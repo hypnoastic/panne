@@ -1,0 +1,51 @@
+{
+  "name": "panne-frontend",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "lint": "eslint .",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@hocuspocus/provider": "^2.0.0",
+    "@tanstack/react-query": "^4.24.6",
+    "@tiptap/extension-bubble-menu": "^2.0.0-beta.220",
+    "@tiptap/extension-code-block-lowlight": "^2.0.0-beta.220",
+    "@tiptap/extension-highlight": "^2.0.0-beta.220",
+    "@tiptap/extension-image": "^2.0.0-beta.220",
+    "@tiptap/extension-task-item": "^2.0.0-beta.220",
+    "@tiptap/extension-task-list": "^2.0.0-beta.220",
+    "@tiptap/react": "^2.0.0-beta.220",
+    "@tiptap/starter-kit": "^2.0.0-beta.220",
+    "axios": "^1.3.4",
+    "framer-motion": "^10.18.0",
+    "i18next": "^22.4.10",
+    "js-cookie": "^3.0.1",
+    "lottie-react": "^2.4.1",
+    "lowlight": "^2.8.1",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-i18next": "^12.1.5",
+    "react-router-dom": "^6.8.1",
+    "socket.io-client": "^4.8.1",
+    "uuid": "^9.0.0",
+    "y-prosemirror": "^1.0.20",
+    "yjs": "^13.5.40"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.33.0",
+    "@types/js-cookie": "^3.0.3",
+    "@types/react": "^18.0.28",
+    "@types/react-dom": "^18.0.11",
+    "@types/uuid": "^9.0.1",
+    "@vitejs/plugin-react": "^5.0.0",
+    "eslint": "^9.33.0",
+    "eslint-plugin-react-hooks": "^5.2.0",
+    "eslint-plugin-react-refresh": "^0.4.20",
+    "globals": "^16.3.0",
+    "vite": "^7.1.2"
+  }
+}

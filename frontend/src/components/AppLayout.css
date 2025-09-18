@@ -1,0 +1,14 @@
+.app-layout {
+  display: flex;
+  height: 100vh;
+  background-color: var(--color-bg);
+}
+
+.app-main {
+  flex: 1;
+  margin-left: 250px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  padding: var(--spacing-2);
+}
