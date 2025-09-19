@@ -1,11 +1,10 @@
 import { useState } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import Lottie from 'lottie-react';
 import AppLayout from '../components/AppLayout';
 import Button from '../components/Button';
-import eventsAnimation from '../assets/events.json';
+import LoadingSpinner from '../components/LoadingSpinner';
 import './EventsPage.css';
 
 // API calls
@@ -77,14 +76,14 @@ const todoItemsApi = {
 };
 
 export default function EventsPage() {
-  const { taskId } = useParams();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const [expandedEvent, setExpandedEvent] = useState(null);
-  const [isCreatingEvent, setIsCreatingEvent] = useState(false);
+  const [isCreating, setIsCreating] = useState(false);
   const [newEventName, setNewEventName] = useState('');
+  const [expandedEvent, setExpandedEvent] = useState(null);
+  const [searchTerm, setSearchTerm] = useState('');
 
-  const { data: events = [] } = useQuery({
+  const { data: events = [], isLoading } = useQuery({
     queryKey: ['events'],
     queryFn: eventsApi.getAll
   });
@@ -94,38 +93,12 @@ export default function EventsPage() {
     queryFn: tasksApi.getAll
   });
 
-  const { data: currentTask } = useQuery({
-    queryKey: ['tasks', taskId],
-    queryFn: () => tasksApi.getById(taskId),
-    enabled: !!taskId
-  });
-
-  const { data: todoItems = [] } = useQuery({
-    queryKey: ['todoItems', taskId],
-    queryFn: () => todoItemsApi.getByTaskId(taskId),
-    enabled: !!taskId
-  });
-
   const createEventMutation = useMutation({
     mutationFn: eventsApi.create,
     onSuccess: () => {
       queryClient.invalidateQueries(['events']);
-      setIsCreatingEvent(false);
+      setIsCreating(false);
       setNewEventName('');
-    }
-  });
-
-  const createTodoMutation = useMutation({
-    mutationFn: todoItemsApi.create,
-    onSuccess: () => {
-      queryClient.invalidateQueries(['todoItems', taskId]);
-    }
-  });
-
-  const updateTodoMutation = useMutation({
-    mutationFn: ({ id, ...data }) => todoItemsApi.update(id, data),
-    onSuccess: () => {
-      queryClient.invalidateQueries(['todoItems', taskId]);
     }
   });
 
@@ -137,151 +110,157 @@ export default function EventsPage() {
     }
   };
 
-  const handleAddTodo = (text) => {
-    if (text.trim()) {
-      createTodoMutation.mutate({
-        task_id: taskId,
-        text: text.trim()
-      });
-    }
-  };
+  const filteredEvents = events.filter(event => 
+    event.name.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  if (isLoading) {
+    return (
+      <AppLayout>
+        <div className="events-loading">
+          <LoadingSpinner />
+        </div>
+      </AppLayout>
+    );
+  }
 
   return (
     <AppLayout>
       <div className="events-page">
-        <div className="events-layout">
-          {/* Events Sidebar */}
-          <div className="events-sidebar">
-            <div className="sidebar-header">
-              <h3>Events</h3>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setIsCreatingEvent(true)}
-              >
+        <div className="events-container">
+          <div className="events-header">
+            <h1 className="font-h1">Events</h1>
+            <div className="header-actions">
+              <input
+                type="text"
+                placeholder="Search events..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="search-input"
+              />
+              <button className="plus-icon" onClick={() => setIsCreating(true)}>
                 +
-              </Button>
+              </button>
             </div>
+          </div>
 
-            {isCreatingEvent && (
-              <motion.div
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: 'auto' }}
-                className="create-event"
-              >
-                <input
-                  type="text"
-                  placeholder="Event name"
-                  value={newEventName}
-                  onChange={(e) => setNewEventName(e.target.value)}
-                  className="create-event__input"
-                  onKeyPress={(e) => e.key === 'Enter' && handleCreateEvent()}
-                />
-                <div className="create-event__actions">
-                  <Button size="sm" onClick={handleCreateEvent}>
-                    Create
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => {
-                      setIsCreatingEvent(false);
-                      setNewEventName('');
-                    }}
-                  >
-                    Cancel
-                  </Button>
-                </div>
-              </motion.div>
-            )}
+          {isCreating && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              className="create-event-form"
+            >
+              <input
+                type="text"
+                placeholder="Event name"
+                value={newEventName}
+                onChange={(e) => setNewEventName(e.target.value)}
+                className="event-input"
+                onKeyPress={(e) => e.key === 'Enter' && handleCreateEvent()}
+                autoFocus
+              />
+              <div className="form-actions">
+                <Button onClick={handleCreateEvent} loading={createEventMutation.isPending}>
+                  Create
+                </Button>
+                <Button
+                  variant="secondary"
+                  onClick={() => {
+                    setIsCreating(false);
+                    setNewEventName('');
+                  }}
+                >
+                  Cancel
+                </Button>
+              </div>
+            </motion.div>
+          )}
 
-            <div className="events-list">
-              {events.map((event) => {
+          <div className="events-list">
+            <AnimatePresence>
+              {filteredEvents.map((event) => {
                 const eventTasks = tasks.filter(task => task.event_id === event.id);
+                const isExpanded = expandedEvent === event.id;
+                
                 return (
-                  <div key={event.id} className="event-group">
-                    <button
-                      className={`event-item ${expandedEvent === event.id ? 'event-item--expanded' : ''}`}
-                      onClick={() => setExpandedEvent(expandedEvent === event.id ? null : event.id)}
+                  <motion.div
+                    key={event.id}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -20 }}
+                    className="event-container"
+                  >
+                    <div 
+                      className="event-card"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setExpandedEvent(isExpanded ? null : event.id);
+                      }}
                     >
-                      <span>{event.name}</span>
-                      <span className="event-count">{eventTasks.length}</span>
-                    </button>
-                    {expandedEvent === event.id && (
+                      <div className="event-header">
+                        <div className="event-info">
+                          <h3 className="event-title">{event.name}</h3>
+                          <p className="event-meta">
+                            {eventTasks.length} tasks
+                          </p>
+                        </div>
+                        <div className={`expand-icon ${isExpanded ? 'expanded' : ''}`}>▼</div>
+                      </div>
+                    </div>
+                    
+                    {isExpanded && (
                       <motion.div
                         initial={{ opacity: 0, height: 0 }}
                         animate={{ opacity: 1, height: 'auto' }}
-                        className="event-tasks"
+                        exit={{ opacity: 0, height: 0 }}
+                        className="tasks-grid"
                       >
-                        {eventTasks.map((task) => (
-                          <Link
-                            key={task.id}
-                            to={`/events/${task.id}`}
-                            className={`task-link ${taskId === task.id ? 'task-link--active' : ''}`}
-                          >
-                            {task.title}
-                          </Link>
-                        ))}
+                        {eventTasks.length > 0 ? (
+                          eventTasks.map((task) => (
+                            <motion.div
+                              key={task.id}
+                              className="task-card"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                navigate(`/tasks/${task.id}`);
+                              }}
+                              whileHover={{ scale: 1.05 }}
+                              initial={{ opacity: 0, y: 20 }}
+                              animate={{ opacity: 1, y: 0 }}
+                            >
+                              <h4 className="task-title">{task.title}</h4>
+                              <p className="task-preview">
+                                {task.description 
+                                  ? task.description.substring(0, 80) + '...' 
+                                  : 'No description'
+                                }
+                              </p>
+                              <span className="task-date">
+                                {new Date(task.updated_at).toLocaleDateString()}
+                              </span>
+                            </motion.div>
+                          ))
+                        ) : (
+                          <div className="empty-tasks">
+                            <p>No tasks in this event</p>
+                          </div>
+                        )}
                       </motion.div>
                     )}
-                  </div>
+                  </motion.div>
                 );
               })}
+            </AnimatePresence>
+          </div>
+
+          {events.length === 0 && !isCreating && (
+            <div className="empty-state">
+              <h3 className="empty-state__title">No events yet</h3>
+              <p className="empty-state__description">
+                Create your first event to organize your tasks
+              </p>
             </div>
-          </div>
-
-          {/* Task Editor */}
-          <div className="events-editor">
-            {currentTask ? (
-              <div className="editor-container">
-                <div className="editor-header">
-                  <h2 className="editor-title">{currentTask.title}</h2>
-                </div>
-
-                <div className="todo-section">
-                  <div className="todo-list">
-                    {todoItems.map((item) => (
-                      <div key={item.id} className="todo-item">
-                        <input
-                          type="checkbox"
-                          checked={item.completed}
-                          onChange={(e) => updateTodoMutation.mutate({
-                            id: item.id,
-                            text: item.text,
-                            completed: e.target.checked
-                          })}
-                        />
-                        <span className={item.completed ? 'completed' : ''}>{item.text}</span>
-                      </div>
-                    ))}
-                    <input
-                      type="text"
-                      placeholder="Add todo item..."
-                      className="add-todo-input"
-                      onKeyPress={(e) => {
-                        if (e.key === 'Enter') {
-                          handleAddTodo(e.target.value);
-                          e.target.value = '';
-                        }
-                      }}
-                    />
-                  </div>
-                </div>
-              </div>
-            ) : (
-              <div className="editor-empty">
-                <div className="empty-state">
-                  <div className="empty-state__image">
-                    <Lottie animationData={eventsAnimation} style={{ width: 200, height: 150 }} />
-                  </div>
-                  <h4 className="empty-state__title">Select a task to start editing</h4>
-                  <p className="empty-state__description">
-                    Choose a task from an event to manage your todos
-                  </p>
-                </div>
-              </div>
-            )}
-          </div>
+          )}
         </div>
       </div>
     </AppLayout>

@@ -85,14 +85,17 @@
 /* AI Popup */
 .ai-popup {
   position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
   background: rgba(26, 26, 46, 0.95);
   backdrop-filter: blur(20px);
   border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: 12px;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
   padding: 12px;
-  min-width: 300px;
-  max-width: 320px;
+  width: 80%;
+  max-width: 600px;
+  min-width: 400px;
   z-index: 1000;
   animation: aiPopupFadeIn 0.2s ease-out;
 }
@@ -100,11 +103,9 @@
 @keyframes aiPopupFadeIn {
   from {
     opacity: 0;
-    transform: translateY(-10px) scale(0.95);
   }
   to {
     opacity: 1;
-    transform: translateY(0) scale(1);
   }
 }
 
@@ -401,9 +402,6 @@
   right: 0;
   bottom: 0;
   background: rgba(0, 0, 0, 0.5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
   z-index: 1000;
 }
 
@@ -416,10 +414,13 @@
     0 8px 32px rgba(0, 0, 0, 0.3),
     0 2px 8px rgba(0, 0, 0, 0.2),
     inset 0 1px 0 rgba(255, 255, 255, 0.1);
-  width: 90%;
-  max-width: 700px;
-  height: 600px;
+  width: 80%;
+  max-width: 900px;
+  height: 500px;
   overflow: hidden;
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
 }
 
 .modal__header {

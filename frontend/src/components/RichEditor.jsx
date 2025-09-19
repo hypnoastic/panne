@@ -69,7 +69,7 @@ export default function RichEditor({ content, onChange, placeholder = "Start wri
   const [showAIPopup, setShowAIPopup] = useState(false);
   const [aiInput, setAiInput] = useState('');
   const [isAiProcessing, setIsAiProcessing] = useState(false);
-  const [aiPopupPosition, setAiPopupPosition] = useState({ x: 0, y: 0 });
+  const [aiPopupPosition, setAiPopupPosition] = useState({ top: '50%' });
   const [currentContext, setCurrentContext] = useState('');
   const fileInputRef = useRef(null);
 
@@ -189,17 +189,26 @@ export default function RichEditor({ content, onChange, placeholder = "Start wri
   }, [editor, tableRows, tableCols]);
 
   const getCaretPosition = useCallback(() => {
-    if (!editor) return { x: 0, y: 0 };
+    if (!editor) return { top: '50%' };
     
     const { view } = editor;
     const { from } = view.state.selection;
     const start = view.coordsAtPos(from);
     const editorRect = view.dom.getBoundingClientRect();
+    const viewportHeight = window.innerHeight;
+    const popupHeight = 60;
     
-    return {
-      x: start.left - editorRect.left,
-      y: start.bottom - editorRect.top + 10
-    };
+    let top = start.bottom - editorRect.top + 10;
+    
+    // If popup would go below viewport, position above cursor
+    if (start.bottom + popupHeight > viewportHeight) {
+      top = start.top - editorRect.top - popupHeight - 10;
+    }
+    
+    // Ensure popup stays within editor bounds
+    top = Math.max(10, Math.min(top, editorRect.height - popupHeight - 10));
+    
+    return { top: `${top}px` };
   }, [editor]);
 
   const handleOpenAI = useCallback(() => {
@@ -533,10 +542,7 @@ export default function RichEditor({ content, onChange, placeholder = "Start wri
         {showAIPopup && (
           <div 
             className="ai-popup"
-            style={{
-              left: aiPopupPosition.x,
-              top: aiPopupPosition.y
-            }}
+            style={aiPopupPosition}
           >
             <div className="ai-popup-content">
               <input

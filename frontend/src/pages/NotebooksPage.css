@@ -135,11 +135,6 @@
   gap: var(--spacing-4);
 }
 
-.notebook-icon {
-  font-size: 24px;
-  flex-shrink: 0;
-}
-
 .notebook-info {
   flex: 1;
 }
