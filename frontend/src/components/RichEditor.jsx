@@ -1,23 +1,75 @@
-import { useEditor, EditorContent, BubbleMenu } from '@tiptap/react';
+import { useEditor, EditorContent, BubbleMenu, FloatingMenu } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
+import TextStyle from '@tiptap/extension-text-style';
+import FontFamily from '@tiptap/extension-font-family';
+import Color from '@tiptap/extension-color';
 import Highlight from '@tiptap/extension-highlight';
+import TextAlign from '@tiptap/extension-text-align';
 import Image from '@tiptap/extension-image';
+import Link from '@tiptap/extension-link';
+import Underline from '@tiptap/extension-underline';
+import Table from '@tiptap/extension-table';
+import TableRow from '@tiptap/extension-table-row';
+import TableHeader from '@tiptap/extension-table-header';
+import TableCell from '@tiptap/extension-table-cell';
+
 import CodeBlockLowlight from '@tiptap/extension-code-block-lowlight';
 import { lowlight } from 'lowlight';
-import { useState, useRef } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import { useMutation } from '@tanstack/react-query';
-import { uploadApi, aiApi } from '../services/api';
+import { uploadApi } from '../services/api';
 import Button from './Button';
 import './RichEditor.css';
 
+// Custom FontSize extension
+import { Extension } from '@tiptap/core';
+
+const FontSize = Extension.create({
+  name: 'fontSize',
+  addOptions() {
+    return {
+      types: ['textStyle'],
+    };
+  },
+  addGlobalAttributes() {
+    return [
+      {
+        types: this.options.types,
+        attributes: {
+          fontSize: {
+            default: null,
+            parseHTML: element => element.style.fontSize.replace(/['"]+/g, ''),
+            renderHTML: attributes => {
+              if (!attributes.fontSize) return {};
+              return { style: `font-size: ${attributes.fontSize}` };
+            },
+          },
+        },
+      },
+    ];
+  },
+  addCommands() {
+    return {
+      setFontSize: fontSize => ({ chain }) => {
+        return chain().setMark('textStyle', { fontSize }).run();
+      },
+      unsetFontSize: () => ({ chain }) => {
+        return chain().setMark('textStyle', { fontSize: null }).removeEmptyTextStyle().run();
+      },
+    };
+  },
+});
+
 export default function RichEditor({ content, onChange, placeholder = "Start writing..." }) {
-  const [showSlashMenu, setShowSlashMenu] = useState(false);
-  const [slashMenuPosition, setSlashMenuPosition] = useState({ x: 0, y: 0 });
-  const [showAIModal, setShowAIModal] = useState(false);
-  const [aiMode, setAiMode] = useState('ask');
-  const [aiMessages, setAiMessages] = useState([]);
+  const [showLinkModal, setShowLinkModal] = useState(false);
+  const [linkUrl, setLinkUrl] = useState('');
+  const [showTableModal, setShowTableModal] = useState(false);
+  const [tableRows, setTableRows] = useState(3);
+  const [tableCols, setTableCols] = useState(3);
+  const [showAIPopup, setShowAIPopup] = useState(false);
   const [aiInput, setAiInput] = useState('');
-  const [isAiTyping, setIsAiTyping] = useState(false);
+  const [isAiProcessing, setIsAiProcessing] = useState(false);
+  const [aiPopupPosition, setAiPopupPosition] = useState({ x: 0, y: 0 });
   const [currentContext, setCurrentContext] = useState('');
   const fileInputRef = useRef(null);
 
@@ -28,26 +80,9 @@ export default function RichEditor({ content, onChange, placeholder = "Start wri
     }
   });
 
-  const aiChatMutation = useMutation({
-    mutationFn: async ({ message, mode, context }) => {
-      let prompt;
-      if (mode === 'ask') {
-        prompt = `You are a helpful AI assistant. Answer the user's question about their note content.
-
-Note content: ${context}
-
-User question: ${message}
-
-Provide a helpful and informative response.`;
-      } else {
-        prompt = `You are an AI editor. Edit the provided text according to the user's instructions. Return ONLY the edited text, no explanations or additional text.
-
-Original text: ${context}
-
-Edit instruction: ${message}
-
-Edited text:`;
-      }
+  const aiEditMutation = useMutation({
+    mutationFn: async ({ message, context }) => {
+      const prompt = `You are an AI editor. Edit the provided text according to the user's instructions. Return ONLY the edited text, no explanations or additional text.\n\nOriginal text: ${context}\n\nEdit instruction: ${message}\n\nEdited text:`;
       
       const response = await fetch('http://localhost:5000/api/ai/query', {
         method: 'POST',
@@ -59,43 +94,65 @@ Edited text:`;
       return response.json();
     },
     onMutate: () => {
-      setIsAiTyping(true);
-      setAiMessages(prev => [...prev, { type: 'user', content: aiInput }]);
+      setIsAiProcessing(true);
     },
     onSuccess: (response) => {
       const aiResponse = response.response || response.message;
-      setAiMessages(prev => [...prev, { type: 'ai', content: aiResponse }]);
       
-      if (aiMode === 'edit') {
-        // For edit mode, replace the content in the editor
-        const hasSelection = editor?.state.selection.from !== editor?.state.selection.to;
-        if (hasSelection) {
-          editor?.chain().focus().deleteSelection().insertContent(aiResponse).run();
-        } else {
-          editor?.chain().focus().selectAll().insertContent(aiResponse).run();
-        }
+      const hasSelection = editor?.state.selection.from !== editor?.state.selection.to;
+      if (hasSelection) {
+        editor?.chain().focus().deleteSelection().insertContent(aiResponse).run();
+      } else {
+        editor?.chain().focus().selectAll().insertContent(aiResponse).run();
       }
       
       setAiInput('');
-      setIsAiTyping(false);
+      setShowAIPopup(false);
+      setIsAiProcessing(false);
     },
     onError: () => {
-      setAiMessages(prev => [...prev, { type: 'ai', content: 'Sorry, I encountered an error. Please try again.' }]);
-      setIsAiTyping(false);
+      setIsAiProcessing(false);
     }
   });
 
   const editor = useEditor({
     extensions: [
-      StarterKit,
+      StarterKit.configure({
+        bulletList: { keepMarks: true, keepAttributes: false },
+        orderedList: { keepMarks: true, keepAttributes: false },
+      }),
+      TextStyle,
+      FontSize,
+      FontFamily.configure({
+        types: ['textStyle'],
+      }),
+      Color.configure({
+        types: ['textStyle'],
+      }),
+      Underline,
       Highlight.configure({
         multicolor: true,
+      }),
+      TextAlign.configure({
+        types: ['heading', 'paragraph'],
       }),
       Image.configure({
         HTMLAttributes: {
           class: 'editor-image',
         },
       }),
+      Link.configure({
+        openOnClick: false,
+        HTMLAttributes: {
+          class: 'editor-link',
+        },
+      }),
+      Table.configure({
+        resizable: true,
+      }),
+      TableRow,
+      TableHeader,
+      TableCell,
       CodeBlockLowlight.configure({
         lowlight,
       }),
@@ -106,53 +163,88 @@ Edited text:`;
     },
     editorProps: {
       attributes: {
-        class: 'prose prose-sm sm:prose lg:prose-lg xl:prose-2xl mx-auto focus:outline-none',
+        class: 'focus:outline-none',
       },
     },
   });
 
-  const handleImageUpload = (e) => {
+  const handleImageUpload = useCallback((e) => {
     const file = e.target.files[0];
     if (file) {
       uploadImageMutation.mutate(file);
     }
-  };
+  }, [uploadImageMutation]);
 
-  const handleAISend = () => {
-    if (!aiInput.trim()) return;
+  const handleAddLink = useCallback(() => {
+    if (linkUrl) {
+      editor?.chain().focus().setLink({ href: linkUrl }).run();
+      setLinkUrl('');
+      setShowLinkModal(false);
+    }
+  }, [editor, linkUrl]);
+
+  const handleInsertTable = useCallback(() => {
+    editor?.chain().focus().insertTable({ rows: tableRows, cols: tableCols, withHeaderRow: true }).run();
+    setShowTableModal(false);
+  }, [editor, tableRows, tableCols]);
+
+  const getCaretPosition = useCallback(() => {
+    if (!editor) return { x: 0, y: 0 };
     
-    aiChatMutation.mutate({
-      message: aiInput,
-      mode: aiMode,
-      context: currentContext
-    });
-  };
+    const { view } = editor;
+    const { from } = view.state.selection;
+    const start = view.coordsAtPos(from);
+    const editorRect = view.dom.getBoundingClientRect();
+    
+    return {
+      x: start.left - editorRect.left,
+      y: start.bottom - editorRect.top + 10
+    };
+  }, [editor]);
 
-  const handleOpenAI = () => {
+  const handleOpenAI = useCallback(() => {
     const selectedText = editor?.state.doc.textBetween(
       editor?.state.selection.from,
       editor?.state.selection.to
     ) || editor?.getText() || '';
     
     setCurrentContext(selectedText);
-    setAiMessages([]);
     setAiInput('');
-    setShowAIModal(true);
-  };
+    setAiPopupPosition(getCaretPosition());
+    setShowAIPopup(true);
+  }, [editor, getCaretPosition]);
 
+  const handleAISend = useCallback(() => {
+    if (!aiInput.trim()) return;
+    
+    aiEditMutation.mutate({
+      message: aiInput,
+      context: currentContext
+    });
+  }, [aiInput, currentContext, aiEditMutation]);
 
+  // Close popup on outside click or escape
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (showAIPopup && !event.target.closest('.ai-popup')) {
+        setShowAIPopup(false);
+      }
+    };
 
-  const slashCommands = [
-    { label: 'Heading 1', command: () => editor.chain().focus().toggleHeading({ level: 1 }).run(), icon: 'H1' },
-    { label: 'Heading 2', command: () => editor.chain().focus().toggleHeading({ level: 2 }).run(), icon: 'H2' },
-    { label: 'Heading 3', command: () => editor.chain().focus().toggleHeading({ level: 3 }).run(), icon: 'H3' },
-    { label: 'Bullet List', command: () => editor.chain().focus().toggleBulletList().run(), icon: '•' },
-    { label: 'Numbered List', command: () => editor.chain().focus().toggleOrderedList().run(), icon: '1.' },
-    { label: 'Quote', command: () => editor.chain().focus().toggleBlockquote().run(), icon: '"' },
-    { label: 'Code Block', command: () => editor.chain().focus().toggleCodeBlock().run(), icon: '</>' },
-    { label: 'Image', command: () => fileInputRef.current?.click(), icon: '🖼️' },
-    { label: 'Divider', command: () => editor.chain().focus().setHorizontalRule().run(), icon: '—' },
-  ];
+    const handleEscape = (event) => {
+      if (event.key === 'Escape' && showAIPopup) {
+        setShowAIPopup(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener('keydown', handleEscape);
+    
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('keydown', handleEscape);
+    };
+  }, [showAIPopup]);
 
   if (!editor) {
     return null;
@@ -160,194 +252,316 @@ Edited text:`;
 
   return (
     <div className="rich-editor">
-      {editor && (
-        <BubbleMenu
-          className="bubble-menu"
-          tippyOptions={{ duration: 100 }}
-          editor={editor}
-        >
-          <div className="bubble-menu__content">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => editor.chain().focus().toggleBold().run()}
-              className={editor.isActive('bold') ? 'is-active' : ''}
-            >
-              B
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => editor.chain().focus().toggleItalic().run()}
-              className={editor.isActive('italic') ? 'is-active' : ''}
-            >
-              I
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => editor.chain().focus().toggleStrike().run()}
-              className={editor.isActive('strike') ? 'is-active' : ''}
-            >
-              S
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => editor.chain().focus().toggleHighlight().run()}
-              className={editor.isActive('highlight') ? 'is-active' : ''}
-            >
-              H
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleOpenAI}
-            >
-              ✨
-            </Button>
-          </div>
-        </BubbleMenu>
-      )}
-
-      <div className="editor-toolbar">
-        <div className="toolbar-group">
-          <Button
-            variant="ghost"
-            size="sm"
+      {/* Bubble Menu for selected text */}
+      <BubbleMenu className="bubble-menu" tippyOptions={{ duration: 100 }} editor={editor}>
+        <div className="bubble-menu__content">
+          <button
             onClick={() => editor.chain().focus().toggleBold().run()}
             className={editor.isActive('bold') ? 'is-active' : ''}
+            title="Bold"
           >
-            Bold
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
+            <strong>B</strong>
+          </button>
+          <button
             onClick={() => editor.chain().focus().toggleItalic().run()}
             className={editor.isActive('italic') ? 'is-active' : ''}
+            title="Italic"
           >
-            Italic
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
+            <em>I</em>
+          </button>
+          <button
             onClick={() => editor.chain().focus().toggleStrike().run()}
             className={editor.isActive('strike') ? 'is-active' : ''}
+            title="Strikethrough"
           >
-            Strike
-          </Button>
+            <s>S</s>
+          </button>
+          <button
+            onClick={() => editor.chain().focus().toggleHighlight().run()}
+            className={editor.isActive('highlight') ? 'is-active' : ''}
+            title="Highlight"
+          >
+            H
+          </button>
+          <button
+            onClick={() => setShowLinkModal(true)}
+            className={editor.isActive('link') ? 'is-active' : ''}
+            title="Add Link"
+          >
+            Link
+          </button>
+
         </div>
-        
-        <div className="toolbar-group">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => {
-              const { from, to } = editor.state.selection;
-              if (from === to) {
-                editor.chain().focus().setHeading({ level: 1 }).run();
-              } else {
-                editor.chain().focus().toggleHeading({ level: 1 }).run();
-              }
-            }}
+      </BubbleMenu>
+
+      {/* Floating Menu for empty lines */}
+      <FloatingMenu className="floating-menu" tippyOptions={{ duration: 100 }} editor={editor}>
+        <div className="floating-menu__content">
+          <button
+            onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
             className={editor.isActive('heading', { level: 1 }) ? 'is-active' : ''}
           >
             H1
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => {
-              const { from, to } = editor.state.selection;
-              if (from === to) {
-                editor.chain().focus().setHeading({ level: 2 }).run();
-              } else {
-                editor.chain().focus().toggleHeading({ level: 2 }).run();
-              }
-            }}
+          </button>
+          <button
+            onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
             className={editor.isActive('heading', { level: 2 }) ? 'is-active' : ''}
           >
             H2
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
+          </button>
+          <button
             onClick={() => editor.chain().focus().toggleBulletList().run()}
             className={editor.isActive('bulletList') ? 'is-active' : ''}
           >
-            List
-          </Button>
+            •
+          </button>
+          <button onClick={() => fileInputRef.current?.click()}>
+            IMG
+          </button>
+        </div>
+      </FloatingMenu>
+
+      {/* Main Toolbar */}
+      <div className="editor-toolbar">
+        {/* Text Formatting */}
+        <div className="toolbar-group">
+          <select
+            className="font-family-select"
+            onChange={(e) => {
+              if (e.target.value) {
+                editor.chain().focus().setFontFamily(e.target.value).run();
+              } else {
+                editor.chain().focus().unsetFontFamily().run();
+              }
+            }}
+          >
+            <option value="">Font Family</option>
+            <option value="Inter">Inter</option>
+            <option value="Arial">Arial</option>
+            <option value="Helvetica">Helvetica</option>
+            <option value="Times New Roman">Times New Roman</option>
+            <option value="Georgia">Georgia</option>
+            <option value="Courier New">Courier New</option>
+          </select>
+
+          <select
+            className="font-size-select"
+            onChange={(e) => {
+              if (e.target.value) {
+                editor.chain().focus().setFontSize(e.target.value).run();
+              } else {
+                editor.chain().focus().unsetFontSize().run();
+              }
+            }}
+          >
+            <option value="">Size</option>
+            <option value="12px">12px</option>
+            <option value="14px">14px</option>
+            <option value="16px">16px</option>
+            <option value="18px">18px</option>
+            <option value="20px">20px</option>
+            <option value="24px">24px</option>
+            <option value="32px">32px</option>
+            <option value="48px">48px</option>
+          </select>
         </div>
 
+        {/* Basic Formatting */}
         <div className="toolbar-group">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => editor.chain().focus().toggleCodeBlock().run()}
-            className={editor.isActive('codeBlock') ? 'is-active' : ''}
+          <button
+            onClick={() => editor.chain().focus().toggleBold().run()}
+            className={editor.isActive('bold') ? 'is-active' : ''}
+            title="Bold (Ctrl+B)"
           >
-            Code
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
+            <strong>B</strong>
+          </button>
+          <button
+            onClick={() => editor.chain().focus().toggleItalic().run()}
+            className={editor.isActive('italic') ? 'is-active' : ''}
+            title="Italic (Ctrl+I)"
+          >
+            <em>I</em>
+          </button>
+          <button
+            onClick={() => editor.chain().focus().toggleUnderline().run()}
+            className={editor.isActive('underline') ? 'is-active' : ''}
+            title="Underline (Ctrl+U)"
+          >
+            <u>U</u>
+          </button>
+          <button
+            onClick={() => editor.chain().focus().toggleStrike().run()}
+            className={editor.isActive('strike') ? 'is-active' : ''}
+            title="Strikethrough"
+          >
+            <s>S</s>
+          </button>
+        </div>
+
+        {/* Colors */}
+        <div className="toolbar-group">
+          <input
+            type="color"
+            onInput={(e) => editor.chain().focus().setColor(e.target.value).run()}
+            value={editor.getAttributes('textStyle').color || '#000000'}
+            title="Text Color"
+            className="color-picker"
+          />
+          <input
+            type="color"
+            onInput={(e) => editor.chain().focus().toggleHighlight({ color: e.target.value }).run()}
+            title="Highlight Color"
+            className="color-picker"
+          />
+        </div>
+
+        {/* Alignment */}
+        <div className="toolbar-group">
+          <button
+            onClick={() => editor.chain().focus().setTextAlign('left').run()}
+            className={editor.isActive({ textAlign: 'left' }) ? 'is-active' : ''}
+            title="Align Left"
+          >
+            ←
+          </button>
+          <button
+            onClick={() => editor.chain().focus().setTextAlign('center').run()}
+            className={editor.isActive({ textAlign: 'center' }) ? 'is-active' : ''}
+            title="Align Center"
+          >
+            ↔
+          </button>
+          <button
+            onClick={() => editor.chain().focus().setTextAlign('right').run()}
+            className={editor.isActive({ textAlign: 'right' }) ? 'is-active' : ''}
+            title="Align Right"
+          >
+            →
+          </button>
+          <button
+            onClick={() => editor.chain().focus().setTextAlign('justify').run()}
+            className={editor.isActive({ textAlign: 'justify' }) ? 'is-active' : ''}
+            title="Justify"
+          >
+            ≡
+          </button>
+        </div>
+
+        {/* Lists */}
+        <div className="toolbar-group">
+          <button
+            onClick={() => editor.chain().focus().toggleBulletList().run()}
+            className={editor.isActive('bulletList') ? 'is-active' : ''}
+            title="Bullet List"
+          >
+            • List
+          </button>
+          <button
+            onClick={() => editor.chain().focus().toggleOrderedList().run()}
+            className={editor.isActive('orderedList') ? 'is-active' : ''}
+            title="Numbered List"
+          >
+            1. List
+          </button>
+        </div>
+
+        {/* Insert Elements */}
+        <div className="toolbar-group">
+          <button
+            onClick={() => setShowLinkModal(true)}
+            className={editor.isActive('link') ? 'is-active' : ''}
+            title="Insert Link"
+          >
+            Link
+          </button>
+          <button
+            onClick={() => fileInputRef.current?.click()}
+            title="Insert Image"
+            disabled={uploadImageMutation.isPending}
+          >
+            {uploadImageMutation.isPending ? '...' : 'IMG'}
+          </button>
+          <button
+            onClick={() => setShowTableModal(true)}
+            title="Insert Table"
+          >
+            Table
+          </button>
+          <button
+            onClick={() => editor.chain().focus().setHorizontalRule().run()}
+            title="Insert Divider"
+          >
+            ─ Divider
+          </button>
+        </div>
+
+        {/* Block Elements */}
+        <div className="toolbar-group">
+          <button
             onClick={() => editor.chain().focus().toggleBlockquote().run()}
             className={editor.isActive('blockquote') ? 'is-active' : ''}
+            title="Quote"
           >
-            Quote
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => fileInputRef.current?.click()}
-            loading={uploadImageMutation.isPending}
+            " Quote
+          </button>
+          <button
+            onClick={() => editor.chain().focus().toggleCodeBlock().run()}
+            className={editor.isActive('codeBlock') ? 'is-active' : ''}
+            title="Code Block"
           >
-            Image
-          </Button>
+            Code
+          </button>
         </div>
 
-        <div className="toolbar-group">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={handleOpenAI}
-          >
-            ✨ AI
-          </Button>
-        </div>
+
       </div>
 
-      <EditorContent 
-        editor={editor} 
-        className="editor-content"
-        placeholder={placeholder}
-      />
-
-      {showSlashMenu && (
-        <div 
-          className="slash-menu"
-          style={{ 
-            position: 'absolute',
-            left: slashMenuPosition.x,
-            top: slashMenuPosition.y 
-          }}
+      {/* Editor Content */}
+      <div className="editor-content-wrapper">
+        <EditorContent editor={editor} className="editor-content" />
+        
+        {/* AI Overlay Button */}
+        <button 
+          className="ai-overlay-button"
+          onClick={handleOpenAI}
+          title="AI Assistant"
         >
-          {slashCommands.map((command, index) => (
-            <button
-              key={index}
-              className="slash-menu__item"
-              onClick={() => {
-                command.command();
-                setShowSlashMenu(false);
-              }}
-            >
-              <span className="slash-menu__icon">{command.icon}</span>
-              <span className="slash-menu__label">{command.label}</span>
-            </button>
-          ))}
-        </div>
-      )}
+          ✦
+        </button>
 
+        {/* AI Popup */}
+        {showAIPopup && (
+          <div 
+            className="ai-popup"
+            style={{
+              left: aiPopupPosition.x,
+              top: aiPopupPosition.y
+            }}
+          >
+            <div className="ai-popup-content">
+              <input
+                type="text"
+                value={aiInput}
+                onChange={(e) => setAiInput(e.target.value)}
+                placeholder="How should I edit this?"
+                className="ai-popup-input"
+                onKeyPress={(e) => e.key === 'Enter' && handleAISend()}
+                autoFocus
+                disabled={isAiProcessing}
+              />
+              <button 
+                className="ai-popup-send"
+                onClick={handleAISend}
+                disabled={!aiInput.trim() || isAiProcessing}
+              >
+                {isAiProcessing ? '...' : '→'}
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Hidden file input */}
       <input
         ref={fileInputRef}
         type="file"
@@ -356,74 +570,73 @@ Edited text:`;
         style={{ display: 'none' }}
       />
 
-      {showAIModal && (
-        <div className="modal-overlay" onClick={() => setShowAIModal(false)}>
-          <div className="modal ai-modal" onClick={(e) => e.stopPropagation()}>
+      {/* Link Modal */}
+      {showLinkModal && (
+        <div className="modal-overlay" onClick={() => setShowLinkModal(false)}>
+          <div className="modal" onClick={(e) => e.stopPropagation()}>
             <div className="modal__header">
-              <h3>AI Assistant</h3>
-              <button className="modal__close" onClick={() => setShowAIModal(false)}>×</button>
+              <h3>Add Link</h3>
+              <button className="modal__close" onClick={() => setShowLinkModal(false)}>×</button>
             </div>
             <div className="modal__content">
-              <div className="ai-mode-selector">
-                <button 
-                  className={`ai-mode-button ${aiMode === 'ask' ? 'active' : ''}`}
-                  onClick={() => setAiMode('ask')}
-                >
-                  Ask
-                </button>
-                <button 
-                  className={`ai-mode-button ${aiMode === 'edit' ? 'active' : ''}`}
-                  onClick={() => setAiMode('edit')}
-                >
-                  Edit
-                </button>
-              </div>
-              
-              {currentContext && (
-                <div className="ai-context-info">
-                  {editor?.state.selection.from !== editor?.state.selection.to 
-                    ? `Working with selected text: "${currentContext.substring(0, 100)}${currentContext.length > 100 ? '...' : ''}"`
-                    : 'Working with full note content'
-                  }
-                </div>
-              )}
-              
-              <div className="ai-chat-container">
-                <div className="ai-messages">
-                  {aiMessages.map((message, index) => (
-                    <div key={index} className={`ai-message ${message.type}`}>
-                      {message.content}
-                    </div>
-                  ))}
-                  {isAiTyping && (
-                    <div className="ai-message ai">
-                      <div className="ai-typing">
-                        <span></span>
-                        <span></span>
-                        <span></span>
-                      </div>
-                    </div>
-                  )}
-                </div>
-                
-                <div className="ai-input-container">
-                  <input
-                    type="text"
-                    value={aiInput}
-                    onChange={(e) => setAiInput(e.target.value)}
-                    placeholder={aiMode === 'ask' ? 'Ask about your note...' : 'How should I edit this?'}
-                    className="ai-input"
-                    onKeyPress={(e) => e.key === 'Enter' && handleAISend()}
-                  />
-                  <Button onClick={handleAISend} loading={aiChatMutation.isPending}>
-                    Send
-                  </Button>
-                </div>
+              <input
+                type="url"
+                placeholder="Enter URL"
+                value={linkUrl}
+                onChange={(e) => setLinkUrl(e.target.value)}
+                className="link-input"
+                onKeyPress={(e) => e.key === 'Enter' && handleAddLink()}
+              />
+              <div className="modal__actions">
+                <Button onClick={handleAddLink}>Add Link</Button>
+                <Button variant="ghost" onClick={() => setShowLinkModal(false)}>Cancel</Button>
               </div>
             </div>
           </div>
         </div>
       )}
+
+      {/* Table Modal */}
+      {showTableModal && (
+        <div className="modal-overlay" onClick={() => setShowTableModal(false)}>
+          <div className="modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal__header">
+              <h3>Insert Table</h3>
+              <button className="modal__close" onClick={() => setShowTableModal(false)}>×</button>
+            </div>
+            <div className="modal__content">
+              <div className="table-config">
+                <label>
+                  Rows: 
+                  <input
+                    type="number"
+                    min="1"
+                    max="10"
+                    value={tableRows}
+                    onChange={(e) => setTableRows(parseInt(e.target.value))}
+                  />
+                </label>
+                <label>
+                  Columns: 
+                  <input
+                    type="number"
+                    min="1"
+                    max="10"
+                    value={tableCols}
+                    onChange={(e) => setTableCols(parseInt(e.target.value))}
+                  />
+                </label>
+              </div>
+              <div className="modal__actions">
+                <Button onClick={handleInsertTable}>Insert Table</Button>
+                <Button variant="ghost" onClick={() => setShowTableModal(false)}>Cancel</Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+
     </div>
   );
 }

@@ -11,10 +11,6 @@ import leftImage from '../assets/left.png';
 import rightImage from '../assets/right.png';
 import arrowImage from '../assets/arrow.png';
 import infoImage from '../assets/info.png';
-import l1Image from '../assets/l1.png';
-import l2Image from '../assets/l2.png';
-import l3Image from '../assets/l3.png';
-import l4Image from '../assets/l4.png';
 import './LandingPage.css';
 
 export default function LandingPage() {
