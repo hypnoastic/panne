@@ -1,80 +1,72 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
-import { usersApi } from '../services/api';
+import Lottie from 'lottie-react';
 import AppLayout from '../components/AppLayout';
 import Button from '../components/Button';
-import LoadingSpinner from '../components/LoadingSpinner';
+import sectionLoader from '../assets/section_loader.json';
 import './TrashPage.css';
+
+// Mock API for trash items
+const trashApi = {
+  getAll: async () => {
+    // Mock data - replace with actual API
+    return [
+      { id: 1, type: 'note', title: 'Deleted Note 1', deletedAt: new Date().toISOString() },
+      { id: 2, type: 'notebook', title: 'Old Notebook', deletedAt: new Date().toISOString() },
+      { id: 3, type: 'agenda', title: 'Completed Agenda', deletedAt: new Date().toISOString() },
+      { id: 4, type: 'task', title: 'Old Task', deletedAt: new Date().toISOString() },
+    ];
+  },
+  restore: async (id) => {
+    // Mock restore - replace with actual API
+    return { success: true };
+  },
+  permanentDelete: async (id) => {
+    // Mock delete - replace with actual API
+    return { success: true };
+  }
+};
 
 export default function TrashPage() {
   const queryClient = useQueryClient();
-  const [selectedItems, setSelectedItems] = useState(new Set());
-  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
-  const [itemToDelete, setItemToDelete] = useState(null);
+  const [selectedType, setSelectedType] = useState('all');
 
-  const { data: trashedNotes = [], isLoading } = useQuery({
+  const { data: trashItems = [], isLoading } = useQuery({
     queryKey: ['trash'],
-    queryFn: usersApi.getTrash
+    queryFn: trashApi.getAll
   });
 
   const restoreMutation = useMutation({
-    mutationFn: usersApi.restoreFromTrash,
+    mutationFn: trashApi.restore,
     onSuccess: () => {
       queryClient.invalidateQueries(['trash']);
-      queryClient.invalidateQueries(['notes']);
     }
   });
 
   const deleteMutation = useMutation({
-    mutationFn: usersApi.permanentDelete,
+    mutationFn: trashApi.permanentDelete,
     onSuccess: () => {
       queryClient.invalidateQueries(['trash']);
-      setShowConfirmDialog(false);
-      setItemToDelete(null);
     }
   });
 
-  const handleSelectItem = (itemId) => {
-    const newSelected = new Set(selectedItems);
-    if (newSelected.has(itemId)) {
-      newSelected.delete(itemId);
-    } else {
-      newSelected.add(itemId);
-    }
-    setSelectedItems(newSelected);
-  };
+  const filteredItems = selectedType === 'all' 
+    ? trashItems 
+    : trashItems.filter(item => item.type === selectedType);
 
-  const handleSelectAll = () => {
-    if (selectedItems.size === trashedNotes.length) {
-      setSelectedItems(new Set());
-    } else {
-      setSelectedItems(new Set(trashedNotes.map(note => note.id)));
-    }
-  };
-
-  const handleBulkRestore = () => {
-    selectedItems.forEach(itemId => {
-      restoreMutation.mutate(itemId);
-    });
-    setSelectedItems(new Set());
-  };
-
-  const handleBulkDelete = () => {
-    selectedItems.forEach(itemId => {
-      deleteMutation.mutate(itemId);
-    });
-    setSelectedItems(new Set());
-  };
-
-  const handlePermanentDelete = (item) => {
-    setItemToDelete(item);
-    setShowConfirmDialog(true);
-  };
-
-  const confirmDelete = () => {
-    if (itemToDelete) {
-      deleteMutation.mutate(itemToDelete.id);
+  const getTypeIcon = (type) => {
+    switch (type) {
+      case 'note':
+        return '📝';
+      case 'notebook':
+        return '📚';
+      case 'agenda':
+        return '📅';
+      case 'task':
+        return '✅';
+      default:
+        return '📄';
     }
   };
 
@@ -82,7 +74,7 @@ export default function TrashPage() {
     return (
       <AppLayout>
         <div className="trash-loading">
-          <LoadingSpinner />
+          <Lottie animationData={sectionLoader} style={{ width: 400, height: 400 }} />
         </div>
       </AppLayout>
     );
@@ -93,161 +85,84 @@ export default function TrashPage() {
       <div className="trash-page">
         <div className="trash-container">
           <div className="trash-header">
-            <div className="trash-title">
-              <h1>Trash</h1>
-              <p>Items in trash will be permanently deleted after 30 days</p>
-            </div>
-            
-            {selectedItems.size > 0 && (
-              <div className="bulk-actions">
-                <Button
-                  variant="secondary"
-                  onClick={handleBulkRestore}
-                  loading={restoreMutation.isPending}
-                >
-                  Restore Selected ({selectedItems.size})
-                </Button>
-                <Button
-                  variant="danger"
-                  onClick={handleBulkDelete}
-                  loading={deleteMutation.isPending}
-                >
-                  Delete Forever ({selectedItems.size})
-                </Button>
+            <div className="header-content">
+              <h1 className="font-h1">Trash</h1>
+              <div className="current-date">
+                {new Date().toLocaleDateString('en-US', { 
+                  weekday: 'long', 
+                  year: 'numeric', 
+                  month: 'long', 
+                  day: 'numeric' 
+                })}
               </div>
-            )}
+            </div>
           </div>
 
-          {trashedNotes.length > 0 && (
-            <div className="trash-controls">
-              <label className="select-all">
-                <input
-                  type="checkbox"
-                  checked={selectedItems.size === trashedNotes.length}
-                  onChange={handleSelectAll}
-                />
-                <span>Select All ({trashedNotes.length})</span>
-              </label>
-            </div>
-          )}
-
-          <div className="trash-content">
-            {trashedNotes.length === 0 ? (
-              <div className="empty-trash">
-                <div className="empty-state">
-                  <div className="empty-state__icon">🗑️</div>
-                  <h3 className="empty-state__title">Trash is empty</h3>
-                  <p className="empty-state__description">
-                    Deleted notes will appear here. You can restore them or delete them permanently.
-                  </p>
-                </div>
-              </div>
-            ) : (
-              <div className="trash-items">
-                <AnimatePresence>
-                  {trashedNotes.map((note) => (
-                    <motion.div
-                      key={note.id}
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -20 }}
-                      className="trash-item"
-                    >
-                      <div className="trash-item__select">
-                        <input
-                          type="checkbox"
-                          checked={selectedItems.has(note.id)}
-                          onChange={() => handleSelectItem(note.id)}
-                        />
-                      </div>
-                      
-                      <div className="trash-item__content">
-                        <h4 className="trash-item__title">{note.title}</h4>
-                        <p className="trash-item__preview">
-                          {note.content?.content?.[0]?.content?.[0]?.text || 'No content'}
-                        </p>
-                        <div className="trash-item__meta">
-                          {note.notebook_name && (
-                            <span className="trash-item__notebook">
-                              📁 {note.notebook_name}
-                            </span>
-                          )}
-                          <span className="trash-item__deleted">
-                            Deleted {new Date(note.deleted_at).toLocaleDateString()}
-                          </span>
-                        </div>
-                      </div>
-
-                      <div className="trash-item__actions">
-                        <Button
-                          variant="secondary"
-                          size="sm"
-                          onClick={() => restoreMutation.mutate(note.id)}
-                          loading={restoreMutation.isPending}
-                        >
-                          Restore
-                        </Button>
-                        <Button
-                          variant="danger"
-                          size="sm"
-                          onClick={() => handlePermanentDelete(note)}
-                        >
-                          Delete Forever
-                        </Button>
-                      </div>
-                    </motion.div>
-                  ))}
-                </AnimatePresence>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Confirmation Dialog */}
-        <AnimatePresence>
-          {showConfirmDialog && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="dialog-overlay"
-              onClick={() => setShowConfirmDialog(false)}
-            >
-              <motion.div
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.9 }}
-                className="dialog"
-                onClick={(e) => e.stopPropagation()}
+          <div className="filter-tabs">
+            {['all', 'note', 'notebook', 'agenda', 'task'].map(type => (
+              <button
+                key={type}
+                className={`filter-tab ${selectedType === type ? 'active' : ''}`}
+                onClick={() => setSelectedType(type)}
               >
-                <div className="dialog__header">
-                  <h3>Delete Forever</h3>
-                </div>
-                <div className="dialog__content">
-                  <p>
-                    Are you sure you want to permanently delete "{itemToDelete?.title}"? 
-                    This action cannot be undone.
-                  </p>
-                </div>
-                <div className="dialog__actions">
-                  <Button
-                    variant="secondary"
-                    onClick={() => setShowConfirmDialog(false)}
-                  >
-                    Cancel
-                  </Button>
-                  <Button
-                    variant="danger"
-                    onClick={confirmDelete}
-                    loading={deleteMutation.isPending}
-                  >
-                    Delete Forever
-                  </Button>
-                </div>
-              </motion.div>
-            </motion.div>
+                {type === 'all' ? 'All Items' : `${type.charAt(0).toUpperCase() + type.slice(1)}s`}
+              </button>
+            ))}
+          </div>
+
+          <div className="trash-list">
+            <AnimatePresence>
+              {filteredItems.map((item) => (
+                <motion.div
+                  key={item.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -20 }}
+                  className="trash-item"
+                >
+                  <div className="item-info">
+                    <div className="item-icon">{getTypeIcon(item.type)}</div>
+                    <div className="item-details">
+                      <h3 className="item-title">{item.title}</h3>
+                      <p className="item-meta">
+                        {item.type.charAt(0).toUpperCase() + item.type.slice(1)} • 
+                        Deleted {new Date(item.deletedAt).toLocaleDateString()}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="item-actions">
+                    <Button
+                      variant="secondary"
+                      onClick={() => restoreMutation.mutate(item.id)}
+                      loading={restoreMutation.isPending}
+                    >
+                      Restore
+                    </Button>
+                    <Button
+                      variant="danger"
+                      onClick={() => deleteMutation.mutate(item.id)}
+                      loading={deleteMutation.isPending}
+                    >
+                      Delete Forever
+                    </Button>
+                  </div>
+                </motion.div>
+              ))}
+            </AnimatePresence>
+          </div>
+
+          {filteredItems.length === 0 && (
+            <div className="empty-state">
+              <div className="empty-icon">🗑️</div>
+              <h3 className="empty-state__title">
+                {selectedType === 'all' ? 'Trash is empty' : `No deleted ${selectedType}s`}
+              </h3>
+              <p className="empty-state__description">
+                Deleted items will appear here and can be restored within 30 days
+              </p>
+            </div>
           )}
-        </AnimatePresence>
+        </div>
       </div>
     </AppLayout>
   );

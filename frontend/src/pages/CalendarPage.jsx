@@ -1,46 +1,47 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useLocation } from 'react-router-dom';
+import Lottie from 'lottie-react';
 import AppLayout from '../components/AppLayout';
-import Button from '../components/Button';
-import LoadingSpinner from '../components/LoadingSpinner';
+
+import sectionLoader from '../assets/section_loader.json';
+import calendarAnimation from '../assets/calendar.json';
 import './CalendarPage.css';
 
 // Calendar Events API
 const calendarEventsApi = {
   getAll: async () => {
-    const response = await fetch('http://localhost:5000/api/calendar-events', {
+    const response = await fetch('http://localhost:5000/api/events', {
       credentials: 'include'
     });
-    if (!response.ok) throw new Error('Failed to fetch calendar events');
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
     return response.json();
   },
   create: async (event) => {
-    const response = await fetch('http://localhost:5000/api/calendar-events', {
+    const response = await fetch('http://localhost:5000/api/events', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json'
+      },
       credentials: 'include',
       body: JSON.stringify(event)
     });
-    if (!response.ok) throw new Error('Failed to create calendar event');
-    return response.json();
-  },
-  update: async (id, event) => {
-    const response = await fetch(`http://localhost:5000/api/calendar-events/${id}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
-      body: JSON.stringify(event)
-    });
-    if (!response.ok) throw new Error('Failed to update calendar event');
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
     return response.json();
   },
   delete: async (id) => {
-    const response = await fetch(`http://localhost:5000/api/calendar-events/${id}`, {
+    const response = await fetch(`http://localhost:5000/api/events/${id}`, {
       method: 'DELETE',
       credentials: 'include'
     });
-    if (!response.ok) throw new Error('Failed to delete calendar event');
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
     return response.json();
   }
 };
@@ -54,6 +55,7 @@ const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
 export default function CalendarPage() {
   const queryClient = useQueryClient();
+  const location = useLocation();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState(null);
   const [isCreatingEvent, setIsCreatingEvent] = useState(false);
@@ -65,14 +67,14 @@ export default function CalendarPage() {
   });
 
   const { data: events = [], isLoading } = useQuery({
-    queryKey: ['calendar-events'],
+    queryKey: ['events'],
     queryFn: calendarEventsApi.getAll
   });
 
   const createEventMutation = useMutation({
     mutationFn: calendarEventsApi.create,
     onSuccess: () => {
-      queryClient.invalidateQueries(['calendar-events']);
+      queryClient.invalidateQueries(['events']);
       setIsCreatingEvent(false);
       setNewEvent({ title: '', description: '', time: '', date: '' });
     }
@@ -81,7 +83,7 @@ export default function CalendarPage() {
   const deleteEventMutation = useMutation({
     mutationFn: calendarEventsApi.delete,
     onSuccess: () => {
-      queryClient.invalidateQueries(['calendar-events']);
+      queryClient.invalidateQueries(['events']);
     }
   });
 
@@ -108,10 +110,22 @@ export default function CalendarPage() {
 
   const getEventsForDate = (date) => {
     const dateStr = date.toISOString().split('T')[0];
-    return events.filter(event => event.date === dateStr);
+    return events.filter(event => {
+      const eventDate = new Date(event.date).toISOString().split('T')[0];
+      return eventDate === dateStr;
+    });
   };
 
   const selectedDateEvents = selectedDate ? getEventsForDate(selectedDate) : [];
+
+  // Handle navigation from dashboard
+  useEffect(() => {
+    if (location.state?.selectedDate) {
+      const date = new Date(location.state.selectedDate);
+      setSelectedDate(date);
+      setCurrentDate(new Date(date.getFullYear(), date.getMonth()));
+    }
+  }, [location.state]);
 
   const handlePrevMonth = () => {
     setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1));
@@ -151,7 +165,7 @@ export default function CalendarPage() {
     return (
       <AppLayout>
         <div className="calendar-loading">
-          <LoadingSpinner />
+          <Lottie animationData={sectionLoader} style={{ width: 400, height: 400 }} />
         </div>
       </AppLayout>
     );
@@ -169,11 +183,25 @@ export default function CalendarPage() {
             {/* Left Side - Calendar */}
             <div className="calendar-section">
               <div className="calendar-nav">
-                <button onClick={handlePrevMonth} className="nav-button">‹</button>
+                <motion.button 
+                  onClick={handlePrevMonth} 
+                  className="nav-arrow"
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  ‹
+                </motion.button>
                 <h2 className="month-year">
                   {MONTHS[currentDate.getMonth()]} {currentDate.getFullYear()}
                 </h2>
-                <button onClick={handleNextMonth} className="nav-button">›</button>
+                <motion.button 
+                  onClick={handleNextMonth} 
+                  className="nav-arrow"
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  ›
+                </motion.button>
               </div>
 
               <div className="calendar-grid">
@@ -227,12 +255,12 @@ export default function CalendarPage() {
                       month: 'long', 
                       day: 'numeric' 
                     })}</h3>
-                    <Button
-                      size="sm"
+                    <button
+                      className="add-event-button"
                       onClick={() => setIsCreatingEvent(true)}
                     >
-                      Add Event
-                    </Button>
+                      +
+                    </button>
                   </div>
 
                   {isCreatingEvent && (
@@ -262,18 +290,22 @@ export default function CalendarPage() {
                         className="event-input"
                       />
                       <div className="form-actions">
-                        <Button onClick={handleCreateEvent} loading={createEventMutation.isPending}>
-                          Create
-                        </Button>
-                        <Button
-                          variant="secondary"
+                        <button 
+                          className="create-button"
+                          onClick={handleCreateEvent} 
+                          disabled={createEventMutation.isPending}
+                        >
+                          {createEventMutation.isPending ? 'Creating...' : 'Create'}
+                        </button>
+                        <button
+                          className="cancel-button"
                           onClick={() => {
                             setIsCreatingEvent(false);
                             setNewEvent({ title: '', description: '', time: '', date: '' });
                           }}
                         >
                           Cancel
-                        </Button>
+                        </button>
                       </div>
                     </motion.div>
                   )}
@@ -287,10 +319,10 @@ export default function CalendarPage() {
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
                             exit={{ opacity: 0, y: -20 }}
-                            className="event-item"
+                            className="calendar-event-item"
                           >
                             <div className="event-content">
-                              <h4 className="event-title">{event.title}</h4>
+                              <h4 className="event-title">{event.title || event.name}</h4>
                               {event.time && (
                                 <span className="event-time">{event.time}</span>
                               )}
@@ -317,7 +349,11 @@ export default function CalendarPage() {
               ) : (
                 <div className="no-date-selected">
                   <div className="placeholder-content">
-                    <div className="placeholder-icon">📅</div>
+                    <Lottie 
+                      animationData={calendarAnimation} 
+                      style={{ width: 200, height: 200 }} 
+                      loop={true}
+                    />
                     <h3>Select a date</h3>
                     <p>Click on a date to view and manage events</p>
                   </div>

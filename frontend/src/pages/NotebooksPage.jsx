@@ -2,10 +2,11 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
+import Lottie from 'lottie-react';
 import { notebooksApi, notesApi } from '../services/api';
 import AppLayout from '../components/AppLayout';
 import Button from '../components/Button';
-import LoadingSpinner from '../components/LoadingSpinner';
+import sectionLoader from '../assets/section_loader.json';
 import './NotebooksPage.css';
 
 export default function NotebooksPage() {
@@ -52,7 +53,7 @@ export default function NotebooksPage() {
     return (
       <AppLayout>
         <div className="notebooks-loading">
-          <LoadingSpinner />
+          <Lottie animationData={sectionLoader} style={{ width: 400, height: 400 }} />
         </div>
       </AppLayout>
     );

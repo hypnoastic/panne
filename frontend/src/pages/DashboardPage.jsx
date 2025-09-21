@@ -54,6 +54,8 @@ export default function DashboardPage() {
   const [chatMessages, setChatMessages] = useState([]);
   const [currentMessage, setCurrentMessage] = useState('');
   const [isTyping, setIsTyping] = useState(false);
+  const [showNotesModal, setShowNotesModal] = useState(false);
+  const [selectedNotes, setSelectedNotes] = useState([]);
 
   const { data: user } = useQuery({
     queryKey: ['auth', 'me'],
@@ -66,9 +68,61 @@ export default function DashboardPage() {
     queryFn: notesApi.getAll
   });
 
-  // Real data with limits
-  const upcomingEvents = [].slice(0, 1); // Max 1 event
-  const recentTasks = [].slice(0, 2); // Max 2 tasks
+  // Get upcoming events from backend
+  const { data: calendarEvents = [] } = useQuery({
+    queryKey: ['events'],
+    queryFn: async () => {
+      try {
+        const response = await fetch('http://localhost:5000/api/events', {
+          credentials: 'include'
+        });
+        if (!response.ok) return [];
+        return response.json();
+      } catch (error) {
+        return [];
+      }
+    }
+  });
+  
+  const today = new Date();
+  const upcomingEvents = calendarEvents
+    .filter(event => new Date(event.date) >= today)
+    .sort((a, b) => new Date(a.date) - new Date(b.date))
+    .slice(0, 2);
+  
+  // Real tasks data
+  const { data: tasks = [] } = useQuery({
+    queryKey: ['tasks'],
+    queryFn: async () => {
+      try {
+        const response = await fetch('http://localhost:5000/api/tasks', {
+          credentials: 'include'
+        });
+        if (!response.ok) return [];
+        return response.json();
+      } catch (error) {
+        return [];
+      }
+    }
+  });
+  
+  // Agendas data
+  const { data: agendas = [] } = useQuery({
+    queryKey: ['agendas'],
+    queryFn: async () => {
+      try {
+        const response = await fetch('http://localhost:5000/api/agendas', {
+          credentials: 'include'
+        });
+        if (!response.ok) return [];
+        return response.json();
+      } catch (error) {
+        return [];
+      }
+    }
+  });
+  
+  const upcomingAgendas = agendas.slice(0, 2);
   const recentNotes = notes
     .sort((a, b) => new Date(b.updated_at) - new Date(a.updated_at))
     .slice(0, 3)
@@ -126,177 +180,219 @@ export default function DashboardPage() {
     }
   };
 
+  const getGreeting = () => {
+    const hour = new Date().getHours();
+    if (hour < 12) return 'Good Morning';
+    if (hour < 18) return 'Good Afternoon';
+    return 'Good Evening';
+  };
+
   const handleFormatToNote = () => {
     if (chatMessages.length > 0) {
       formatToNoteMutation.mutate(chatMessages);
     }
   };
 
+  const handleAISubmit = () => {
+    if (currentMessage.trim()) {
+      navigate('/ai', { state: { initialMessage: currentMessage, selectedNotes } });
+      setCurrentMessage('');
+    }
+  };
+
+  const handleNoteSelection = (note) => {
+    setSelectedNotes(prev => {
+      const exists = prev.find(n => n.id === note.id);
+      if (exists) {
+        return prev.filter(n => n.id !== note.id);
+      } else {
+        return [...prev, note];
+      }
+    });
+  };
+
   return (
     <AppLayout>
-      <div className="dashboard-page">
-        <div className="dashboard-content">
-          {/* Left Column - 60% */}
-          <div className="dashboard-main">
-            <div className="welcome-section glass">
-              <div className="welcome-content">
-                <Lottie animationData={helloAnimation} style={{ width: 60, height: 60 }} />
-                <div className="welcome-text">
-                  <h1>Welcome back, {user?.name}!</h1>
-                  <p>Here's what's happening today</p>
+      <div className="dashboard-main">
+        <div className="dashboard-main-container">
+          {/* Welcome Text */}
+          <div className="welcome-header">
+            <h1>{getGreeting()}, {user?.name || 'User'}!</h1>
+          </div>
+
+          {/* Modern AI Input Section */}
+          <div className="ai-input-section">
+            <div className="ai-input-container">
+              <button className="ai-plus-btn" onClick={() => {
+                console.log('Plus button clicked in dashboard');
+                setShowNotesModal(true);
+              }}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <line x1="12" y1="5" x2="12" y2="19"></line>
+                  <line x1="5" y1="12" x2="19" y2="12"></line>
+                </svg>
+              </button>
+              <input
+                type="text"
+                value={currentMessage}
+                onChange={(e) => setCurrentMessage(e.target.value)}
+                placeholder="Ask AI anything..."
+                className="ai-input"
+                onKeyPress={(e) => e.key === 'Enter' && handleAISubmit()}
+              />
+              <button className="ai-send-btn" onClick={handleAISubmit} disabled={!currentMessage.trim()}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <line x1="22" y1="2" x2="11" y2="13"></line>
+                  <polygon points="22,2 15,22 11,13 2,9 22,2"></polygon>
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          {/* Date Display */}
+          <div className="date-display">
+            <span>{today.toLocaleDateString('en', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</span>
+          </div>
+
+          {/* Dashboard Content Container */}
+          <div className="dashboard-content-container">
+            <div className="dashboard-content">
+            {/* Left Column - Events & Tasks */}
+            <div className="dashboard-left">
+              <div className="dashboard-section">
+                <h2>Upcoming Events</h2>
+                <div className="dashboard-events-list">
+                  {upcomingEvents.length > 0 ? upcomingEvents.map(event => (
+                    <div 
+                      key={event.id} 
+                      className="dashboard-event-item"
+                      onClick={() => {
+                        const eventDate = new Date(event.date);
+                        navigate('/calendar', { state: { selectedDate: eventDate, selectedEventId: event.id } });
+                      }}
+                    >
+                      <div className="dashboard-event-dot"></div>
+                      <div className="dashboard-event-info">
+                        <h4>{event.title}</h4>
+                        <span>{new Date(event.date).toLocaleDateString()} - {event.time || 'All day'}</span>
+                      </div>
+                    </div>
+                  )) : (
+                    <div className="dashboard-empty-state">No upcoming events</div>
+                  )}
+                </div>
+              </div>
+
+
+
+              <div className="dashboard-section">
+                <h2>Upcoming Agendas</h2>
+                <div className="dashboard-agendas-list">
+                  {upcomingAgendas.length > 0 ? upcomingAgendas.map(agenda => {
+                    const agendaTasks = tasks.filter(task => task.agenda_id === agenda.id);
+                    const completedTasks = agendaTasks.filter(task => task.completed).length;
+                    const totalTasks = agendaTasks.length;
+                    const completionPercentage = totalTasks > 0 ? (completedTasks / totalTasks) * 100 : 0;
+                    
+                    return (
+                      <div 
+                        key={agenda.id} 
+                        className="dashboard-agenda-item"
+                        onClick={() => navigate('/agenda', { state: { selectedAgendaId: agenda.id } })}
+                      >
+                        <div className="dashboard-agenda-info">
+                          <span className="dashboard-agenda-name">{agenda.name}</span>
+                          <span className="dashboard-agenda-tasks">{completedTasks}/{totalTasks} tasks</span>
+                        </div>
+                        <div className="dashboard-progress-circle">
+                          <svg width="40" height="40" className="progress-ring">
+                            <circle
+                              cx="20"
+                              cy="20"
+                              r="16"
+                              fill="none"
+                              stroke="rgba(255, 255, 255, 0.1)"
+                              strokeWidth="3"
+                            />
+                            <circle
+                              cx="20"
+                              cy="20"
+                              r="16"
+                              fill="none"
+                              stroke="#2EC4B6"
+                              strokeWidth="3"
+                              strokeDasharray={`${2 * Math.PI * 16}`}
+                              strokeDashoffset={`${2 * Math.PI * 16 * (1 - completionPercentage / 100)}`}
+                              transform="rotate(-90 20 20)"
+                              className="progress-circle"
+                            />
+                          </svg>
+                          <span className="progress-text">{Math.round(completionPercentage)}%</span>
+                        </div>
+                      </div>
+                    );
+                  }) : (
+                    <div className="dashboard-empty-state">No agendas yet</div>
+                  )}
                 </div>
               </div>
             </div>
 
-            <div className="upcoming-events glass">
-              <h2>Upcoming Events</h2>
-              <div className="events-list">
-                {upcomingEvents.length > 0 ? upcomingEvents.map(event => (
-                  <motion.div
-                    key={event.id}
-                    className="event-card"
-                    whileHover={{ scale: 1.02 }}
-                  >
-                    <div className="event-date">
-                      <span className="date">{new Date(event.date).getDate()}</span>
-                      <span className="month">{new Date(event.date).toLocaleDateString('en', { month: 'short' })}</span>
+            {/* Right Column - Recent Notes */}
+            <div className="dashboard-right">
+              <div className="dashboard-section">
+                <h2>Recent Notes</h2>
+                <div className="dashboard-notes-list">
+                  {recentNotes.slice(0, 3).map(note => (
+                    <div key={note.id} className="dashboard-note-item" onClick={() => navigate(`/notes/${note.id}`)}>
+                      <h4>{note.title}</h4>
+                      <p>{note.preview}</p>
+                      <span className="dashboard-note-date">{note.updatedAt}</span>
                     </div>
-                    <div className="event-details">
-                      <h3>{event.title}</h3>
-                      <p>{event.time}</p>
-                    </div>
-                  </motion.div>
-                )) : (
-                  <div className="empty-state-mini">
-                    <p>No upcoming events</p>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            <div className="recent-tasks glass">
-              <h2>Task Reminders</h2>
-              <div className="tasks-list">
-                {recentTasks.length > 0 ? recentTasks.map(task => (
-                  <motion.div
-                    key={task.id}
-                    className={`task-item ${task.completed ? 'completed' : ''}`}
-                    whileHover={{ scale: 1.02 }}
-                  >
-                    <div className="task-checkbox">
-                      <input type="checkbox" checked={task.completed} readOnly />
-                    </div>
-                    <span className="task-title">{task.title}</span>
-                  </motion.div>
-                )) : (
-                  <div className="empty-state-mini">
-                    <p>No pending tasks</p>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            <div className="recent-notes glass">
-              <h2>Recent Notes</h2>
-              <div className="notes-grid">
-                {recentNotes.length > 0 ? recentNotes.map(note => (
-                  <motion.div
-                    key={note.id}
-                    className="note-card"
-                    whileHover={{ scale: 1.05, rotateY: 5 }}
-                    onClick={() => navigate(`/notes/${note.id}`)}
-                  >
-                    <h3>{note.title}</h3>
-                    <p>{note.preview}</p>
-                    <span className="note-time">{note.updatedAt}</span>
-                  </motion.div>
-                )) : (
-                  <div className="empty-state-mini">
-                    <p>No notes yet</p>
-                  </div>
-                )}
+                  ))}
+                  {recentNotes.length === 0 && (
+                    <div className="dashboard-empty-state">No notes yet</div>
+                  )}
+                </div>
               </div>
             </div>
           </div>
+          </div>
+        </div>
 
-          {/* Right Column - 40% */}
-          <div className="dashboard-sidebar">
-            <div className="ai-chat-window glass">
-              <div className="chat-header">
-                <h3>AI Assistant</h3>
-                {chatMessages.length > 0 && (
-                  <Button
-                    size="sm"
-                    onClick={handleFormatToNote}
-                    loading={formatToNoteMutation.isPending}
+        {/* Notes Selection Modal */}
+        {showNotesModal && (
+          <div className="modal-overlay" onClick={() => setShowNotesModal(false)}>
+            <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+              <div className="modal-header">
+                <h3>Select Notes for Context</h3>
+                <button onClick={() => setShowNotesModal(false)}>×</button>
+              </div>
+              <div className="modal-body">
+                {notes.map(note => (
+                  <div
+                    key={note.id}
+                    className={`note-option ${selectedNotes.find(n => n.id === note.id) ? 'selected' : ''}`}
+                    onClick={() => handleNoteSelection(note)}
                   >
-                    Format to Note
-                  </Button>
-                )}
-              </div>
-
-              <div className="chat-messages">
-                {chatMessages.length === 0 ? (
-                  <div className="chat-placeholder">
-                    <div className="placeholder-image">
-                      <Lottie animationData={aiAnimation} style={{ width: 300, height: 300 }} />
+                    <div className="note-checkbox">
+                      {selectedNotes.find(n => n.id === note.id) && '✓'}
                     </div>
-                    <h4>Start a conversation</h4>
-                    <p>Ask me anything about your notes, tasks, or get help with your work.</p>
+                    <div className="note-details">
+                      <h4>{note.title}</h4>
+                      <p>{note.content && typeof note.content === 'string' ? note.content.replace(/<[^>]*>/g, '').substring(0, 100) + '...' : 'No content'}</p>
+                    </div>
                   </div>
-                ) : (
-                  <div className="messages-list">
-                    <AnimatePresence>
-                      {chatMessages.map((message, index) => (
-                        <motion.div
-                          key={index}
-                          className={`message ${message.type}`}
-                          initial={{ opacity: 0, y: 20 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          exit={{ opacity: 0, y: -20 }}
-                        >
-                          <div className="message-content">
-                            {message.content}
-                          </div>
-                        </motion.div>
-                      ))}
-                    </AnimatePresence>
-                    {isTyping && (
-                      <motion.div
-                        className="message ai typing"
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                      >
-                        <div className="typing-indicator">
-                          <span></span>
-                          <span></span>
-                          <span></span>
-                        </div>
-                      </motion.div>
-                    )}
-                  </div>
-                )}
+                ))}
               </div>
-
-              <div className="chat-input">
-                <input
-                  type="text"
-                  value={currentMessage}
-                  onChange={(e) => setCurrentMessage(e.target.value)}
-                  placeholder="Type your message..."
-                  onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
-                />
-                <Button
-                  onClick={handleSendMessage}
-                  disabled={!currentMessage.trim()}
-                  loading={sendMessageMutation.isPending}
-                >
-                  Send
+              <div className="modal-footer">
+                <Button onClick={() => setShowNotesModal(false)}>
+                  Done ({selectedNotes.length} selected)
                 </Button>
               </div>
             </div>
           </div>
-        </div>
+        )}
       </div>
     </AppLayout>
   );

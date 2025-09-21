@@ -21,6 +21,16 @@
   --color-gray-800: #1f2937;
   --color-gray-900: #111827;
   
+  /* Text colors */
+  --text-primary: #E6E8EB;
+  --text-secondary: #9CA3AF;
+  --text-tertiary: #6B7280;
+  
+  /* Accent colors */
+  --accent-color: #2EC4B6;
+  --accent-color-rgb: 46, 196, 182;
+  --accent-color-hover: #26A69A;
+  
   /* Typography */
   --font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   --font-size-xs: 0.75rem;
@@ -58,6 +68,9 @@
   --transition-fast: 150ms ease-in-out;
   --transition-normal: 250ms ease-in-out;
   --transition-slow: 350ms ease-in-out;
+  
+  /* Layout */
+  --max-width-app: 1400px;
 }
 
 * {

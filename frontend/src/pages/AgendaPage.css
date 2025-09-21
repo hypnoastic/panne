@@ -1,8 +1,8 @@
-.events-page {
+.agenda-page {
   background: transparent;
 }
 
-.events-container {
+.agenda-container {
   max-width: 1400px;
   margin: 0 auto;
   backdrop-filter: blur(20px);
@@ -16,7 +16,7 @@
    height: calc(100vh - var(--spacing-3));
 }
 
-.events-header {
+.agenda-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -29,7 +29,7 @@
   gap: var(--spacing-3);
 }
 
-.events-header h1 {
+.agenda-header h1 {
   font-size: var(--font-size-2xl);
   font-weight: 700;
   color: #E6E8EB;
@@ -55,14 +55,14 @@
   font-size: 36px;
 }
 
-.events-loading {
+.agenda-loading {
   display: flex;
   justify-content: center;
   align-items: center;
   height: 400px;
 }
 
-.create-event-form {
+.create-agenda-form {
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: 12px;
@@ -70,7 +70,7 @@
   margin-bottom: var(--spacing-6);
 }
 
-.event-input {
+.agenda-input {
   width: 100%;
   padding: var(--spacing-3);
   background: rgba(255, 255, 255, 0.05);
@@ -81,7 +81,7 @@
   margin-bottom: var(--spacing-3);
 }
 
-.event-input::placeholder {
+.agenda-input::placeholder {
   color: #9CA3AF;
 }
 
@@ -104,47 +104,47 @@
   color: #9CA3AF;
 }
 
-.events-list {
+.agenda-list {
   display: flex;
   flex-direction: column;
   gap: var(--spacing-4);
 }
 
-.event-container {
+.agenda-item-container {
   border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: 16px;
   overflow: hidden;
 }
 
-.event-card {
+.agenda-card {
   background: rgba(255, 255, 255, 0.05);
   cursor: pointer;
   transition: all var(--transition-fast);
 }
 
-.event-card:hover {
+.agenda-card:hover {
   background: rgba(255, 255, 255, 0.08);
 }
 
-.event-header {
+.agenda-item-header {
   display: flex;
   align-items: center;
   padding: var(--spacing-4);
-  justify-content: space-between;
+  gap: var(--spacing-4);
 }
 
-.event-info {
+.agenda-info {
   flex: 1;
 }
 
-.event-title {
+.agenda-title {
   font-size: var(--font-size-lg);
   font-weight: 600;
   margin: 0 0 var(--spacing-1) 0;
   color: #E6E8EB;
 }
 
-.event-meta {
+.agenda-meta {
   color: #9CA3AF;
   font-size: var(--font-size-sm);
   margin: 0;

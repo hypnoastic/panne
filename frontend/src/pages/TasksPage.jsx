@@ -11,40 +11,40 @@ import eventsAnimation from '../assets/events.json';
 import './TasksPage.css';
 
 // Real API calls to database
-const eventsApi = {
+const agendasApi = {
   getAll: async () => {
-    const response = await fetch('http://localhost:5000/api/events', {
+    const response = await fetch('http://localhost:5000/api/agendas', {
       credentials: 'include'
     });
-    if (!response.ok) throw new Error('Failed to fetch events');
+    if (!response.ok) throw new Error('Failed to fetch agendas');
     return response.json();
   },
-  create: async (event) => {
-    const response = await fetch('http://localhost:5000/api/events', {
+  create: async (agenda) => {
+    const response = await fetch('http://localhost:5000/api/agendas', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include',
-      body: JSON.stringify(event)
+      body: JSON.stringify(agenda)
     });
-    if (!response.ok) throw new Error('Failed to create event');
+    if (!response.ok) throw new Error('Failed to create agenda');
     return response.json();
   },
   update: async (id, updates) => {
-    const response = await fetch(`http://localhost:5000/api/events/${id}`, {
+    const response = await fetch(`http://localhost:5000/api/agendas/${id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include',
       body: JSON.stringify(updates)
     });
-    if (!response.ok) throw new Error('Failed to update event');
+    if (!response.ok) throw new Error('Failed to update agenda');
     return response.json();
   },
   delete: async (id) => {
-    const response = await fetch(`http://localhost:5000/api/events/${id}`, {
+    const response = await fetch(`http://localhost:5000/api/agendas/${id}`, {
       method: 'DELETE',
       credentials: 'include'
     });
-    if (!response.ok) throw new Error('Failed to delete event');
+    if (!response.ok) throw new Error('Failed to delete agenda');
     return response.json();
   }
 };
@@ -136,16 +136,16 @@ export default function TasksPage() {
   const { taskId } = useParams();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const [selectedEvent, setSelectedEvent] = useState(null);
+  const [selectedAgenda, setSelectedAgenda] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
-  const [isCreatingEvent, setIsCreatingEvent] = useState(false);
+  const [isCreatingAgenda, setIsCreatingAgenda] = useState(false);
   const [isCreatingTask, setIsCreatingTask] = useState(false);
-  const [newEventName, setNewEventName] = useState('');
+  const [newAgendaName, setNewAgendaName] = useState('');
   const [newTaskName, setNewTaskName] = useState('');
 
-  const { data: events = [] } = useQuery({
-    queryKey: ['events'],
-    queryFn: eventsApi.getAll
+  const { data: agendas = [] } = useQuery({
+    queryKey: ['agendas'],
+    queryFn: agendasApi.getAll
   });
 
   const { data: tasks = [] } = useQuery({
@@ -165,12 +165,12 @@ export default function TasksPage() {
     enabled: !!taskId
   });
 
-  const createEventMutation = useMutation({
-    mutationFn: eventsApi.create,
+  const createAgendaMutation = useMutation({
+    mutationFn: agendasApi.create,
     onSuccess: () => {
-      queryClient.invalidateQueries(['events']);
-      setIsCreatingEvent(false);
-      setNewEventName('');
+      queryClient.invalidateQueries(['agendas']);
+      setIsCreatingAgenda(false);
+      setNewAgendaName('');
     }
   });
 
@@ -213,14 +213,14 @@ export default function TasksPage() {
 
   const filteredTasks = tasks.filter(task => {
     const matchesSearch = task.title.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesEvent = !selectedEvent || task.event_id === selectedEvent;
-    return matchesSearch && matchesEvent;
+    const matchesAgenda = !selectedAgenda || task.agenda_id === selectedAgenda;
+    return matchesSearch && matchesAgenda;
   });
 
-  const handleCreateEvent = () => {
-    if (newEventName.trim()) {
-      createEventMutation.mutate({
-        name: newEventName.trim()
+  const handleCreateAgenda = () => {
+    if (newAgendaName.trim()) {
+      createAgendaMutation.mutate({
+        name: newAgendaName.trim()
       });
     }
   };
@@ -230,7 +230,7 @@ export default function TasksPage() {
     createTaskMutation.mutate({
       title: taskTitle,
       content: {},
-      event_id: selectedEvent
+      agenda_id: selectedAgenda
     });
     setIsCreatingTask(false);
     setNewTaskName('');
@@ -251,43 +251,43 @@ export default function TasksPage() {
     <AppLayout>
       <div className="tasks-page">
         <div className="tasks-layout">
-          {/* Events Sidebar */}
+          {/* Agendas Sidebar */}
           <div className="tasks-sidebar">
             <div className="sidebar-header">
-              <h3>Events</h3>
+              <h3>Agendas</h3>
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => setIsCreatingTask(true)}
+                onClick={() => setIsCreatingAgenda(true)}
               >
-                + Task
+                +
               </Button>
             </div>
 
-            {isCreatingTask && (
+            {isCreatingAgenda && (
               <motion.div
                 initial={{ opacity: 0, height: 0 }}
                 animate={{ opacity: 1, height: 'auto' }}
-                className="create-event"
+                className="create-agenda"
               >
                 <input
                   type="text"
-                  placeholder="Task name"
-                  value={newTaskName}
-                  onChange={(e) => setNewTaskName(e.target.value)}
-                  className="create-event__input"
-                  onKeyPress={(e) => e.key === 'Enter' && handleCreateTask()}
+                  placeholder="Agenda name"
+                  value={newAgendaName}
+                  onChange={(e) => setNewAgendaName(e.target.value)}
+                  className="create-agenda__input"
+                  onKeyPress={(e) => e.key === 'Enter' && handleCreateAgenda()}
                 />
-                <div className="create-event__actions">
-                  <Button size="sm" onClick={handleCreateTask}>
+                <div className="create-agenda__actions">
+                  <Button size="sm" onClick={handleCreateAgenda}>
                     Create
                   </Button>
                   <Button
                     variant="ghost"
                     size="sm"
                     onClick={() => {
-                      setIsCreatingTask(false);
-                      setNewTaskName('');
+                      setIsCreatingAgenda(false);
+                      setNewAgendaName('');
                     }}
                   >
                     Cancel
@@ -296,25 +296,28 @@ export default function TasksPage() {
               </motion.div>
             )}
 
-            <div className="events-list">
+            <div className="agendas-list">
               <button
-                className={`event-item ${!selectedEvent ? 'event-item--active' : ''}`}
-                onClick={() => setSelectedEvent(null)}
+                className={`agenda-item ${!selectedAgenda ? 'agenda-item--active' : ''}`}
+                onClick={() => setSelectedAgenda(null)}
               >
                 <span>All Tasks</span>
-                <span className="event-count">{tasks.length}</span>
+                <span className="agenda-count">{tasks.length}</span>
               </button>
 
-              {events.map((event) => (
-                <button
-                  key={event.id}
-                  className={`event-item ${selectedEvent === event.id ? 'event-item--active' : ''}`}
-                  onClick={() => setSelectedEvent(event.id)}
-                >
-                  <span>{event.name}</span>
-                  <span className="event-count">{event.task_count || 0}</span>
-                </button>
-              ))}
+              {agendas.map((agenda) => {
+                const agendaTaskCount = tasks.filter(task => task.agenda_id === agenda.id).length;
+                return (
+                  <button
+                    key={agenda.id}
+                    className={`agenda-item ${selectedAgenda === agenda.id ? 'agenda-item--active' : ''}`}
+                    onClick={() => setSelectedAgenda(agenda.id)}
+                  >
+                    <span>{agenda.name}</span>
+                    <span className="agenda-count">{agendaTaskCount}</span>
+                  </button>
+                );
+              })}
             </div>
           </div>
 
@@ -330,7 +333,7 @@ export default function TasksPage() {
                   className="search-input"
                 />
               </div>
-              <Button onClick={handleCreateTask} loading={createTaskMutation.isPending}>
+              <Button onClick={() => setIsCreatingTask(true)} loading={createTaskMutation.isPending}>
                 New Task
               </Button>
             </div>
@@ -351,8 +354,8 @@ export default function TasksPage() {
                         {task.content?.content?.[0]?.content?.[0]?.text || 'No content'}
                       </p>
                       <div className="task-item__meta">
-                        {task.event_name && (
-                          <span className="task-item__event">{task.event_name}</span>
+                        {task.agenda_name && (
+                          <span className="task-item__agenda">{task.agenda_name}</span>
                         )}
                         <span className="task-item__date">
                           {new Date(task.updated_at).toLocaleDateString()}

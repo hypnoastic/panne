@@ -56,24 +56,16 @@
   padding: 0 var(--spacing-2);
 }
 
-.nav-button {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+.nav-arrow {
+  background: none;
+  border: none;
   color: #E6E8EB;
-  font-size: var(--font-size-xl);
+  font-size: 2rem;
   cursor: pointer;
-  transition: all var(--transition-fast);
   display: flex;
   align-items: center;
   justify-content: center;
-}
-
-.nav-button:hover {
-  background: rgba(255, 255, 255, 0.2);
-  transform: scale(1.1);
+  padding: 8px;
 }
 
 .month-year {
@@ -204,6 +196,21 @@
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
+.add-event-button {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: rgba(46, 196, 182, 0.2);
+  border: 1px solid #2EC4B6;
+  color: #2EC4B6;
+  font-size: 1.5rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 300;
+}
+
 .selected-date-header h3 {
   font-size: var(--font-size-lg);
   font-weight: 600;
@@ -257,6 +264,43 @@
   gap: var(--spacing-2);
 }
 
+.create-button {
+  padding: var(--spacing-2) var(--spacing-4);
+  background: #2EC4B6;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  transition: all var(--transition-fast);
+}
+
+.create-button:hover {
+  background: #26a69a;
+}
+
+.create-button:disabled {
+  background: #666;
+  cursor: not-allowed;
+}
+
+.cancel-button {
+  padding: var(--spacing-2) var(--spacing-4);
+  background: rgba(255, 255, 255, 0.1);
+  color: #E6E8EB;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  transition: all var(--transition-fast);
+}
+
+.cancel-button:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
 .events-list {
   flex: 1;
   overflow-y: auto;
@@ -265,7 +309,7 @@
   gap: var(--spacing-3);
 }
 
-.event-item {
+.calendar-event-item {
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 8px;
@@ -276,7 +320,7 @@
   transition: all var(--transition-fast);
 }
 
-.event-item:hover {
+.calendar-event-item:hover {
   background: rgba(255, 255, 255, 0.08);
   border-color: rgba(255, 255, 255, 0.2);
 }
@@ -364,6 +408,25 @@
   margin: 0;
   font-size: var(--font-size-sm);
   line-height: 1.5;
+}
+
+.add-event-button {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 32px;
+  font-weight: 300;
+  cursor: pointer;
+  transition: transform var(--transition-fast);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  margin: 0;
+}
+
+.add-event-button:hover {
+  transform: scale(1.2);
 }
 
 /* Responsive Design */

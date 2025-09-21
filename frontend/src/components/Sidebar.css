@@ -66,27 +66,7 @@
   border-bottom: 1px solid rgba(255, 255, 255, 0.2);
 }
 
-.create-btn {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-2);
-  padding: var(--spacing-2);
-  border: 1px solid var(--color-accent);
-  border-radius: 12px;
-  background:  rgba(45, 127, 119, 0.15);
-  color: white;
-  font-size: var(--font-label);
-  font-weight: 500;
-  cursor: pointer;
-  transition: all var(--transition-fast);
-}
 
-.create-btn:hover {
-   background-color: rgba(0, 243, 218, 0.15);
-  color: #E6E8EB;
-  border-radius: 12px;
-  transform: scale(1.02)
-}
 
 .sidebar-nav {
   flex: 1;

@@ -236,9 +236,13 @@ export default function NotesPage() {
                   className="search-input"
                 />
               </div>
-              <Button onClick={handleCreateNote} loading={createNoteMutation.isPending}>
-                New Note
-              </Button>
+              <button 
+                className="plus-icon-notes" 
+                onClick={handleCreateNote}
+                disabled={createNoteMutation.isPending}
+              >
+                +
+              </button>
             </div>
 
             <div className="notes-items">
@@ -271,7 +275,6 @@ export default function NotesPage() {
 
               {filteredNotes.length === 0 && (
                 <div className="empty-state">
-
                   <h4 className="empty-state__title">No notes found</h4>
                   <p className="empty-state__description">
                     {searchTerm ? 'Try adjusting your search terms' : 'Create your first note to get started'}

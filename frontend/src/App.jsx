@@ -5,10 +5,11 @@ import LandingPage from './pages/LandingPage';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import DashboardPage from './pages/DashboardPage';
+import AIPage from './pages/AIPage';
 import NotesPage from './pages/NotesPage';
 import NotebooksPage from './pages/NotebooksPage';
 import TasksPage from './pages/TasksPage';
-import EventsPage from './pages/EventsPage';
+import AgendaPage from './pages/AgendaPage';
 import CalendarPage from './pages/CalendarPage';
 import SettingsPage from './pages/SettingsPage';
 import TrashPage from './pages/TrashPage';
@@ -40,9 +41,10 @@ function App() {
       
       {/* Protected routes */}
       <Route path="/dashboard" element={user ? <DashboardPage /> : <Navigate to="/login" />} />
+      <Route path="/ai" element={user ? <AIPage /> : <Navigate to="/login" />} />
       <Route path="/notebooks" element={user ? <NotebooksPage /> : <Navigate to="/login" />} />
       <Route path="/notes/:noteId?" element={user ? <NotesPage /> : <Navigate to="/login" />} />
-      <Route path="/events/:taskId?" element={user ? <EventsPage /> : <Navigate to="/login" />} />
+      <Route path="/agenda/:taskId?" element={user ? <AgendaPage /> : <Navigate to="/login" />} />
       <Route path="/tasks/:taskId?" element={user ? <TasksPage /> : <Navigate to="/login" />} />
       <Route path="/calendar" element={user ? <CalendarPage /> : <Navigate to="/login" />} />
       <Route path="/settings" element={user ? <SettingsPage /> : <Navigate to="/login" />} />

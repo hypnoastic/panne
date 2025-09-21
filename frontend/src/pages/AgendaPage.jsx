@@ -6,25 +6,25 @@ import Lottie from 'lottie-react';
 import AppLayout from '../components/AppLayout';
 import Button from '../components/Button';
 import sectionLoader from '../assets/section_loader.json';
-import './EventsPage.css';
+import './AgendaPage.css';
 
 // API calls
-const eventsApi = {
+const agendasApi = {
   getAll: async () => {
-    const response = await fetch('http://localhost:5000/api/events', {
+    const response = await fetch('http://localhost:5000/api/agendas', {
       credentials: 'include'
     });
-    if (!response.ok) throw new Error('Failed to fetch events');
+    if (!response.ok) throw new Error('Failed to fetch agendas');
     return response.json();
   },
-  create: async (event) => {
-    const response = await fetch('http://localhost:5000/api/events', {
+  create: async (agenda) => {
+    const response = await fetch('http://localhost:5000/api/agendas', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include',
-      body: JSON.stringify(event)
+      body: JSON.stringify(agenda)
     });
-    if (!response.ok) throw new Error('Failed to create event');
+    if (!response.ok) throw new Error('Failed to create agenda');
     return response.json();
   }
 };
@@ -76,18 +76,18 @@ const todoItemsApi = {
   }
 };
 
-export default function EventsPage() {
+export default function AgendaPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const queryClient = useQueryClient();
   const [isCreating, setIsCreating] = useState(false);
-  const [newEventName, setNewEventName] = useState('');
-  const [expandedEvent, setExpandedEvent] = useState(null);
+  const [newAgendaName, setNewAgendaName] = useState('');
+  const [expandedAgenda, setExpandedAgenda] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
 
-  const { data: events = [], isLoading, error: eventsError } = useQuery({
-    queryKey: ['events'],
-    queryFn: eventsApi.getAll,
+  const { data: agendas = [], isLoading, error: agendasError } = useQuery({
+    queryKey: ['agendas'],
+    queryFn: agendasApi.getAll,
     retry: 1
   });
 
@@ -97,11 +97,11 @@ export default function EventsPage() {
     retry: 1
   });
 
-  if (eventsError || tasksError) {
+  if (agendasError || tasksError) {
     return (
       <AppLayout>
-        <div className="events-page">
-          <div className="events-container">
+        <div className="agenda-page">
+          <div className="agenda-container">
             <div className="error-state">
               <h3>Error loading data</h3>
               <p>Please try refreshing the page</p>
@@ -112,51 +112,51 @@ export default function EventsPage() {
     );
   }
 
-  const createEventMutation = useMutation({
-    mutationFn: eventsApi.create,
+  const createAgendaMutation = useMutation({
+    mutationFn: agendasApi.create,
     onSuccess: () => {
-      queryClient.invalidateQueries(['events']);
+      queryClient.invalidateQueries(['agendas']);
       setIsCreating(false);
-      setNewEventName('');
+      setNewAgendaName('');
     }
   });
 
-  const handleCreateEvent = () => {
-    if (newEventName.trim()) {
-      createEventMutation.mutate({
-        name: newEventName.trim()
+  const handleCreateAgenda = () => {
+    if (newAgendaName.trim()) {
+      createAgendaMutation.mutate({
+        name: newAgendaName.trim()
       });
     }
   };
 
-  const filteredEvents = events.filter(event => 
-    (event.title || event.name || '').toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredAgendas = agendas.filter(agenda => 
+    (agenda.name || '').toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   // Handle navigation from dashboard to specific task
   useEffect(() => {
     try {
-      if (location.state?.selectedTaskId && tasks.length > 0 && events.length > 0) {
+      if (location.state?.selectedTaskId && tasks.length > 0 && agendas.length > 0) {
         const selectedTask = tasks.find(task => task.id === location.state.selectedTaskId);
         if (selectedTask) {
           // Find and expand the event containing this task
-          const parentEvent = events.find(event => 
-            tasks.some(task => task.event_id === event.id && task.id === selectedTask.id)
+          const parentAgenda = agendas.find(agenda => 
+            tasks.some(task => task.agenda_id === agenda.id && task.id === selectedTask.id)
           );
-          if (parentEvent) {
-            setExpandedEvent(parentEvent.id);
+          if (parentAgenda) {
+            setExpandedAgenda(parentAgenda.id);
           }
         }
       }
     } catch (error) {
       console.error('Error handling task navigation:', error);
     }
-  }, [location.state, tasks, events]);
+  }, [location.state, tasks, agendas]);
 
   if (isLoading) {
     return (
       <AppLayout>
-        <div className="events-loading">
+        <div className="agenda-loading">
           <Lottie animationData={sectionLoader} style={{ width: 400, height: 400 }} />
         </div>
       </AppLayout>
@@ -165,14 +165,14 @@ export default function EventsPage() {
 
   return (
     <AppLayout>
-      <div className="events-page">
-        <div className="events-container">
-          <div className="events-header">
-            <h1 className="font-h1">Events</h1>
+      <div className="agenda-page">
+        <div className="agenda-container">
+          <div className="agenda-header">
+            <h1 className="font-h1">Agenda</h1>
             <div className="header-actions">
               <input
                 type="text"
-                placeholder="Search events..."
+                placeholder="Search agendas..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="search-input"
@@ -187,26 +187,26 @@ export default function EventsPage() {
             <motion.div
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: 'auto' }}
-              className="create-event-form"
+              className="create-agenda-form"
             >
               <input
                 type="text"
-                placeholder="Event name"
-                value={newEventName}
-                onChange={(e) => setNewEventName(e.target.value)}
-                className="event-input"
-                onKeyPress={(e) => e.key === 'Enter' && handleCreateEvent()}
+                placeholder="Agenda name"
+                value={newAgendaName}
+                onChange={(e) => setNewAgendaName(e.target.value)}
+                className="agenda-input"
+                onKeyPress={(e) => e.key === 'Enter' && handleCreateAgenda()}
                 autoFocus
               />
               <div className="form-actions">
-                <Button onClick={handleCreateEvent} loading={createEventMutation.isPending}>
+                <Button onClick={handleCreateAgenda} loading={createAgendaMutation.isPending}>
                   Create
                 </Button>
                 <Button
                   variant="secondary"
                   onClick={() => {
                     setIsCreating(false);
-                    setNewEventName('');
+                    setNewAgendaName('');
                   }}
                 >
                   Cancel
@@ -215,32 +215,32 @@ export default function EventsPage() {
             </motion.div>
           )}
 
-          <div className="events-list">
+          <div className="agenda-list">
             <AnimatePresence>
-              {filteredEvents.map((event) => {
-                const eventTasks = tasks.filter(task => task.event_id === event.id);
-                const isExpanded = expandedEvent === event.id;
+              {filteredAgendas.map((agenda) => {
+                const agendaTasks = tasks.filter(task => task.agenda_id === agenda.id);
+                const isExpanded = expandedAgenda === agenda.id;
                 
                 return (
                   <motion.div
-                    key={event.id}
+                    key={agenda.id}
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -20 }}
-                    className="event-container"
+                    className="agenda-item-container"
                   >
                     <div 
-                      className="event-card"
+                      className="agenda-card"
                       onClick={(e) => {
                         e.stopPropagation();
-                        setExpandedEvent(isExpanded ? null : event.id);
+                        setExpandedAgenda(isExpanded ? null : agenda.id);
                       }}
                     >
-                      <div className="event-header">
-                        <div className="event-info">
-                          <h3 className="event-title">{event.title || event.name}</h3>
-                          <p className="event-meta">
-                            {eventTasks.length} tasks
+                      <div className="agenda-item-header">
+                        <div className="agenda-info">
+                          <h3 className="agenda-title">{agenda.name}</h3>
+                          <p className="agenda-meta">
+                            {agendaTasks.length} tasks
                           </p>
                         </div>
                         <div className={`expand-icon ${isExpanded ? 'expanded' : ''}`}>▼</div>
@@ -254,8 +254,8 @@ export default function EventsPage() {
                         exit={{ opacity: 0, height: 0 }}
                         className="tasks-grid"
                       >
-                        {eventTasks.length > 0 ? (
-                          eventTasks.map((task) => (
+                        {agendaTasks.length > 0 ? (
+                          agendaTasks.map((task) => (
                             <motion.div
                               key={task.id}
                               className="task-card"
@@ -281,7 +281,7 @@ export default function EventsPage() {
                           ))
                         ) : (
                           <div className="empty-tasks">
-                            <p>No tasks in this event</p>
+                            <p>No tasks in this agenda</p>
                           </div>
                         )}
                       </motion.div>
@@ -292,11 +292,11 @@ export default function EventsPage() {
             </AnimatePresence>
           </div>
 
-          {events.length === 0 && !isCreating && (
+          {agendas.length === 0 && (
             <div className="empty-state">
-              <h3 className="empty-state__title">No events yet</h3>
+              <h3 className="empty-state__title">No agendas yet</h3>
               <p className="empty-state__description">
-                Create your first event to organize your tasks
+                Create your first agenda to organize your tasks
               </p>
             </div>
           )}

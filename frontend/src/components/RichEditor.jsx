@@ -522,21 +522,23 @@ export default function RichEditor({ content, onChange, placeholder = "Start wri
           </button>
         </div>
 
+        {/* AI Assistant */}
+        <div className="toolbar-group">
+          <button
+            onClick={handleOpenAI}
+            className="ai-button"
+            title="AI Assistant"
+          >
+            ✦ AI
+          </button>
+        </div>
+
 
       </div>
 
       {/* Editor Content */}
       <div className="editor-content-wrapper">
         <EditorContent editor={editor} className="editor-content" />
-        
-        {/* AI Overlay Button */}
-        <button 
-          className="ai-overlay-button"
-          onClick={handleOpenAI}
-          title="AI Assistant"
-        >
-          ✦
-        </button>
 
         {/* AI Popup */}
         {showAIPopup && (

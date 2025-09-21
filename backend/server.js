@@ -15,6 +15,7 @@ import aiChatRoutes from './routes/ai-chat.js';
 import uploadRoutes from './routes/upload.js';
 import usersRoutes from './routes/users.js';
 import eventsRoutes from './routes/events.js';
+import agendasRoutes from './routes/agendas.js';
 import tasksRoutes from './routes/tasks.js';
 import todosRoutes from './routes/todos.js';
 import { authenticateToken } from './middleware/auth.js';
@@ -65,6 +66,7 @@ app.use('/api/ai', authenticateToken, aiChatRoutes);
 app.use('/api/upload', authenticateToken, uploadRoutes);
 app.use('/api/users', authenticateToken, usersRoutes);
 app.use('/api/events', authenticateToken, eventsRoutes);
+app.use('/api/agendas', authenticateToken, agendasRoutes);
 app.use('/api/tasks', authenticateToken, tasksRoutes);
 app.use('/api/todos', authenticateToken, todosRoutes);
 

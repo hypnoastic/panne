@@ -99,4 +99,69 @@ Please format this as a clean, organized note with:
   }
 });
 
+// Export chat to note
+router.post('/export-to-note', authenticateToken, async (req, res) => {
+  try {
+    const { chatHistory } = req.body;
+    
+    if (!chatHistory || chatHistory.length === 0) {
+      return res.status(400).json({ error: 'Chat history is required' });
+    }
+
+    // Get or create AI Notes notebook
+    let aiNotebook = await pool.query(
+      'SELECT * FROM notebooks WHERE owner_id = $1 AND title = $2',
+      [req.user.id, 'AI Notes']
+    );
+
+    if (aiNotebook.rows.length === 0) {
+      const newNotebook = await pool.query(
+        'INSERT INTO notebooks (owner_id, title) VALUES ($1, $2) RETURNING *',
+        [req.user.id, 'AI Notes']
+      );
+      aiNotebook = newNotebook;
+    }
+
+    // Format chat history into a note
+    const chatText = chatHistory.map(msg => 
+      `**${msg.type === 'user' ? 'You' : 'PanneAI'}:** ${msg.content}`
+    ).join('\n\n');
+
+    // Generate title from first user message
+    const firstUserMessage = chatHistory.find(msg => msg.type === 'user');
+    const title = firstUserMessage ? 
+      (firstUserMessage.content.length > 50 ? 
+        firstUserMessage.content.substring(0, 50) + '...' : 
+        firstUserMessage.content) : 
+      'AI Conversation';
+    
+    // Create content as JSON object for JSONB column
+    const contentJson = {
+      type: 'doc',
+      content: [{
+        type: 'paragraph',
+        content: [{
+          type: 'text',
+          text: chatText
+        }]
+      }]
+    };
+    
+    // Create the note
+    const noteResult = await pool.query(
+      'INSERT INTO notes (owner_id, notebook_id, title, content) VALUES ($1, $2, $3, $4) RETURNING *',
+      [req.user.id, aiNotebook.rows[0].id, title, JSON.stringify(contentJson)]
+    );
+
+    res.json({ 
+      success: true, 
+      note: noteResult.rows[0],
+      notebook: aiNotebook.rows[0]
+    });
+  } catch (error) {
+    console.error('Export to note error:', error);
+    res.status(500).json({ error: 'Failed to export to note' });
+  }
+});
+
 export default router;

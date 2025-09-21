@@ -3,11 +3,11 @@ import pool from '../config/database.js';
 
 const router = express.Router();
 
-// Get all events for user
+// Get all agendas for user
 router.get('/', async (req, res) => {
   try {
     const result = await pool.query(
-      'SELECT * FROM events WHERE user_id = $1::uuid ORDER BY date ASC, time ASC',
+      'SELECT * FROM agendas WHERE user_id = $1::uuid ORDER BY created_at DESC',
       [req.user.id]
     );
     res.json(result.rows);
@@ -16,18 +16,18 @@ router.get('/', async (req, res) => {
   }
 });
 
-// Create event
+// Create agenda
 router.post('/', async (req, res) => {
   try {
-    const { title, description, time, date } = req.body;
+    const { name } = req.body;
     
-    if (!title || !date) {
-      return res.status(400).json({ error: 'Title and date are required' });
+    if (!name) {
+      return res.status(400).json({ error: 'Name is required' });
     }
     
     const result = await pool.query(
-      'INSERT INTO events (title, description, time, date, user_id) VALUES ($1, $2, $3, $4, $5::uuid) RETURNING *',
-      [title, description, time, date, req.user.id]
+      'INSERT INTO agendas (name, user_id) VALUES ($1, $2::uuid) RETURNING *',
+      [name, req.user.id]
     );
     res.status(201).json(result.rows[0]);
   } catch (error) {
@@ -35,17 +35,17 @@ router.post('/', async (req, res) => {
   }
 });
 
-// Update event
+// Update agenda
 router.put('/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const { title, description, time, date } = req.body;
+    const { name } = req.body;
     const result = await pool.query(
-      'UPDATE events SET title = $1, description = $2, time = $3, date = $4, updated_at = CURRENT_TIMESTAMP WHERE id = $5 AND user_id = $6::uuid RETURNING *',
-      [title, description, time, date, id, req.user.id]
+      'UPDATE agendas SET name = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2 AND user_id = $3::uuid RETURNING *',
+      [name, id, req.user.id]
     );
     if (result.rows.length === 0) {
-      return res.status(404).json({ error: 'Event not found' });
+      return res.status(404).json({ error: 'Agenda not found' });
     }
     res.json(result.rows[0]);
   } catch (error) {
@@ -53,18 +53,18 @@ router.put('/:id', async (req, res) => {
   }
 });
 
-// Delete event
+// Delete agenda
 router.delete('/:id', async (req, res) => {
   try {
     const { id } = req.params;
     const result = await pool.query(
-      'DELETE FROM events WHERE id = $1 AND user_id = $2::uuid RETURNING *',
+      'DELETE FROM agendas WHERE id = $1 AND user_id = $2::uuid RETURNING *',
       [id, req.user.id]
     );
     if (result.rows.length === 0) {
-      return res.status(404).json({ error: 'Event not found' });
+      return res.status(404).json({ error: 'Agenda not found' });
     }
-    res.json({ message: 'Event deleted successfully' });
+    res.json({ message: 'Agenda deleted successfully' });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
