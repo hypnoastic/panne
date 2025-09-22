@@ -1,6 +1,7 @@
+import { useState, useEffect } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { authApi } from './services/api';
+import { authApi, notesApi } from './services/api';
 import LandingPage from './pages/LandingPage';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
@@ -15,10 +16,15 @@ import SettingsPage from './pages/SettingsPage';
 import TrashPage from './pages/TrashPage';
 import SharePage from './pages/SharePage';
 import SharedNotePage from './pages/SharedNotePage';
+import CollabPage from './pages/CollabPage';
 import LoadingSpinner from './components/LoadingSpinner';
+import NotificationToast from './components/NotificationToast';
 import './App.css';
 
 function App() {
+  const [notification, setNotification] = useState(null);
+  const [lastRequestCount, setLastRequestCount] = useState(0);
+
   const { data: user, isLoading } = useQuery({
     queryKey: ['auth', 'me'],
     queryFn: authApi.getCurrentUser,
@@ -26,11 +32,29 @@ function App() {
     staleTime: Infinity
   });
 
+  // Check for new permission requests
+  const { data: permissionRequests = [] } = useQuery({
+    queryKey: ['permission-requests'],
+    queryFn: () => notesApi.getPermissionRequests(),
+    enabled: !!user,
+    refetchInterval: 5000
+  });
+
+  // Show notification when new request arrives
+  useEffect(() => {
+    if (permissionRequests.length > lastRequestCount && lastRequestCount > 0) {
+      const newRequest = permissionRequests[0]; // Get the latest request
+      setNotification(newRequest);
+    }
+    setLastRequestCount(permissionRequests.length);
+  }, [permissionRequests.length, lastRequestCount]);
+
   if (isLoading) {
     return <LoadingSpinner />;
   }
 
   return (
+    <>
     <Routes>
       {/* Public routes */}
       <Route path="/" element={!user ? <LandingPage /> : <Navigate to="/dashboard" />} />
@@ -49,10 +73,18 @@ function App() {
       <Route path="/calendar" element={user ? <CalendarPage /> : <Navigate to="/login" />} />
       <Route path="/settings" element={user ? <SettingsPage /> : <Navigate to="/login" />} />
       <Route path="/trash" element={user ? <TrashPage /> : <Navigate to="/login" />} />
+      <Route path="/collab" element={user ? <CollabPage /> : <Navigate to="/login" />} />
       
       {/* Catch all */}
       <Route path="*" element={<Navigate to={user ? "/dashboard" : "/"} />} />
     </Routes>
+    {user && (
+      <NotificationToast 
+        notification={notification}
+        onClose={() => setNotification(null)}
+      />
+    )}
+    </>
   );
 }
 

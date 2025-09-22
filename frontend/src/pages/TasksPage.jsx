@@ -300,13 +300,13 @@ export default function TasksPage() {
           {/* Tasks List */}
           <div className="tasks-list">
             <div className="tasks-list-header">
-              <div className="search-box">
+              <div className="taskspage-search-box">
                 <input
                   type="text"
                   placeholder="Search tasks..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="search-input"
+                  className="taskspage-search-input"
                 />
               </div>
               <button 

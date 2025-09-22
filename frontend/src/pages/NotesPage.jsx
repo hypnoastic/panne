@@ -9,6 +9,7 @@ import RichEditor from '../components/RichEditor';
 import Button from '../components/Button';
 import LoadingSpinner from '../components/LoadingSpinner';
 import { useCollaboration } from '../hooks/useCollaboration';
+
 import notesAnimation from '../assets/notes.json';
 import './NotesPage.css';
 
@@ -32,12 +33,37 @@ export default function NotesPage() {
   const [sharePermission, setSharePermission] = useState('read');
   const [shareVisibility, setShareVisibility] = useState('private');
   const [showOnlineUsersModal, setShowOnlineUsersModal] = useState(false);
-  const [showPermissionRequestModal, setShowPermissionRequestModal] = useState(false);
-  const [permissionRequest, setPermissionRequest] = useState(null);
+  const [toastMessage, setToastMessage] = useState('');
+  const [showToast, setShowToast] = useState(false);
+  const [lastRequestCount, setLastRequestCount] = useState(0);
+
 
   
   // Real-time collaboration
   const { connectedUsers, isConnected } = useCollaboration(noteId);
+
+  // Permission requests query
+  const { data: permissionRequests = [] } = useQuery({
+    queryKey: ['permission-requests'],
+    queryFn: () => notesApi.getPermissionRequests(),
+    refetchInterval: 30000 // Check every 30 seconds
+  });
+
+  // Show toast when new permission requests arrive
+  useEffect(() => {
+    if (permissionRequests.length > lastRequestCount && lastRequestCount > 0) {
+      const newCount = permissionRequests.length - lastRequestCount;
+      setToastMessage(`${newCount} new permission request${newCount > 1 ? 's' : ''} received`);
+      setShowToast(true);
+      
+      const timer = setTimeout(() => {
+        setShowToast(false);
+      }, 3000);
+      
+      return () => clearTimeout(timer);
+    }
+    setLastRequestCount(permissionRequests.length);
+  }, [permissionRequests.length, lastRequestCount]);
 
   const { data: notebooks = [] } = useQuery({
     queryKey: ['notebooks'],
@@ -104,7 +130,7 @@ export default function NotesPage() {
     mutationFn: ({ noteId, permission, visibility }) => notesApi.createShareLink(noteId, { permission, visibility }),
     onSuccess: (data) => {
       setShareLink(data.share_url);
-      setShowShareModal(false);
+      // Don't close modal, keep it open to show the generated link
     }
   });
 
@@ -115,12 +141,7 @@ export default function NotesPage() {
     }
   });
 
-  const respondToPermissionMutation = useMutation({
-    mutationFn: ({ requestId, response }) => notesApi.respondToPermission(requestId, { response }),
-    onSuccess: () => {
-      setPermissionRequest(null);
-    }
-  });
+
 
   const restoreVersionMutation = useMutation({
     mutationFn: ({ noteId, versionId }) => notesApi.restoreVersion(noteId, versionId),
@@ -223,6 +244,7 @@ export default function NotesPage() {
 
           {/* Notes List */}
           <div className="notespage-notes-list">
+
             <div className="notespage-notes-list-header">
               <div className="notespage-search-box">
                 <input
@@ -316,21 +338,18 @@ export default function NotesPage() {
                       className="notespage-editor-title"
                       placeholder="Untitled"
                     />
-                    {connectedUsers.length > 0 && (
-                      <button 
-                        className="notespage-online-users-btn"
-                        onClick={() => setShowOnlineUsersModal(true)}
-                      >
-                        {connectedUsers.length} online
-                      </button>
-                    )}
                   </div>
                   <div className="notespage-editor-actions">
 
                     <Button 
                       variant="ghost" 
                       size="sm"
-                      onClick={() => setShowShareModal(true)}
+                      onClick={() => {
+                        setShareLink('');
+                        setSharePermission('read');
+                        setShareVisibility('private');
+                        setShowShareModal(true);
+                      }}
                     >
                       Share
                     </Button>
@@ -355,11 +374,28 @@ export default function NotesPage() {
                   </div>
                 </div>
                 <div className="notespage-editor-collaboration">
+                  <div className="notespage-ai-toolbar">
+                    <button className="notespage-ai-btn">
+                      ✨ AI
+                    </button>
+                  </div>
+                  
                   <RichEditor
                     content={currentNote.content}
                     onChange={handleNoteChange}
                     placeholder="Start writing your note..."
                   />
+                  {connectedUsers.length > 0 && (
+                    <div className="notespage-online-users-indicator">
+                      <button 
+                        className="notespage-online-users-btn"
+                        onClick={() => setShowOnlineUsersModal(true)}
+                      >
+                        <div className="notespage-online-dot"></div>
+                        {connectedUsers.length} online
+                      </button>
+                    </div>
+                  )}
                 </div>
               </div>
             ) : (
@@ -608,52 +644,7 @@ export default function NotesPage() {
           </div>
         )}
 
-        {/* Permission Request Modal */}
-        {permissionRequest && (
-          <div className="notespage-modal-overlay">
-            <div className="notespage-permission-modal" onClick={(e) => e.stopPropagation()}>
-              <div className="notespage-modal-header">
-                <h3>Permission Request</h3>
-              </div>
-              <div className="notespage-modal-content">
-                <p className="notespage-permission-message">
-                  <strong>{permissionRequest.requesterName}</strong> is requesting access to "{permissionRequest.noteTitle}"
-                </p>
-                {permissionRequest.message && (
-                  <div className="notespage-request-message">
-                    <label>Message:</label>
-                    <p>{permissionRequest.message}</p>
-                  </div>
-                )}
-                <div className="notespage-modal-actions">
-                  <Button 
-                    onClick={() => {
-                      respondToPermissionMutation.mutate({
-                        requestId: permissionRequest.id,
-                        response: 'approved'
-                      });
-                    }}
-                    loading={respondToPermissionMutation.isPending}
-                  >
-                    Approve
-                  </Button>
-                  <Button
-                    variant="secondary"
-                    onClick={() => {
-                      respondToPermissionMutation.mutate({
-                        requestId: permissionRequest.id,
-                        response: 'denied'
-                      });
-                    }}
-                    loading={respondToPermissionMutation.isPending}
-                  >
-                    Decline
-                  </Button>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
+
 
         {/* Create Notebook Modal */}
         {showCreateNotebookModal && (
@@ -737,6 +728,20 @@ export default function NotesPage() {
             </div>
           </div>
         )}
+
+        {/* Toast Notification */}
+        <AnimatePresence>
+          {showToast && (
+            <motion.div
+              initial={{ opacity: 0, y: 50 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 50 }}
+              className="notespage-toast"
+            >
+              {toastMessage}
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </AppLayout>
   );

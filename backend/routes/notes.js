@@ -22,6 +22,33 @@ router.get('/', async (req, res) => {
   }
 });
 
+// Get collaborative notes (notes user owns or collaborates on)
+router.get('/collab', async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT DISTINCT n.*, nb.title as notebook_name,
+             CASE WHEN n.owner_id = $1 THEN true ELSE false END as is_owner,
+             c.role as permission,
+             (
+               SELECT COUNT(*) 
+               FROM collaborators c2 
+               WHERE c2.note_id = n.id
+             ) as collaborator_count
+      FROM notes n
+      LEFT JOIN notebooks nb ON n.notebook_id = nb.id
+      LEFT JOIN collaborators c ON n.id = c.note_id AND c.user_id = $1
+      WHERE (n.owner_id = $1 OR c.user_id = $1) 
+        AND n.deleted_at IS NULL
+      ORDER BY n.updated_at DESC
+    `, [req.user.id]);
+    
+    res.json(result.rows);
+  } catch (error) {
+    console.error('Get collab notes error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 // Get single note
 router.get('/:id', async (req, res) => {
   try {
@@ -312,22 +339,34 @@ router.post('/:id/collaborators', async (req, res) => {
 // Create sharing link
 router.post('/:id/share', async (req, res) => {
   try {
-    const { permission = 'viewer', expires_at } = req.body;
+    const { permission = 'read', visibility = 'private', expires_at } = req.body;
     const shareId = uuidv4();
     
     // Map permission values to database constraint values
-    const roleMap = { 'view': 'viewer', 'edit': 'editor', 'viewer': 'viewer', 'editor': 'editor' };
-    const role = roleMap[permission] || 'viewer';
+    const permissionMap = { 'read': 'view', 'write': 'edit', 'view': 'view', 'edit': 'edit', 'viewer': 'view', 'editor': 'edit' };
+    const finalPermission = permissionMap[permission] || 'view';
+    
+    // Check if note exists and user owns it
+    const noteCheck = await pool.query(
+      'SELECT id FROM notes WHERE id = $1 AND owner_id = $2',
+      [req.params.id, req.user.id]
+    );
+    
+    if (noteCheck.rows.length === 0) {
+      return res.status(404).json({ error: 'Note not found or access denied' });
+    }
     
     const result = await pool.query(`
-      INSERT INTO sharing_links (note_id, token, role, expires_at) 
-      VALUES ($1, $2, $3, $4) 
+      INSERT INTO sharing_links (note_id, share_id, permission, visibility, expires_at) 
+      VALUES ($1, $2, $3, $4, $5) 
       RETURNING *
-    `, [req.params.id, shareId, role, expires_at]);
+    `, [req.params.id, shareId, finalPermission, visibility, expires_at]);
+    
+    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
     
     res.status(201).json({
       ...result.rows[0],
-      share_url: `${process.env.FRONTEND_URL}/share/${shareId}`
+      share_url: `${frontendUrl}/share/${shareId}`
     });
   } catch (error) {
     console.error('Create share link error:', error);
@@ -335,26 +374,100 @@ router.post('/:id/share', async (req, res) => {
   }
 });
 
-// Get shared note by share ID
-router.get('/shared/:shareId', async (req, res) => {
+// Request permission for private note
+router.post('/:id/request-permission', async (req, res) => {
   try {
-    const result = await pool.query(`
-      SELECT n.*, nb.title as notebook_name, sl.role as permission 
-      FROM notes n 
-      LEFT JOIN notebooks nb ON n.notebook_id = nb.id 
-      JOIN sharing_links sl ON n.id = sl.note_id 
-      WHERE sl.token = $1 AND (sl.expires_at IS NULL OR sl.expires_at > NOW())
-    `, [req.params.shareId]);
+    const { message } = req.body;
+    const noteId = req.params.id;
     
-    if (result.rows.length === 0) {
-      return res.status(404).json({ error: 'Shared note not found or expired' });
+    // Get note details
+    const noteResult = await pool.query(
+      'SELECT title, owner_id FROM notes WHERE id = $1',
+      [noteId]
+    );
+    
+    if (noteResult.rows.length === 0) {
+      return res.status(404).json({ error: 'Note not found' });
     }
     
-    res.json(result.rows[0]);
+    const note = noteResult.rows[0];
+    
+    // Check if request already exists
+    const existingRequest = await pool.query(
+      'SELECT id FROM permission_requests WHERE note_id = $1 AND requester_id = $2 AND status = $3',
+      [noteId, req.user.id, 'pending']
+    );
+    
+    if (existingRequest.rows.length > 0) {
+      return res.status(400).json({ error: 'Permission request already pending' });
+    }
+    
+    // Create permission request
+    const result = await pool.query(`
+      INSERT INTO permission_requests (note_id, requester_id, owner_id, message, status) 
+      VALUES ($1, $2, $3, $4, $5) 
+      RETURNING *
+    `, [noteId, req.user.id, note.owner_id, message, 'pending']);
+    
+    res.status(201).json(result.rows[0]);
   } catch (error) {
-    console.error('Get shared note error:', error);
+    console.error('Request permission error:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
 
+
+
+
+
+
+
+
+
+// Create a separate router for permission requests
+const permissionRouter = express.Router();
+
+// Get pending permission requests for user
+permissionRouter.get('/', async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT pr.*, n.title as note_title, u.name as requester_name 
+      FROM permission_requests pr 
+      JOIN notes n ON pr.note_id = n.id 
+      JOIN users u ON pr.requester_id = u.id 
+      WHERE pr.owner_id = $1 AND pr.status = 'pending' 
+      ORDER BY pr.created_at DESC
+    `, [req.user.id]);
+    
+    res.json(result.rows);
+  } catch (error) {
+    console.error('Get permission requests error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Respond to permission request
+permissionRouter.post('/:requestId/respond', async (req, res) => {
+  try {
+    const { response } = req.body; // 'approved' or 'denied'
+    const requestId = req.params.requestId;
+    
+    // Update permission request
+    const result = await pool.query(
+      'UPDATE permission_requests SET status = $1, responded_at = NOW() WHERE id = $2 AND owner_id = $3 RETURNING *',
+      [response, requestId, req.user.id]
+    );
+    
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Permission request not found' });
+    }
+    
+    res.json(result.rows[0]);
+  } catch (error) {
+    console.error('Respond to permission error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+export { permissionRouter };
 export default router;

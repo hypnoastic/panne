@@ -1,0 +1,398 @@
+.collabpage-collab-page {
+  height: calc(100vh - var(--spacing-3));
+  overflow: hidden;
+  background: transparent;
+}
+
+.collabpage-container {
+  max-width: var(--max-width-app);
+  margin: 0 auto;
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 16px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 
+    0 8px 32px rgba(0, 0, 0, 0.3),
+    0 2px 8px rgba(0, 0, 0, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+.collabpage-header {
+  padding: var(--spacing-6);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.collabpage-header h1 {
+  margin: 0 0 var(--spacing-2) 0;
+  font-size: var(--font-size-3xl);
+  font-weight: 700;
+  color: #E6E8EB;
+}
+
+.collabpage-header p {
+  margin: 0;
+  color: #9CA3AF;
+  font-size: var(--font-size-base);
+}
+
+.collabpage-content {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+}
+
+.collabpage-notes-section {
+  flex: 0 0 70%;
+  padding: var(--spacing-6);
+  overflow-y: auto;
+  border-right: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.collabpage-requests-section {
+  flex: 0 0 30%;
+  padding: var(--spacing-6);
+  overflow-y: auto;
+}
+
+.collabpage-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--spacing-6);
+}
+
+.collabpage-section-header h2 {
+  margin: 0;
+  font-size: var(--font-size-xl);
+  font-weight: 600;
+  color: #E6E8EB;
+}
+
+.collabpage-count {
+  background: rgba(46, 196, 182, 0.2);
+  color: #2EC4B6;
+  padding: var(--spacing-1) var(--spacing-3);
+  border-radius: var(--radius-full);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+}
+
+/* Notes Grid */
+.collabpage-notes-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: var(--spacing-4);
+}
+
+.collabpage-note-card {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-4);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  position: relative;
+}
+
+.collabpage-note-card:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(46, 196, 182, 0.3);
+  transform: translateY(-2px);
+}
+
+.collabpage-note-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: var(--spacing-3);
+}
+
+.collabpage-note-title {
+  margin: 0;
+  font-size: var(--font-size-lg);
+  font-weight: 600;
+  color: #E6E8EB;
+  line-height: 1.3;
+  flex: 1;
+  margin-right: var(--spacing-2);
+}
+
+.collabpage-note-role {
+  background: rgba(138, 43, 226, 0.2);
+  color: #9F7AEA;
+  padding: var(--spacing-1) var(--spacing-2);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-xs);
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.collabpage-note-preview {
+  color: #9CA3AF;
+  font-size: var(--font-size-sm);
+  line-height: 1.5;
+  margin: 0 0 var(--spacing-4) 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.collabpage-note-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--spacing-3);
+}
+
+.collabpage-collab-count {
+  color: #9CA3AF;
+  font-size: var(--font-size-sm);
+}
+
+.collabpage-note-date {
+  color: #6B7280;
+  font-size: var(--font-size-xs);
+}
+
+.collabpage-permission-badge {
+  background: rgba(16, 185, 129, 0.2);
+  color: #10B981;
+  padding: var(--spacing-1) var(--spacing-2);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-xs);
+  font-weight: 500;
+  align-self: flex-start;
+}
+
+/* Requests List */
+.collabpage-requests-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-3);
+}
+
+.collabpage-request-item {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-4);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.collabpage-request-item:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.collabpage-request-item--selected {
+  background: rgba(46, 196, 182, 0.1);
+  border-color: #2EC4B6;
+}
+
+.collabpage-request-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--spacing-3);
+}
+
+.collabpage-requester-info {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-3);
+  flex: 1;
+}
+
+.collabpage-requester-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: var(--font-size-base);
+}
+
+.collabpage-requester-name {
+  font-weight: 600;
+  color: #E6E8EB;
+  font-size: var(--font-size-sm);
+}
+
+.collabpage-request-note {
+  color: #9CA3AF;
+  font-size: var(--font-size-xs);
+  margin-top: var(--spacing-1);
+}
+
+.collabpage-request-status {
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.collabpage-request-message {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-3);
+  margin-bottom: var(--spacing-3);
+  color: #E6E8EB;
+  font-size: var(--font-size-sm);
+  font-style: italic;
+  line-height: 1.4;
+}
+
+.collabpage-request-date {
+  color: #6B7280;
+  font-size: var(--font-size-xs);
+  margin-bottom: var(--spacing-3);
+}
+
+.collabpage-request-actions {
+  display: flex;
+  gap: var(--spacing-2);
+}
+
+.collabpage-btn {
+  padding: var(--spacing-2) var(--spacing-3);
+  border: none;
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  flex: 1;
+}
+
+.collabpage-btn--approve {
+  background: rgba(16, 185, 129, 0.2);
+  color: #10B981;
+  border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.collabpage-btn--approve:hover {
+  background: rgba(16, 185, 129, 0.3);
+  border-color: rgba(16, 185, 129, 0.5);
+}
+
+.collabpage-btn--deny {
+  background: rgba(239, 68, 68, 0.2);
+  color: #EF4444;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+.collabpage-btn--deny:hover {
+  background: rgba(239, 68, 68, 0.3);
+  border-color: rgba(239, 68, 68, 0.5);
+}
+
+.collabpage-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Empty States */
+.collabpage-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: var(--spacing-8);
+  color: #9CA3AF;
+}
+
+.collabpage-empty-state--small {
+  padding: var(--spacing-6);
+}
+
+.collabpage-empty-icon {
+  font-size: 3rem;
+  margin-bottom: var(--spacing-4);
+  opacity: 0.7;
+}
+
+.collabpage-empty-state h3 {
+  margin: 0 0 var(--spacing-2) 0;
+  font-size: var(--font-size-lg);
+  font-weight: 600;
+  color: #E6E8EB;
+}
+
+.collabpage-empty-state h4 {
+  margin: 0 0 var(--spacing-2) 0;
+  font-size: var(--font-size-base);
+  font-weight: 600;
+  color: #E6E8EB;
+}
+
+.collabpage-empty-state p {
+  margin: 0;
+  font-size: var(--font-size-sm);
+  line-height: 1.5;
+}
+
+/* Loading State */
+.collabpage-loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 400px;
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+  .collabpage-content {
+    flex-direction: column;
+  }
+  
+  .collabpage-notes-section {
+    flex: 1;
+    border-right: none;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  }
+  
+  .collabpage-requests-section {
+    flex: 0 0 300px;
+  }
+  
+  .collabpage-notes-grid {
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  }
+}
+
+@media (max-width: 768px) {
+  .collabpage-header {
+    padding: var(--spacing-4);
+  }
+  
+  .collabpage-notes-section,
+  .collabpage-requests-section {
+    padding: var(--spacing-4);
+  }
+  
+  .collabpage-notes-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .collabpage-request-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--spacing-2);
+  }
+  
+  .collabpage-requester-info {
+    width: 100%;
+  }
+}

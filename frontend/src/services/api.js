@@ -10,6 +10,28 @@ const api = axios.create({
   },
 });
 
+// Add request interceptor for debugging
+api.interceptors.request.use(
+  (config) => {
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
+
+// Add response interceptor for error handling
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      // Handle unauthorized access
+      window.location.href = '/login';
+    }
+    return Promise.reject(error);
+  }
+);
+
 // Auth API
 export const authApi = {
   login: (credentials) => api.post('/auth/login', credentials).then(res => res.data),
@@ -34,6 +56,14 @@ export const notesApi = {
   createShareLink: (id, shareData) => 
     api.post(`/notes/${id}/share`, shareData).then(res => res.data),
   getSharedNote: (shareId) => api.get(`/notes/shared/${shareId}`).then(res => res.data),
+  requestPermission: (id, requestData) => 
+    api.post(`/notes/${id}/request-permission`, requestData).then(res => res.data),
+  respondToPermission: (requestId, responseData) => 
+    api.post(`/permissions/${requestId}/respond`, responseData).then(res => res.data),
+  getPermissionRequests: () => 
+    api.get('/permissions').then(res => res.data),
+  getCollabNotes: () => 
+    api.get('/notes/collab').then(res => res.data),
 };
 
 // Notebooks API
@@ -69,6 +99,12 @@ export const usersApi = {
   getTrash: () => api.get('/users/trash').then(res => res.data),
   restoreFromTrash: (id) => api.post(`/users/trash/${id}/restore`).then(res => res.data),
   permanentDelete: (id) => api.delete(`/users/trash/${id}`).then(res => res.data),
+};
+
+// Notifications API
+export const notificationsApi = {
+  getUnread: () => api.get('/notifications/unread').then(res => res.data),
+  markAsRead: (id) => api.put(`/notifications/${id}/read`).then(res => res.data),
 };
 
 export default api;
