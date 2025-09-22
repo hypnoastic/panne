@@ -28,6 +28,12 @@ export default function NotesPage() {
   const [shareLink, setShareLink] = useState('');
   const [showDeleteNoteModal, setShowDeleteNoteModal] = useState(false);
   const [noteToDelete, setNoteToDelete] = useState(null);
+  const [showShareModal, setShowShareModal] = useState(false);
+  const [sharePermission, setSharePermission] = useState('read');
+  const [shareVisibility, setShareVisibility] = useState('private');
+  const [showOnlineUsersModal, setShowOnlineUsersModal] = useState(false);
+  const [showPermissionRequestModal, setShowPermissionRequestModal] = useState(false);
+  const [permissionRequest, setPermissionRequest] = useState(null);
 
   
   // Real-time collaboration
@@ -95,9 +101,24 @@ export default function NotesPage() {
   });
 
   const createShareLinkMutation = useMutation({
-    mutationFn: (noteId) => notesApi.createShareLink(noteId, { permission: 'view' }),
+    mutationFn: ({ noteId, permission, visibility }) => notesApi.createShareLink(noteId, { permission, visibility }),
     onSuccess: (data) => {
       setShareLink(data.share_url);
+      setShowShareModal(false);
+    }
+  });
+
+  const requestPermissionMutation = useMutation({
+    mutationFn: ({ noteId, message }) => notesApi.requestPermission(noteId, { message }),
+    onSuccess: () => {
+      setShowPermissionRequestModal(false);
+    }
+  });
+
+  const respondToPermissionMutation = useMutation({
+    mutationFn: ({ requestId, response }) => notesApi.respondToPermission(requestId, { response }),
+    onSuccess: () => {
+      setPermissionRequest(null);
     }
   });
 
@@ -281,25 +302,35 @@ export default function NotesPage() {
             {currentNote ? (
               <div className="notespage-editor-container">
                 <div className="notespage-editor-header">
-                  <input
-                    type="text"
-                    value={currentNote.title}
-                    onChange={(e) => {
-                      updateNoteMutation.mutate({
-                        id: currentNote.id,
-                        title: e.target.value,
-                        content: currentNote.content
-                      });
-                    }}
-                    className="notespage-editor-title"
-                    placeholder="Untitled"
-                  />
+                  <div className="notespage-title-section">
+                    <input
+                      type="text"
+                      value={currentNote.title}
+                      onChange={(e) => {
+                        updateNoteMutation.mutate({
+                          id: currentNote.id,
+                          title: e.target.value,
+                          content: currentNote.content
+                        });
+                      }}
+                      className="notespage-editor-title"
+                      placeholder="Untitled"
+                    />
+                    {connectedUsers.length > 0 && (
+                      <button 
+                        className="notespage-online-users-btn"
+                        onClick={() => setShowOnlineUsersModal(true)}
+                      >
+                        {connectedUsers.length} online
+                      </button>
+                    )}
+                  </div>
                   <div className="notespage-editor-actions">
 
                     <Button 
                       variant="ghost" 
                       size="sm"
-                      onClick={() => setShowCollaborators(true)}
+                      onClick={() => setShowShareModal(true)}
                     >
                       Share
                     </Button>
@@ -324,32 +355,6 @@ export default function NotesPage() {
                   </div>
                 </div>
                 <div className="notespage-editor-collaboration">
-                  {connectedUsers.length > 0 && (
-                    <div className="notespage-collaboration-bar">
-                      <div className="notespage-connected-users">
-                        <span className="notespage-collaboration-status">
-                          {isConnected ? '🟢' : '🔴'} 
-                          {connectedUsers.length} user{connectedUsers.length !== 1 ? 's' : ''} online
-                        </span>
-                        <div className="notespage-user-avatars">
-                          {connectedUsers.slice(0, 3).map((user, index) => (
-                            <div key={user.userId || `user-${index}`} className="notespage-user-avatar" title={user.name}>
-                              {user.avatar ? (
-                                <img src={user.avatar} alt={user.name} />
-                              ) : (
-                                <span>{user.name?.charAt(0)?.toUpperCase()}</span>
-                              )}
-                            </div>
-                          ))}
-                          {connectedUsers.length > 3 && (
-                            <div key="user-count" className="notespage-user-avatar notespage-user-count">
-                              +{connectedUsers.length - 3}
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  )}
                   <RichEditor
                     content={currentNote.content}
                     onChange={handleNoteChange}
@@ -448,32 +453,105 @@ export default function NotesPage() {
           </div>
         )}
 
-        {/* Collaborators Modal */}
-        {showCollaborators && (
-          <div className="notespage-modal-overlay" onClick={() => setShowCollaborators(false)}>
-            <div className="notespage-modal" onClick={(e) => e.stopPropagation()}>
-              <div className="notespage-modal__header">
-                <h3>Share & Collaborate</h3>
+        {/* Share Modal */}
+        {showShareModal && (
+          <div className="notespage-modal-overlay" onClick={() => setShowShareModal(false)}>
+            <div className="notespage-share-modal" onClick={(e) => e.stopPropagation()}>
+              <div className="notespage-modal-header">
+                <h3>Share Note</h3>
                 <button 
-                  className="notespage-modal__close"
-                  onClick={() => setShowCollaborators(false)}
+                  className="notespage-modal-close"
+                  onClick={() => setShowShareModal(false)}
                 >
                   ×
                 </button>
               </div>
-              
-              <div className="notespage-modal__content">
+              <div className="notespage-modal-content">
+                <div className="notespage-share-options">
+                  <div className="notespage-option-group">
+                    <label>Permission</label>
+                    <div className="notespage-radio-group">
+                      <label className="notespage-radio-label">
+                        <input
+                          type="radio"
+                          name="permission"
+                          value="read"
+                          checked={sharePermission === 'read'}
+                          onChange={(e) => setSharePermission(e.target.value)}
+                        />
+                        <span>Read Only</span>
+                      </label>
+                      <label className="notespage-radio-label">
+                        <input
+                          type="radio"
+                          name="permission"
+                          value="write"
+                          checked={sharePermission === 'write'}
+                          onChange={(e) => setSharePermission(e.target.value)}
+                        />
+                        <span>Read & Write</span>
+                      </label>
+                    </div>
+                  </div>
+                  
+                  <div className="notespage-option-group">
+                    <label>Visibility</label>
+                    <div className="notespage-radio-group">
+                      <label className="notespage-radio-label">
+                        <input
+                          type="radio"
+                          name="visibility"
+                          value="private"
+                          checked={shareVisibility === 'private'}
+                          onChange={(e) => setShareVisibility(e.target.value)}
+                        />
+                        <span>Private (Request required)</span>
+                      </label>
+                      <label className="notespage-radio-label">
+                        <input
+                          type="radio"
+                          name="visibility"
+                          value="public"
+                          checked={shareVisibility === 'public'}
+                          onChange={(e) => setShareVisibility(e.target.value)}
+                        />
+                        <span>Public (Anyone logged in)</span>
+                      </label>
+                    </div>
+                  </div>
+                </div>
                 
-                <div className="notespage-share-section">
-                  <label>Share link:</label>
-                  <div className="notespage-share-link">
-                    <input
-                      type="text"
-                      value={shareLink || 'Click Generate to create a share link'}
-                      readOnly
-                      className="notespage-form-input"
-                    />
-                    {shareLink ? (
+                <div className="notespage-modal-actions">
+                  <Button 
+                    onClick={() => {
+                      createShareLinkMutation.mutate({
+                        noteId: currentNote.id,
+                        permission: sharePermission,
+                        visibility: shareVisibility
+                      });
+                    }}
+                    loading={createShareLinkMutation.isPending}
+                  >
+                    Generate Link
+                  </Button>
+                  <Button
+                    variant="secondary"
+                    onClick={() => setShowShareModal(false)}
+                  >
+                    Cancel
+                  </Button>
+                </div>
+                
+                {shareLink && (
+                  <div className="notespage-share-result">
+                    <label>Share Link:</label>
+                    <div className="notespage-share-link">
+                      <input
+                        type="text"
+                        value={shareLink}
+                        readOnly
+                        className="notespage-modal-input"
+                      />
                       <Button 
                         size="sm" 
                         variant="ghost"
@@ -483,47 +561,94 @@ export default function NotesPage() {
                       >
                         Copy
                       </Button>
-                    ) : (
-                      <Button 
-                        size="sm"
-                        onClick={() => {
-                          createShareLinkMutation.mutate(currentNote.id);
-                        }}
-                        loading={createShareLinkMutation.isPending}
-                      >
-                        Generate
-                      </Button>
-                    )}
+                    </div>
                   </div>
-                </div>
-                
-                <div className="notespage-collaborators-list">
-                  <h4>Collaborators:</h4>
-                  {connectedUsers.length > 0 ? (
-                    <div className="notespage-collaborators">
-                      {connectedUsers.map((user, index) => (
-                        <div key={user.userId || `collaborator-${index}`} className="notespage-collaborator-item">
-                          <div className="notespage-collaborator-info">
-                            <div className="notespage-collaborator-avatar">
-                              {user.avatar ? (
-                                <img src={user.avatar} alt={user.name} />
-                              ) : (
-                                <span>{user.name?.charAt(0)?.toUpperCase()}</span>
-                              )}
-                            </div>
-                            <div>
-                              <div className="notespage-collaborator-name">{user.name}</div>
-                              <div className="notespage-collaborator-status">🟢 Online</div>
-                            </div>
-                          </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Online Users Modal */}
+        {showOnlineUsersModal && (
+          <div className="notespage-modal-overlay" onClick={() => setShowOnlineUsersModal(false)}>
+            <div className="notespage-online-users-modal" onClick={(e) => e.stopPropagation()}>
+              <div className="notespage-modal-header">
+                <h3>Online Users ({connectedUsers.length})</h3>
+                <button 
+                  className="notespage-modal-close"
+                  onClick={() => setShowOnlineUsersModal(false)}
+                >
+                  ×
+                </button>
+              </div>
+              <div className="notespage-modal-content">
+                <div className="notespage-users-list">
+                  {connectedUsers.map((user, index) => (
+                    <div key={user.userId || `user-${index}`} className="notespage-user-item">
+                      <div className="notespage-user-avatar">
+                        {user.avatar ? (
+                          <img src={user.avatar} alt={user.name} />
+                        ) : (
+                          <span>{user.name?.charAt(0)?.toUpperCase()}</span>
+                        )}
+                      </div>
+                      <div className="notespage-user-info">
+                        <div className="notespage-user-name">{user.name}</div>
+                        <div className="notespage-user-status">
+                          <span className="notespage-status-indicator notespage-online"></span>
+                          Online
                         </div>
-                      ))}
+                      </div>
                     </div>
-                  ) : (
-                    <div className="empty-state">
-                      <p>No one else is currently viewing this note</p>
-                    </div>
-                  )}
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Permission Request Modal */}
+        {permissionRequest && (
+          <div className="notespage-modal-overlay">
+            <div className="notespage-permission-modal" onClick={(e) => e.stopPropagation()}>
+              <div className="notespage-modal-header">
+                <h3>Permission Request</h3>
+              </div>
+              <div className="notespage-modal-content">
+                <p className="notespage-permission-message">
+                  <strong>{permissionRequest.requesterName}</strong> is requesting access to "{permissionRequest.noteTitle}"
+                </p>
+                {permissionRequest.message && (
+                  <div className="notespage-request-message">
+                    <label>Message:</label>
+                    <p>{permissionRequest.message}</p>
+                  </div>
+                )}
+                <div className="notespage-modal-actions">
+                  <Button 
+                    onClick={() => {
+                      respondToPermissionMutation.mutate({
+                        requestId: permissionRequest.id,
+                        response: 'approved'
+                      });
+                    }}
+                    loading={respondToPermissionMutation.isPending}
+                  >
+                    Approve
+                  </Button>
+                  <Button
+                    variant="secondary"
+                    onClick={() => {
+                      respondToPermissionMutation.mutate({
+                        requestId: permissionRequest.id,
+                        response: 'denied'
+                      });
+                    }}
+                    loading={respondToPermissionMutation.isPending}
+                  >
+                    Decline
+                  </Button>
                 </div>
               </div>
             </div>

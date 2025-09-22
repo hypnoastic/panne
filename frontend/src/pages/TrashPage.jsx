@@ -81,19 +81,19 @@ export default function TrashPage() {
   const getTypeIcon = (type) => {
     switch (type) {
       case 'note':
-        return '📝';
+        return 'N';
       case 'notebook':
-        return '📚';
+        return 'NB';
       case 'agenda':
-        return '📅';
+        return 'A';
       case 'task':
-        return '✅';
+        return 'T';
       case 'event':
-        return '📅';
+        return 'E';
       case 'chat':
-        return '💬';
+        return 'C';
       default:
-        return '📄';
+        return '?';
     }
   };
 
@@ -124,27 +124,19 @@ export default function TrashPage() {
           <div className="trash-header">
             <div className="header-content">
               <h1 className="font-h1">Trash</h1>
-              <div className="current-date">
-                {new Date().toLocaleDateString('en-US', { 
-                  weekday: 'long', 
-                  year: 'numeric', 
-                  month: 'long', 
-                  day: 'numeric' 
-                })}
+              <div className="search-box">
+                <input
+                  type="text"
+                  placeholder="Search trash..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="search-input"
+                />
               </div>
             </div>
           </div>
 
           <div className="search-and-filters">
-            <div className="search-box">
-              <input
-                type="text"
-                placeholder="Search trash..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="search-input"
-              />
-            </div>
             <div className="filter-tabs">
               {['all', 'note', 'notebook', 'agenda', 'task', 'event', 'chat'].map(type => (
                 <button
@@ -175,7 +167,6 @@ export default function TrashPage() {
                   className="trash-item"
                 >
                   <div className="item-info">
-                    <div className="item-icon">{getTypeIcon(item.item_type || 'unknown')}</div>
                     <div className="item-details">
                       <h3 className="item-title">{item.title}</h3>
                       <p className="item-meta">
@@ -207,7 +198,6 @@ export default function TrashPage() {
 
           {filteredItems.length === 0 && (
             <div className="empty-state">
-              <div className="empty-icon">🗑️</div>
               <h3 className="empty-state__title">
                 {searchTerm ? 'No matching items found' : selectedType === 'all' ? 'Trash is empty' : `No deleted ${selectedType}s`}
               </h3>

@@ -113,4 +113,84 @@ router.get('/me', authenticateToken, (req, res) => {
   res.json({ user: req.user });
 });
 
+// Update profile
+router.put('/profile', authenticateToken, async (req, res) => {
+  try {
+    const { name, email, language } = req.body;
+    const result = await pool.query(
+      'UPDATE users SET name = $1, email = $2, language = $3, updated_at = CURRENT_TIMESTAMP WHERE id = $4 RETURNING id, email, name, language, avatar_url',
+      [name, email, language, req.user.id]
+    );
+    
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    
+    res.json({ user: result.rows[0] });
+  } catch (error) {
+    console.error('Profile update error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Change password
+router.post('/change-password', authenticateToken, async (req, res) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+    
+    // Get current password hash
+    const result = await pool.query(
+      'SELECT password_hash FROM users WHERE id = $1',
+      [req.user.id]
+    );
+    
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    
+    const user = result.rows[0];
+    
+    // Verify current password
+    const isValidPassword = await bcrypt.compare(currentPassword, user.password_hash);
+    
+    if (!isValidPassword) {
+      return res.status(400).json({ error: 'Current password is incorrect' });
+    }
+    
+    // Hash new password
+    const saltRounds = 12;
+    const newPasswordHash = await bcrypt.hash(newPassword, saltRounds);
+    
+    // Update password
+    await pool.query(
+      'UPDATE users SET password_hash = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2',
+      [newPasswordHash, req.user.id]
+    );
+    
+    res.json({ message: 'Password changed successfully' });
+  } catch (error) {
+    console.error('Password change error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Upload avatar
+router.post('/avatar', authenticateToken, async (req, res) => {
+  try {
+    // For now, return a placeholder response
+    // In a real implementation, you would handle file upload with multer and cloudinary
+    const avatarUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(req.user.name)}&background=2EC4B6&color=fff&size=200`;
+    
+    const result = await pool.query(
+      'UPDATE users SET avatar_url = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2 RETURNING id, email, name, language, avatar_url',
+      [avatarUrl, req.user.id]
+    );
+    
+    res.json({ user: result.rows[0] });
+  } catch (error) {
+    console.error('Avatar upload error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 export default router;

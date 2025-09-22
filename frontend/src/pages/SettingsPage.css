@@ -60,14 +60,12 @@
 }
 
 .settingspage-settings-tab.settingspage-active {
-  background: var(--accent-color);
-  border-color: var(--accent-color);
+  background: #2EC4B6;
+  border-color: #2EC4B6;
   color: white;
 }
 
-.settingspage-tab-icon {
-  font-size: 18px;
-}
+
 
 .settingspage-tab-label {
   font-size: var(--font-size-base);
@@ -170,7 +168,7 @@
 .settingspage-form-input:focus,
 .settingspage-form-select:focus {
   outline: none;
-  border-color: var(--accent-color);
+  border-color: #2EC4B6;
   background: rgba(255, 255, 255, 0.15);
 }
 
@@ -206,7 +204,7 @@
 .settingspage-checkbox-label input[type="checkbox"] {
   width: 18px;
   height: 18px;
-  accent-color: var(--accent-color);
+  accent-color: #2EC4B6;
 }
 
 @media (max-width: 768px) {

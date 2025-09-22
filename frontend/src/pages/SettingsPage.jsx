@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
 import AppLayout from '../components/AppLayout';
@@ -56,15 +56,19 @@ export default function SettingsPage() {
 
   const { data: user } = useQuery({
     queryKey: ['auth', 'me'],
-    queryFn: authApi.getCurrentUser,
-    onSuccess: (data) => {
+    queryFn: authApi.getCurrentUser
+  });
+
+  // Update profile data when user data loads
+  useEffect(() => {
+    if (user) {
       setProfileData({
-        name: data.name || '',
-        email: data.email || '',
-        language: data.language || 'en'
+        name: user.name || '',
+        email: user.email || '',
+        language: user.language || 'en'
       });
     }
-  });
+  }, [user]);
 
   const updateProfileMutation = useMutation({
     mutationFn: settingsApi.updateProfile,
@@ -116,9 +120,9 @@ export default function SettingsPage() {
   };
 
   const tabs = [
-    { id: 'profile', label: 'Profile', icon: '👤' },
-    { id: 'security', label: 'Security', icon: '🔒' },
-    { id: 'preferences', label: 'Preferences', icon: '⚙️' }
+    { id: 'profile', label: 'Profile' },
+    { id: 'security', label: 'Security' },
+    { id: 'preferences', label: 'Preferences' }
   ];
 
   return (
@@ -137,7 +141,6 @@ export default function SettingsPage() {
                   className={`settingspage-settings-tab ${activeTab === tab.id ? 'settingspage-active' : ''}`}
                   onClick={() => setActiveTab(tab.id)}
                 >
-                  <span className="settingspage-tab-icon">{tab.icon}</span>
                   <span className="settingspage-tab-label">{tab.label}</span>
                 </button>
               ))}
@@ -157,7 +160,7 @@ export default function SettingsPage() {
                       {user?.avatar_url ? (
                         <img src={user.avatar_url} alt="Avatar" />
                       ) : (
-                        <span>{user?.name?.charAt(0)?.toUpperCase()}</span>
+                        <span>{user?.name?.charAt(0)?.toUpperCase() || 'U'}</span>
                       )}
                     </div>
                     <div className="settingspage-avatar-actions">
