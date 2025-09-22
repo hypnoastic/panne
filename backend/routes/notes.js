@@ -119,7 +119,42 @@ router.put('/:id', async (req, res) => {
   }
 });
 
-// Delete note (soft delete)
+// Move note to trash
+router.post('/:id/trash', async (req, res) => {
+  try {
+    // Get note details
+    const noteResult = await pool.query(
+      'SELECT * FROM notes WHERE id = $1 AND owner_id = $2 AND deleted_at IS NULL',
+      [req.params.id, req.user.id]
+    );
+    
+    if (noteResult.rows.length === 0) {
+      return res.status(404).json({ error: 'Note not found' });
+    }
+    
+    const note = noteResult.rows[0];
+    
+    // Add to trash table
+    await pool.query(
+      'INSERT INTO trash (item_id, item_type, title, user_id) VALUES ($1, $2, $3, $4)',
+      [req.params.id, 'note', note.title, req.user.id]
+    );
+    
+    // Soft delete note
+    await pool.query(`
+      UPDATE notes 
+      SET deleted_at = NOW(), updated_at = NOW() 
+      WHERE id = $1 AND owner_id = $2
+    `, [req.params.id, req.user.id]);
+    
+    res.json({ message: 'Note moved to trash' });
+  } catch (error) {
+    console.error('Move note to trash error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Delete note (soft delete - legacy endpoint)
 router.delete('/:id', async (req, res) => {
   try {
     const result = await pool.query(`

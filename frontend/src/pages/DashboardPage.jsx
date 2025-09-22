@@ -213,17 +213,17 @@ export default function DashboardPage() {
 
   return (
     <AppLayout>
-      <div className="dashboard-main">
-        <div className="dashboard-main-container">
+      <div className="dashboardpage-main">
+        <div className="dashboardpage-container">
           {/* Welcome Text */}
-          <div className="welcome-header">
+          <div className="dashboardpage-welcome-header">
             <h1>{getGreeting()}, {user?.name || 'User'}!</h1>
           </div>
 
           {/* Modern AI Input Section */}
-          <div className="ai-input-section">
-            <div className="ai-input-container">
-              <button className="ai-plus-btn" onClick={() => {
+          <div className="dashboardpage-ai-input-section">
+            <div className="dashboardpage-ai-input-container">
+              <button className="dashboardpage-ai-plus-btn" onClick={() => {
                 console.log('Plus button clicked in dashboard');
                 setShowNotesModal(true);
               }}>
@@ -237,10 +237,10 @@ export default function DashboardPage() {
                 value={currentMessage}
                 onChange={(e) => setCurrentMessage(e.target.value)}
                 placeholder="Ask AI anything..."
-                className="ai-input"
+                className="dashboardpage-ai-input"
                 onKeyPress={(e) => e.key === 'Enter' && handleAISubmit()}
               />
-              <button className="ai-send-btn" onClick={handleAISubmit} disabled={!currentMessage.trim()}>
+              <button className="dashboardpage-ai-send-btn" onClick={handleAISubmit} disabled={!currentMessage.trim()}>
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <line x1="22" y1="2" x2="11" y2="13"></line>
                   <polygon points="22,2 15,22 11,13 2,9 22,2"></polygon>
@@ -250,44 +250,44 @@ export default function DashboardPage() {
           </div>
 
           {/* Date Display */}
-          <div className="date-display">
+          <div className="dashboardpage-date-display">
             <span>{today.toLocaleDateString('en', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</span>
           </div>
 
           {/* Dashboard Content Container */}
-          <div className="dashboard-content-container">
-            <div className="dashboard-content">
+          <div className="dashboardpage-content-container">
+            <div className="dashboardpage-content">
             {/* Left Column - Events & Tasks */}
-            <div className="dashboard-left">
-              <div className="dashboard-section">
+            <div className="dashboardpage-left">
+              <div className="dashboardpage-section">
                 <h2>Upcoming Events</h2>
-                <div className="dashboard-events-list">
+                <div className="dashboardpage-events-list">
                   {upcomingEvents.length > 0 ? upcomingEvents.map(event => (
                     <div 
                       key={event.id} 
-                      className="dashboard-event-item"
+                      className="dashboardpage-event-item"
                       onClick={() => {
                         const eventDate = new Date(event.date);
                         navigate('/calendar', { state: { selectedDate: eventDate, selectedEventId: event.id } });
                       }}
                     >
-                      <div className="dashboard-event-dot"></div>
-                      <div className="dashboard-event-info">
+                      <div className="dashboardpage-event-dot"></div>
+                      <div className="dashboardpage-event-info">
                         <h4>{event.title}</h4>
                         <span>{new Date(event.date).toLocaleDateString()} - {event.time || 'All day'}</span>
                       </div>
                     </div>
                   )) : (
-                    <div className="dashboard-empty-state">No upcoming events</div>
+                    <div className="dashboardpage-empty-state">No upcoming events</div>
                   )}
                 </div>
               </div>
 
 
 
-              <div className="dashboard-section">
+              <div className="dashboardpage-section">
                 <h2>Upcoming Agendas</h2>
-                <div className="dashboard-agendas-list">
+                <div className="dashboardpage-agendas-list">
                   {upcomingAgendas.length > 0 ? upcomingAgendas.map(agenda => {
                     const agendaTasks = tasks.filter(task => task.agenda_id === agenda.id);
                     const completedTasks = agendaTasks.filter(task => task.completed).length;
@@ -297,15 +297,15 @@ export default function DashboardPage() {
                     return (
                       <div 
                         key={agenda.id} 
-                        className="dashboard-agenda-item"
+                        className="dashboardpage-agenda-item"
                         onClick={() => navigate('/agenda', { state: { selectedAgendaId: agenda.id } })}
                       >
-                        <div className="dashboard-agenda-info">
-                          <span className="dashboard-agenda-name">{agenda.name}</span>
-                          <span className="dashboard-agenda-tasks">{completedTasks}/{totalTasks} tasks</span>
+                        <div className="dashboardpage-agenda-info">
+                          <span className="dashboardpage-agenda-name">{agenda.name}</span>
+                          <span className="dashboardpage-agenda-tasks">{completedTasks}/{totalTasks} tasks</span>
                         </div>
-                        <div className="dashboard-progress-circle">
-                          <svg width="40" height="40" className="progress-ring">
+                        <div className="dashboardpage-progress-circle">
+                          <svg width="40" height="40" className="dashboardpage-progress-ring">
                             <circle
                               cx="20"
                               cy="20"
@@ -324,34 +324,34 @@ export default function DashboardPage() {
                               strokeDasharray={`${2 * Math.PI * 16}`}
                               strokeDashoffset={`${2 * Math.PI * 16 * (1 - completionPercentage / 100)}`}
                               transform="rotate(-90 20 20)"
-                              className="progress-circle"
+                              className="dashboardpage-progress-circle"
                             />
                           </svg>
-                          <span className="progress-text">{Math.round(completionPercentage)}%</span>
+                          <span className="dashboardpage-progress-text">{Math.round(completionPercentage)}%</span>
                         </div>
                       </div>
                     );
                   }) : (
-                    <div className="dashboard-empty-state">No agendas yet</div>
+                    <div className="dashboardpage-empty-state">No agendas yet</div>
                   )}
                 </div>
               </div>
             </div>
 
             {/* Right Column - Recent Notes */}
-            <div className="dashboard-right">
-              <div className="dashboard-section">
+            <div className="dashboardpage-right">
+              <div className="dashboardpage-section">
                 <h2>Recent Notes</h2>
-                <div className="dashboard-notes-list">
+                <div className="dashboardpage-notes-list">
                   {recentNotes.slice(0, 3).map(note => (
-                    <div key={note.id} className="dashboard-note-item" onClick={() => navigate(`/notes/${note.id}`)}>
+                    <div key={note.id} className="dashboardpage-note-item" onClick={() => navigate(`/notes/${note.id}`)}>
                       <h4>{note.title}</h4>
                       <p>{note.preview}</p>
-                      <span className="dashboard-note-date">{note.updatedAt}</span>
+                      <span className="dashboardpage-note-date">{note.updatedAt}</span>
                     </div>
                   ))}
                   {recentNotes.length === 0 && (
-                    <div className="dashboard-empty-state">No notes yet</div>
+                    <div className="dashboardpage-empty-state">No notes yet</div>
                   )}
                 </div>
               </div>
@@ -362,30 +362,30 @@ export default function DashboardPage() {
 
         {/* Notes Selection Modal */}
         {showNotesModal && (
-          <div className="modal-overlay" onClick={() => setShowNotesModal(false)}>
-            <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-              <div className="modal-header">
+          <div className="dashboardpage-modal-overlay" onClick={() => setShowNotesModal(false)}>
+            <div className="dashboardpage-modal-content" onClick={(e) => e.stopPropagation()}>
+              <div className="dashboardpage-modal-header">
                 <h3>Select Notes for Context</h3>
                 <button onClick={() => setShowNotesModal(false)}>×</button>
               </div>
-              <div className="modal-body">
+              <div className="dashboardpage-modal-body">
                 {notes.map(note => (
                   <div
                     key={note.id}
-                    className={`note-option ${selectedNotes.find(n => n.id === note.id) ? 'selected' : ''}`}
+                    className={`dashboardpage-note-option ${selectedNotes.find(n => n.id === note.id) ? 'dashboardpage-selected' : ''}`}
                     onClick={() => handleNoteSelection(note)}
                   >
-                    <div className="note-checkbox">
+                    <div className="dashboardpage-note-checkbox">
                       {selectedNotes.find(n => n.id === note.id) && '✓'}
                     </div>
-                    <div className="note-details">
+                    <div className="dashboardpage-note-details">
                       <h4>{note.title}</h4>
                       <p>{note.content && typeof note.content === 'string' ? note.content.replace(/<[^>]*>/g, '').substring(0, 100) + '...' : 'No content'}</p>
                     </div>
                   </div>
                 ))}
               </div>
-              <div className="modal-footer">
+              <div className="dashboardpage-modal-footer">
                 <Button onClick={() => setShowNotesModal(false)}>
                   Done ({selectedNotes.length} selected)
                 </Button>

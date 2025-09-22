@@ -18,6 +18,7 @@ import eventsRoutes from './routes/events.js';
 import agendasRoutes from './routes/agendas.js';
 import tasksRoutes from './routes/tasks.js';
 import todosRoutes from './routes/todos.js';
+import trashRoutes from './routes/trash.js';
 import { authenticateToken } from './middleware/auth.js';
 import { setupCollaboration } from './services/collaboration.js';
 
@@ -69,6 +70,7 @@ app.use('/api/events', authenticateToken, eventsRoutes);
 app.use('/api/agendas', authenticateToken, agendasRoutes);
 app.use('/api/tasks', authenticateToken, tasksRoutes);
 app.use('/api/todos', authenticateToken, todosRoutes);
+app.use('/api/trash', authenticateToken, trashRoutes);
 
 // Health check
 app.get('/health', (req, res) => {

@@ -36,10 +36,10 @@ router.get('/:id', async (req, res) => {
 // Create task
 router.post('/', async (req, res) => {
   try {
-    const { title = 'Untitled Task', content = {}, event_id } = req.body;
+    const { title = 'Untitled Task', content = {}, agenda_id } = req.body;
     const result = await pool.query(
-      'INSERT INTO tasks (title, content, event_id, user_id) VALUES ($1, $2, $3, $4) RETURNING *',
-      [title, JSON.stringify(content), event_id, req.user.id]
+      'INSERT INTO tasks (title, content, agenda_id, user_id) VALUES ($1, $2, $3, $4) RETURNING *',
+      [title, JSON.stringify(content), agenda_id, req.user.id]
     );
     res.status(201).json(result.rows[0]);
   } catch (error) {
@@ -65,7 +65,42 @@ router.put('/:id', async (req, res) => {
   }
 });
 
-// Delete task
+// Move task to trash
+router.post('/:id/trash', async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    // Get task details
+    const taskResult = await pool.query(
+      'SELECT * FROM tasks WHERE id = $1 AND user_id = $2',
+      [id, req.user.id]
+    );
+    
+    if (taskResult.rows.length === 0) {
+      return res.status(404).json({ error: 'Task not found' });
+    }
+    
+    const task = taskResult.rows[0];
+    
+    // Add to trash table
+    await pool.query(
+      'INSERT INTO trash (item_id, item_type, title, user_id) VALUES ($1, $2, $3, $4)',
+      [id, 'task', task.title, req.user.id]
+    );
+    
+    // Delete task
+    await pool.query(
+      'DELETE FROM tasks WHERE id = $1 AND user_id = $2',
+      [id, req.user.id]
+    );
+    
+    res.json({ message: 'Task moved to trash' });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Delete task (legacy endpoint)
 router.delete('/:id', async (req, res) => {
   try {
     const { id } = req.params;

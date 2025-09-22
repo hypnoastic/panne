@@ -35,8 +35,8 @@ const calendarEventsApi = {
     return response.json();
   },
   delete: async (id) => {
-    const response = await fetch(`http://localhost:5000/api/events/${id}`, {
-      method: 'DELETE',
+    const response = await fetch(`http://localhost:5000/api/events/${id}/trash`, {
+      method: 'POST',
       credentials: 'include'
     });
     if (!response.ok) {
@@ -65,6 +65,8 @@ export default function CalendarPage() {
     time: '',
     date: ''
   });
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [eventToDelete, setEventToDelete] = useState(null);
 
   const { data: events = [], isLoading } = useQuery({
     queryKey: ['events'],
@@ -84,6 +86,8 @@ export default function CalendarPage() {
     mutationFn: calendarEventsApi.delete,
     onSuccess: () => {
       queryClient.invalidateQueries(['events']);
+      setShowDeleteModal(false);
+      setEventToDelete(null);
     }
   });
 
@@ -164,7 +168,7 @@ export default function CalendarPage() {
   if (isLoading) {
     return (
       <AppLayout>
-        <div className="calendar-loading">
+        <div className="calendarpage-loading">
           <Lottie animationData={sectionLoader} style={{ width: 400, height: 400 }} />
         </div>
       </AppLayout>
@@ -173,30 +177,30 @@ export default function CalendarPage() {
 
   return (
     <AppLayout>
-      <div className="calendar-page">
-        <div className="calendar-container">
-          <div className="calendar-header">
+      <div className="calendarpage-page">
+        <div className="calendarpage-container">
+          <div className="calendarpage-header">
             <h1>Calendar</h1>
           </div>
 
-          <div className="calendar-layout">
+          <div className="calendarpage-layout">
             {/* Left Side - Calendar */}
-            <div className="calendar-section">
-              <div className="calendar-nav">
+            <div className="calendarpage-section">
+              <div className="calendarpage-nav">
                 <motion.button 
                   onClick={handlePrevMonth} 
-                  className="nav-arrow"
+                  className="calendarpage-nav-arrow"
                   whileHover={{ scale: 1.1 }}
                   whileTap={{ scale: 0.95 }}
                 >
                   ‹
                 </motion.button>
-                <h2 className="month-year">
+                <h2 className="calendarpage-month-year">
                   {MONTHS[currentDate.getMonth()]} {currentDate.getFullYear()}
                 </h2>
                 <motion.button 
                   onClick={handleNextMonth} 
-                  className="nav-arrow"
+                  className="calendarpage-nav-arrow"
                   whileHover={{ scale: 1.1 }}
                   whileTap={{ scale: 0.95 }}
                 >
@@ -204,36 +208,36 @@ export default function CalendarPage() {
                 </motion.button>
               </div>
 
-              <div className="calendar-grid">
-                <div className="calendar-days-header">
+              <div className="calendarpage-grid">
+                <div className="calendarpage-days-header">
                   {DAYS.map(day => (
-                    <div key={day} className="day-header">{day}</div>
+                    <div key={day} className="calendarpage-day-header">{day}</div>
                   ))}
                 </div>
 
-                <div className="calendar-days">
+                <div className="calendarpage-days">
                   {calendarData.days.map((date, index) => {
                     const dayEvents = getEventsForDate(date);
                     return (
                       <motion.div
                         key={index}
-                        className={`calendar-day ${
-                          !isCurrentMonth(date) ? 'other-month' : ''
-                        } ${isToday(date) ? 'today' : ''} ${
-                          isSelected(date) ? 'selected' : ''
+                        className={`calendarpage-day ${
+                          !isCurrentMonth(date) ? 'calendarpage-other-month' : ''
+                        } ${isToday(date) ? 'calendarpage-today' : ''} ${
+                          isSelected(date) ? 'calendarpage-selected' : ''
                         }`}
                         onClick={() => handleDateClick(date)}
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
                       >
-                        <span className="day-number">{date.getDate()}</span>
+                        <span className="calendarpage-day-number">{date.getDate()}</span>
                         {dayEvents.length > 0 && (
-                          <div className="event-indicators">
+                          <div className="calendarpage-event-indicators">
                             {dayEvents.slice(0, 3).map((event, i) => (
-                              <div key={i} className="event-dot" />
+                              <div key={i} className="calendarpage-event-dot" />
                             ))}
                             {dayEvents.length > 3 && (
-                              <span className="more-events">+{dayEvents.length - 3}</span>
+                              <span className="calendarpage-more-events">+{dayEvents.length - 3}</span>
                             )}
                           </div>
                         )}
@@ -245,10 +249,10 @@ export default function CalendarPage() {
             </div>
 
             {/* Right Side - Selected Date Events */}
-            <div className="events-sidebar">
+            <div className="calendarpage-events-sidebar">
               {selectedDate ? (
-                <div className="selected-date-section">
-                  <div className="selected-date-header">
+                <div className="calendarpage-selected-date-section">
+                  <div className="calendarpage-selected-date-header">
                     <h3>{selectedDate.toLocaleDateString('en-US', { 
                       weekday: 'long', 
                       year: 'numeric', 
@@ -256,7 +260,7 @@ export default function CalendarPage() {
                       day: 'numeric' 
                     })}</h3>
                     <button
-                      className="add-event-button"
+                      className="calendarpage-add-event-button"
                       onClick={() => setIsCreatingEvent(true)}
                     >
                       +
@@ -267,38 +271,38 @@ export default function CalendarPage() {
                     <motion.div
                       initial={{ opacity: 0, height: 0 }}
                       animate={{ opacity: 1, height: 'auto' }}
-                      className="create-event-form"
+                      className="calendarpage-create-event-form"
                     >
                       <input
                         type="text"
                         placeholder="Event title"
                         value={newEvent.title}
                         onChange={(e) => setNewEvent({ ...newEvent, title: e.target.value })}
-                        className="event-input"
+                        className="calendarpage-event-input"
                       />
                       <textarea
                         placeholder="Description (optional)"
                         value={newEvent.description}
                         onChange={(e) => setNewEvent({ ...newEvent, description: e.target.value })}
-                        className="event-textarea"
+                        className="calendarpage-event-textarea"
                         rows="3"
                       />
                       <input
                         type="time"
                         value={newEvent.time}
                         onChange={(e) => setNewEvent({ ...newEvent, time: e.target.value })}
-                        className="event-input"
+                        className="calendarpage-event-input"
                       />
-                      <div className="form-actions">
+                      <div className="calendarpage-form-actions">
                         <button 
-                          className="create-button"
+                          className="calendarpage-create-button"
                           onClick={handleCreateEvent} 
                           disabled={createEventMutation.isPending}
                         >
                           {createEventMutation.isPending ? 'Creating...' : 'Create'}
                         </button>
                         <button
-                          className="cancel-button"
+                          className="calendarpage-cancel-button"
                           onClick={() => {
                             setIsCreatingEvent(false);
                             setNewEvent({ title: '', description: '', time: '', date: '' });
@@ -310,7 +314,7 @@ export default function CalendarPage() {
                     </motion.div>
                   )}
 
-                  <div className="events-list">
+                  <div className="calendarpage-events-list">
                     <AnimatePresence>
                       {selectedDateEvents.length > 0 ? (
                         selectedDateEvents.map((event) => (
@@ -319,27 +323,35 @@ export default function CalendarPage() {
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
                             exit={{ opacity: 0, y: -20 }}
-                            className="calendar-event-item"
+                            className="calendarpage-event-item"
                           >
-                            <div className="event-content">
-                              <h4 className="event-title">{event.title || event.name}</h4>
+                            <div className="calendarpage-event-content">
+                              <h4 className="calendarpage-event-title">{event.title || event.name}</h4>
                               {event.time && (
-                                <span className="event-time">{event.time}</span>
+                                <span className="calendarpage-event-time">{event.time}</span>
                               )}
                               {event.description && (
-                                <p className="event-description">{event.description}</p>
+                                <p className="calendarpage-event-description">{event.description}</p>
                               )}
                             </div>
                             <button
-                              onClick={() => deleteEventMutation.mutate(event.id)}
-                              className="delete-button"
+                              onClick={() => {
+                                setEventToDelete(event);
+                                setShowDeleteModal(true);
+                              }}
+                              className="calendarpage-delete-button"
                             >
-                              ×
+                              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                <polyline points="3,6 5,6 21,6"></polyline>
+                                <path d="M19,6v14a2,2,0,0,1-2,2H7a2,2,0,0,1-2-2V6m3,0V4a2,2,0,0,1,2-2h4a2,2,0,0,1,2,2V6"></path>
+                                <line x1="10" y1="11" x2="10" y2="17"></line>
+                                <line x1="14" y1="11" x2="14" y2="17"></line>
+                              </svg>
                             </button>
                           </motion.div>
                         ))
                       ) : (
-                        <div className="no-events">
+                        <div className="calendarpage-no-events">
                           <p>No events scheduled for this date</p>
                         </div>
                       )}
@@ -347,11 +359,11 @@ export default function CalendarPage() {
                   </div>
                 </div>
               ) : (
-                <div className="no-date-selected">
-                  <div className="placeholder-content">
+                <div className="calendarpage-no-date-selected">
+                  <div className="calendarpage-placeholder-content">
                     <Lottie 
                       animationData={calendarAnimation} 
-                      style={{ width: 200, height: 200 }} 
+                      style={{ width: 300, height: 300 }} 
                       loop={true}
                     />
                     <h3>Select a date</h3>
@@ -362,6 +374,46 @@ export default function CalendarPage() {
             </div>
           </div>
         </div>
+
+        {/* Delete Event Modal */}
+        {showDeleteModal && eventToDelete && (
+          <div className="calendarpage-modal-overlay" onClick={() => setShowDeleteModal(false)}>
+            <div className="calendarpage-delete-modal" onClick={(e) => e.stopPropagation()}>
+              <div className="calendarpage-modal-header">
+                <h3>Delete Event</h3>
+                <button 
+                  className="calendarpage-modal-close" 
+                  onClick={() => setShowDeleteModal(false)}
+                >
+                  ×
+                </button>
+              </div>
+              <div className="calendarpage-modal-content">
+                <p className="calendarpage-delete-message">
+                  Are you sure you want to move "{eventToDelete.title || eventToDelete.name}" to trash?
+                </p>
+                <div className="calendarpage-modal-actions">
+                  <button 
+                    className="calendarpage-confirm-delete"
+                    onClick={() => deleteEventMutation.mutate(eventToDelete.id)}
+                    disabled={deleteEventMutation.isPending}
+                  >
+                    {deleteEventMutation.isPending ? 'Moving to Trash...' : 'Move to Trash'}
+                  </button>
+                  <button
+                    className="calendarpage-cancel-delete"
+                    onClick={() => {
+                      setShowDeleteModal(false);
+                      setEventToDelete(null);
+                    }}
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </AppLayout>
   );

@@ -1,8 +1,8 @@
-.settings-page {
+.settingspage-settings-page {
   background: transparent;
 }
 
-.settings-container {
+.settingspage-settings-container {
   max-width: 1200px;
   margin: 0 auto;
   backdrop-filter: blur(20px);
@@ -16,31 +16,31 @@
   height: calc(100vh - var(--spacing-3));
 }
 
-.settings-header {
+.settingspage-settings-header {
   margin-bottom: var(--spacing-6);
 }
 
-.settings-header h1 {
+.settingspage-settings-header h1 {
   font-size: var(--font-size-2xl);
   font-weight: 700;
   color: #E6E8EB;
   margin: 0;
 }
 
-.settings-layout {
+.settingspage-settings-layout {
   display: grid;
   grid-template-columns: 250px 1fr;
   gap: var(--spacing-8);
   height: calc(100% - 80px);
 }
 
-.settings-sidebar {
+.settingspage-settings-sidebar {
   display: flex;
   flex-direction: column;
   gap: var(--spacing-2);
 }
 
-.settings-tab {
+.settingspage-settings-tab {
   display: flex;
   align-items: center;
   gap: var(--spacing-3);
@@ -54,39 +54,39 @@
   text-align: left;
 }
 
-.settings-tab:hover {
+.settingspage-settings-tab:hover {
   background: rgba(255, 255, 255, 0.05);
   color: #E6E8EB;
 }
 
-.settings-tab.active {
+.settingspage-settings-tab.settingspage-active {
   background: var(--accent-color);
   border-color: var(--accent-color);
   color: white;
 }
 
-.tab-icon {
+.settingspage-tab-icon {
   font-size: 18px;
 }
 
-.tab-label {
+.settingspage-tab-label {
   font-size: var(--font-size-base);
   font-weight: 500;
 }
 
-.settings-content {
+.settingspage-settings-content {
   overflow-y: auto;
   padding-right: var(--spacing-2);
 }
 
-.settings-section {
+.settingspage-settings-section {
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 16px;
   padding: var(--spacing-6);
 }
 
-.settings-section h2 {
+.settingspage-settings-section h2 {
   font-size: var(--font-size-xl);
   font-weight: 600;
   color: #E6E8EB;
@@ -95,7 +95,7 @@
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-.avatar-section {
+.settingspage-avatar-section {
   display: flex;
   align-items: center;
   gap: var(--spacing-4);
@@ -106,7 +106,7 @@
   border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-.avatar-preview {
+.settingspage-avatar-preview {
   width: 80px;
   height: 80px;
   border-radius: 50%;
@@ -120,40 +120,40 @@
   overflow: hidden;
 }
 
-.avatar-preview img {
+.settingspage-avatar-preview img {
   width: 100%;
   height: 100%;
   object-fit: cover;
 }
 
-.avatar-actions {
+.settingspage-avatar-actions {
   flex: 1;
 }
 
-.avatar-upload {
+.settingspage-avatar-upload {
   cursor: pointer;
 }
 
-.settings-form {
+.settingspage-settings-form {
   display: flex;
   flex-direction: column;
   gap: var(--spacing-4);
 }
 
-.form-group {
+.settingspage-form-group {
   display: flex;
   flex-direction: column;
   gap: var(--spacing-2);
 }
 
-.form-group label {
+.settingspage-form-group label {
   font-size: var(--font-size-sm);
   font-weight: 500;
   color: #E6E8EB;
 }
 
-.form-input,
-.form-select {
+.settingspage-form-input,
+.settingspage-form-select {
   padding: var(--spacing-3);
   background: rgba(255, 255, 255, 0.1);
   border: 1px solid rgba(255, 255, 255, 0.2);
@@ -163,38 +163,38 @@
   transition: all var(--transition-fast);
 }
 
-.form-input::placeholder {
+.settingspage-form-input::placeholder {
   color: #9CA3AF;
 }
 
-.form-input:focus,
-.form-select:focus {
+.settingspage-form-input:focus,
+.settingspage-form-select:focus {
   outline: none;
   border-color: var(--accent-color);
   background: rgba(255, 255, 255, 0.15);
 }
 
-.form-select option {
+.settingspage-form-select option {
   background: #1a1a2e;
   color: #E6E8EB;
 }
 
-.preference-group {
+.settingspage-preference-group {
   margin-bottom: var(--spacing-6);
 }
 
-.preference-group h3 {
+.settingspage-preference-group h3 {
   font-size: var(--font-size-lg);
   font-weight: 600;
   color: #E6E8EB;
   margin: 0 0 var(--spacing-4) 0;
 }
 
-.preference-item {
+.settingspage-preference-item {
   margin-bottom: var(--spacing-3);
 }
 
-.checkbox-label {
+.settingspage-checkbox-label {
   display: flex;
   align-items: center;
   gap: var(--spacing-3);
@@ -203,24 +203,24 @@
   font-size: var(--font-size-base);
 }
 
-.checkbox-label input[type="checkbox"] {
+.settingspage-checkbox-label input[type="checkbox"] {
   width: 18px;
   height: 18px;
   accent-color: var(--accent-color);
 }
 
 @media (max-width: 768px) {
-  .settings-layout {
+  .settingspage-settings-layout {
     grid-template-columns: 1fr;
     gap: var(--spacing-4);
   }
   
-  .settings-sidebar {
+  .settingspage-settings-sidebar {
     flex-direction: row;
     overflow-x: auto;
   }
   
-  .settings-tab {
+  .settingspage-settings-tab {
     min-width: 120px;
     justify-content: center;
   }

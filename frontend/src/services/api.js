@@ -24,7 +24,7 @@ export const notesApi = {
   getById: (id) => api.get(`/notes/${id}`).then(res => res.data),
   create: (noteData) => api.post('/notes', noteData).then(res => res.data),
   update: (id, noteData) => api.put(`/notes/${id}`, noteData).then(res => res.data),
-  delete: (id) => api.delete(`/notes/${id}`).then(res => res.data),
+  delete: (id) => api.post(`/notes/${id}/trash`).then(res => res.data),
   getVersions: (id) => api.get(`/notes/${id}/versions`).then(res => res.data),
   restoreVersion: (noteId, versionId) => 
     api.post(`/notes/${noteId}/versions/${versionId}/restore`).then(res => res.data),

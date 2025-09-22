@@ -19,13 +19,15 @@ export default function NotesPage() {
   const [selectedNotebook, setSelectedNotebook] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [isCreatingNote, setIsCreatingNote] = useState(false);
-  const [isCreatingNotebook, setIsCreatingNotebook] = useState(false);
+  const [showCreateNotebookModal, setShowCreateNotebookModal] = useState(false);
   const [newNotebookName, setNewNotebookName] = useState('');
   const [showVersions, setShowVersions] = useState(false);
   const [selectedVersion, setSelectedVersion] = useState(null);
   const [showCollaborators, setShowCollaborators] = useState(false);
   const [collaboratorEmail, setCollaboratorEmail] = useState('');
   const [shareLink, setShareLink] = useState('');
+  const [showDeleteNoteModal, setShowDeleteNoteModal] = useState(false);
+  const [noteToDelete, setNoteToDelete] = useState(null);
 
   
   // Real-time collaboration
@@ -79,7 +81,7 @@ export default function NotesPage() {
     mutationFn: notebooksApi.create,
     onSuccess: () => {
       queryClient.invalidateQueries(['notebooks']);
-      setIsCreatingNotebook(false);
+      setShowCreateNotebookModal(false);
       setNewNotebookName('');
     }
   });
@@ -111,7 +113,11 @@ export default function NotesPage() {
     mutationFn: notesApi.delete,
     onSuccess: () => {
       queryClient.invalidateQueries(['notes']);
-      navigate('/notes');
+      setShowDeleteNoteModal(false);
+      setNoteToDelete(null);
+      if (noteId === noteToDelete?.id) {
+        navigate('/notes');
+      }
     }
   });
 
@@ -153,91 +159,61 @@ export default function NotesPage() {
 
   return (
     <AppLayout>
-      <div className="notes-page">
-        <div className="notes-layout">
+      <div className="notespage-notes-page">
+        <div className="notespage-notes-layout">
           {/* Notebooks Sidebar */}
-          <div className="notes-sidebar">
-            <div className="sidebar-header">
+          <div className="notespage-notes-sidebar">
+            <div className="notespage-sidebar-header">
               <h3>Notebooks</h3>
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => setIsCreatingNotebook(true)}
+                onClick={() => setShowCreateNotebookModal(true)}
               >
                 +
               </Button>
             </div>
 
-            {isCreatingNotebook && (
-              <motion.div
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: 'auto' }}
-                className="create-notebook"
-              >
-                <input
-                  type="text"
-                  placeholder="Notebook name"
-                  value={newNotebookName}
-                  onChange={(e) => setNewNotebookName(e.target.value)}
-                  className="create-notebook__input"
-                  onKeyPress={(e) => e.key === 'Enter' && handleCreateNotebook()}
-                />
-                <div className="create-notebook__actions">
-                  <Button size="sm" onClick={handleCreateNotebook}>
-                    Create
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => {
-                      setIsCreatingNotebook(false);
-                      setNewNotebookName('');
-                    }}
-                  >
-                    Cancel
-                  </Button>
-                </div>
-              </motion.div>
-            )}
 
-            <div className="notebooks-list">
+
+            <div className="notespage-notebooks-list">
               <button
-                className={`notebook-item ${!selectedNotebook ? 'notebook-item--active' : ''}`}
+                className={`notespage-notebook-item ${!selectedNotebook ? 'notespage-notebook-item--active' : ''}`}
                 onClick={() => setSelectedNotebook(null)}
               >
 
                 <span>All Notes</span>
-                <span className="notebook-count">{notes.length}</span>
+                <span className="notespage-notebook-count">{notes.length}</span>
               </button>
 
               {notebooks.map((notebook) => (
                 <button
                   key={notebook.id}
-                  className={`notebook-item ${selectedNotebook === notebook.id ? 'notebook-item--active' : ''}`}
+                  className={`notespage-notebook-item ${selectedNotebook === notebook.id ? 'notespage-notebook-item--active' : ''}`}
                   onClick={() => setSelectedNotebook(notebook.id)}
                 >
 
                   <span>{notebook.title}</span>
-                  <span className="notebook-count">{notebook.note_count || 0}</span>
+                  <span className="notespage-notebook-count">{notebook.note_count || 0}</span>
                 </button>
               ))}
             </div>
           </div>
 
           {/* Notes List */}
-          <div className="notes-list">
-            <div className="notes-list-header">
-              <div className="search-box">
+          <div className="notespage-notes-list">
+            <div className="notespage-notes-list-header">
+              <div className="notespage-search-box">
                 <input
                   type="text"
                   placeholder="Search notes..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="search-input"
+                  className="notespage-search-input"
                 />
               </div>
               <button 
-                className="plus-icon-notes" 
+                className="notespage-plus-icon-notes" 
                 onClick={handleCreateNote}
                 disabled={createNoteMutation.isPending}
               >
@@ -245,7 +221,7 @@ export default function NotesPage() {
               </button>
             </div>
 
-            <div className="notes-items">
+            <div className="notespage-notes-items">
               <AnimatePresence>
                 {filteredNotes.map((note) => (
                   <motion.div
@@ -253,30 +229,46 @@ export default function NotesPage() {
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -20 }}
-                    className={`note-item ${noteId === note.id ? 'note-item--active' : ''}`}
+                    className={`notespage-note-item ${noteId === note.id ? 'notespage-note-item--active' : ''}`}
                   >
-                    <Link to={`/notes/${note.id}`} className="note-item__link">
-                      <h4 className="note-item__title">{note.title}</h4>
-                      <p className="note-item__preview">
+                    <Link to={`/notes/${note.id}`} className="notespage-note-item__link">
+                      <h4 className="notespage-note-item__title">{note.title}</h4>
+                      <p className="notespage-note-item__preview">
                         {note.content?.content?.[0]?.content?.[0]?.text || 'No content'}
                       </p>
-                      <div className="note-item__meta">
+                      <div className="notespage-note-item__meta">
                         {note.notebook_name && (
-                          <span className="note-item__notebook">{note.notebook_name}</span>
+                          <span className="notespage-note-item__notebook">{note.notebook_name}</span>
                         )}
-                        <span className="note-item__date">
+                        <span className="notespage-note-item__date">
                           {new Date(note.updated_at).toLocaleDateString()}
                         </span>
                       </div>
                     </Link>
+                    <button
+                      className="note-delete-btn"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        setNoteToDelete(note);
+                        setShowDeleteNoteModal(true);
+                      }}
+                    >
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <polyline points="3,6 5,6 21,6"></polyline>
+                        <path d="M19,6v14a2,2,0,0,1-2,2H7a2,2,0,0,1-2-2V6m3,0V4a2,2,0,0,1,2-2h4a2,2,0,0,1,2,2V6"></path>
+                        <line x1="10" y1="11" x2="10" y2="17"></line>
+                        <line x1="14" y1="11" x2="14" y2="17"></line>
+                      </svg>
+                    </button>
                   </motion.div>
                 ))}
               </AnimatePresence>
 
               {filteredNotes.length === 0 && (
-                <div className="empty-state">
-                  <h4 className="empty-state__title">No notes found</h4>
-                  <p className="empty-state__description">
+                <div className="notespage-empty-state">
+                  <h4 className="notespage-empty-state__title">No notes found</h4>
+                  <p className="notespage-empty-state__description">
                     {searchTerm ? 'Try adjusting your search terms' : 'Create your first note to get started'}
                   </p>
                 </div>
@@ -285,10 +277,10 @@ export default function NotesPage() {
           </div>
 
           {/* Editor */}
-          <div className="notes-editor">
+          <div className="notespage-notes-editor">
             {currentNote ? (
-              <div className="editor-container">
-                <div className="editor-header">
+              <div className="notespage-editor-container">
+                <div className="notespage-editor-header">
                   <input
                     type="text"
                     value={currentNote.title}
@@ -299,10 +291,10 @@ export default function NotesPage() {
                         content: currentNote.content
                       });
                     }}
-                    className="editor-title"
+                    className="notespage-editor-title"
                     placeholder="Untitled"
                   />
-                  <div className="editor-actions">
+                  <div className="notespage-editor-actions">
 
                     <Button 
                       variant="ghost" 
@@ -322,9 +314,8 @@ export default function NotesPage() {
                       variant="ghost" 
                       size="sm"
                       onClick={() => {
-                        if (confirm('Move this note to trash?')) {
-                          deleteNoteMutation.mutate(currentNote.id);
-                        }
+                        setNoteToDelete(currentNote);
+                        setShowDeleteNoteModal(true);
                       }}
                       loading={deleteNoteMutation.isPending}
                     >
@@ -332,17 +323,17 @@ export default function NotesPage() {
                     </Button>
                   </div>
                 </div>
-                <div className="editor-collaboration">
+                <div className="notespage-editor-collaboration">
                   {connectedUsers.length > 0 && (
-                    <div className="collaboration-bar">
-                      <div className="connected-users">
-                        <span className="collaboration-status">
+                    <div className="notespage-collaboration-bar">
+                      <div className="notespage-connected-users">
+                        <span className="notespage-collaboration-status">
                           {isConnected ? '🟢' : '🔴'} 
                           {connectedUsers.length} user{connectedUsers.length !== 1 ? 's' : ''} online
                         </span>
-                        <div className="user-avatars">
+                        <div className="notespage-user-avatars">
                           {connectedUsers.slice(0, 3).map((user, index) => (
-                            <div key={user.userId || `user-${index}`} className="user-avatar" title={user.name}>
+                            <div key={user.userId || `user-${index}`} className="notespage-user-avatar" title={user.name}>
                               {user.avatar ? (
                                 <img src={user.avatar} alt={user.name} />
                               ) : (
@@ -351,7 +342,7 @@ export default function NotesPage() {
                             </div>
                           ))}
                           {connectedUsers.length > 3 && (
-                            <div key="user-count" className="user-avatar user-count">
+                            <div key="user-count" className="notespage-user-avatar notespage-user-count">
                               +{connectedUsers.length - 3}
                             </div>
                           )}
@@ -367,13 +358,13 @@ export default function NotesPage() {
                 </div>
               </div>
             ) : (
-              <div className="editor-empty">
-                <div className="empty-state">
-                  <div className="empty-state__image">
+              <div className="notespage-editor-empty">
+                <div className="notespage-empty-state">
+                  <div className="notespage-empty-state__image">
                     <Lottie animationData={notesAnimation} style={{ width: 400, height: 400}} />
                   </div>
-                  <h4 className="empty-state__title">Select a note to start editing</h4>
-                  <p className="empty-state__description">
+                  <h4 className="notespage-empty-state__title">Select a note to start editing</h4>
+                  <p className="notespage-empty-state__description">
                     Choose a note from the list or create a new one
                   </p>
                 </div>
@@ -384,33 +375,33 @@ export default function NotesPage() {
 
         {/* Version History Modal */}
         {showVersions && (
-          <div className="modal-overlay" onClick={() => setShowVersions(false)}>
-            <div className="modal modal--large" onClick={(e) => e.stopPropagation()}>
-              <div className="modal__header">
+          <div className="notespage-modal-overlay" onClick={() => setShowVersions(false)}>
+            <div className="notespage-modal notespage-modal--large" onClick={(e) => e.stopPropagation()}>
+              <div className="notespage-modal__header">
                 <h3>Version History</h3>
                 <button 
-                  className="modal__close"
+                  className="notespage-modal__close"
                   onClick={() => setShowVersions(false)}
                 >
                   ×
                 </button>
               </div>
               
-              <div className="modal__content modal__content--split">
-                <div className="versions-panel">
+              <div className="notespage-modal__content notespage-modal__content--split">
+                <div className="notespage-versions-panel">
                   {versions.length > 0 ? (
-                    <div className="versions-list">
+                    <div className="notespage-versions-list">
                       {versions.map((version) => (
                         <div 
                           key={version.id} 
-                          className={`version-item ${selectedVersion?.id === version.id ? 'version-item--selected' : ''}`}
+                          className={`notespage-version-item ${selectedVersion?.id === version.id ? 'notespage-version-item--selected' : ''}`}
                           onClick={() => setSelectedVersion(version)}
                         >
-                          <div className="version-info">
-                            <div className="version-date">
+                          <div className="notespage-version-info">
+                            <div className="notespage-version-date">
                               {new Date(version.created_at).toLocaleString()}
                             </div>
-                            <div className="version-changes">
+                            <div className="notespage-version-changes">
                               Version {version.version_number || 'Auto'}
                             </div>
                           </div>
@@ -438,16 +429,16 @@ export default function NotesPage() {
                   )}
                 </div>
                 
-                <div className="version-preview">
+                <div className="notespage-version-preview">
                   {selectedVersion ? (
-                    <div className="preview-content">
+                    <div className="notespage-preview-content">
                       <h4>Preview</h4>
-                      <div className="preview-text">
+                      <div className="notespage-preview-text">
                         {selectedVersion.content?.content?.[0]?.content?.[0]?.text || 'No content available'}
                       </div>
                     </div>
                   ) : (
-                    <div className="preview-placeholder">
+                    <div className="notespage-preview-placeholder">
                       <p>Select a version to preview</p>
                     </div>
                   )}
@@ -459,28 +450,28 @@ export default function NotesPage() {
 
         {/* Collaborators Modal */}
         {showCollaborators && (
-          <div className="modal-overlay" onClick={() => setShowCollaborators(false)}>
-            <div className="modal" onClick={(e) => e.stopPropagation()}>
-              <div className="modal__header">
+          <div className="notespage-modal-overlay" onClick={() => setShowCollaborators(false)}>
+            <div className="notespage-modal" onClick={(e) => e.stopPropagation()}>
+              <div className="notespage-modal__header">
                 <h3>Share & Collaborate</h3>
                 <button 
-                  className="modal__close"
+                  className="notespage-modal__close"
                   onClick={() => setShowCollaborators(false)}
                 >
                   ×
                 </button>
               </div>
               
-              <div className="modal__content">
+              <div className="notespage-modal__content">
                 
-                <div className="share-section">
+                <div className="notespage-share-section">
                   <label>Share link:</label>
-                  <div className="share-link">
+                  <div className="notespage-share-link">
                     <input
                       type="text"
                       value={shareLink || 'Click Generate to create a share link'}
                       readOnly
-                      className="form-input"
+                      className="notespage-form-input"
                     />
                     {shareLink ? (
                       <Button 
@@ -506,14 +497,14 @@ export default function NotesPage() {
                   </div>
                 </div>
                 
-                <div className="collaborators-list">
+                <div className="notespage-collaborators-list">
                   <h4>Collaborators:</h4>
                   {connectedUsers.length > 0 ? (
-                    <div className="collaborators">
+                    <div className="notespage-collaborators">
                       {connectedUsers.map((user, index) => (
-                        <div key={user.userId || `collaborator-${index}`} className="collaborator-item">
-                          <div className="collaborator-info">
-                            <div className="collaborator-avatar">
+                        <div key={user.userId || `collaborator-${index}`} className="notespage-collaborator-item">
+                          <div className="notespage-collaborator-info">
+                            <div className="notespage-collaborator-avatar">
                               {user.avatar ? (
                                 <img src={user.avatar} alt={user.name} />
                               ) : (
@@ -521,8 +512,8 @@ export default function NotesPage() {
                               )}
                             </div>
                             <div>
-                              <div className="collaborator-name">{user.name}</div>
-                              <div className="collaborator-status">🟢 Online</div>
+                              <div className="notespage-collaborator-name">{user.name}</div>
+                              <div className="notespage-collaborator-status">🟢 Online</div>
                             </div>
                           </div>
                         </div>
@@ -533,6 +524,89 @@ export default function NotesPage() {
                       <p>No one else is currently viewing this note</p>
                     </div>
                   )}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Create Notebook Modal */}
+        {showCreateNotebookModal && (
+          <div className="notespage-modal-overlay" onClick={() => setShowCreateNotebookModal(false)}>
+            <div className="notespage-create-notebook-modal" onClick={(e) => e.stopPropagation()}>
+              <div className="notespage-modal-header">
+                <h3>Create New Notebook</h3>
+                <button 
+                  className="notespage-modal-close" 
+                  onClick={() => setShowCreateNotebookModal(false)}
+                >
+                  ×
+                </button>
+              </div>
+              <div className="notespage-modal-content">
+                <div className="notespage-modal-form">
+                  <input
+                    type="text"
+                    placeholder="Notebook name"
+                    value={newNotebookName}
+                    onChange={(e) => setNewNotebookName(e.target.value)}
+                    className="notespage-modal-input"
+                    onKeyPress={(e) => e.key === 'Enter' && handleCreateNotebook()}
+                    autoFocus
+                  />
+                  <div className="notespage-modal-actions">
+                    <Button onClick={handleCreateNotebook} loading={createNotebookMutation.isPending}>
+                      Create
+                    </Button>
+                    <Button
+                      variant="secondary"
+                      onClick={() => {
+                        setShowCreateNotebookModal(false);
+                        setNewNotebookName('');
+                      }}
+                    >
+                      Cancel
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Delete Note Modal */}
+        {showDeleteNoteModal && noteToDelete && (
+          <div className="notespage-modal-overlay" onClick={() => setShowDeleteNoteModal(false)}>
+            <div className="notespage-delete-note-modal" onClick={(e) => e.stopPropagation()}>
+              <div className="notespage-modal-header">
+                <h3>Delete Note</h3>
+                <button 
+                  className="notespage-modal-close" 
+                  onClick={() => setShowDeleteNoteModal(false)}
+                >
+                  ×
+                </button>
+              </div>
+              <div className="notespage-modal-content">
+                <p className="notespage-delete-message">
+                  Are you sure you want to move "{noteToDelete.title}" to trash?
+                </p>
+                <div className="notespage-modal-actions">
+                  <Button 
+                    onClick={() => deleteNoteMutation.mutate(noteToDelete.id)}
+                    loading={deleteNoteMutation.isPending}
+                  >
+                    Move to Trash
+                  </Button>
+                  <Button
+                    variant="secondary"
+                    onClick={() => {
+                      setShowDeleteNoteModal(false);
+                      setNoteToDelete(null);
+                    }}
+                  >
+                    Cancel
+                  </Button>
                 </div>
               </div>
             </div>

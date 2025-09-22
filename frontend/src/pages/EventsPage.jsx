@@ -102,7 +102,7 @@ export default function EventsPage() {
       <AppLayout>
         <div className="events-page">
           <div className="events-container">
-            <div className="error-state">
+            <div className="eventspage-error-state">
               <h3>Error loading data</h3>
               <p>Please try refreshing the page</p>
             </div>
@@ -156,7 +156,7 @@ export default function EventsPage() {
   if (isLoading) {
     return (
       <AppLayout>
-        <div className="events-loading">
+        <div className="eventspage-loading">
           <Lottie animationData={sectionLoader} style={{ width: 400, height: 400 }} />
         </div>
       </AppLayout>
@@ -165,19 +165,19 @@ export default function EventsPage() {
 
   return (
     <AppLayout>
-      <div className="events-page">
-        <div className="events-container">
-          <div className="events-header">
+      <div className="eventspage-page">
+        <div className="eventspage-container">
+          <div className="eventspage-header">
             <h1 className="font-h1">Events</h1>
-            <div className="header-actions">
+            <div className="eventspage-header-actions">
               <input
                 type="text"
                 placeholder="Search events..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="search-input"
+                className="eventspage-search-input"
               />
-              <button className="plus-icon" onClick={() => setIsCreating(true)}>
+              <button className="eventspage-plus-icon" onClick={() => setIsCreating(true)}>
                 +
               </button>
             </div>
@@ -187,18 +187,18 @@ export default function EventsPage() {
             <motion.div
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: 'auto' }}
-              className="create-event-form"
+              className="eventspage-create-event-form"
             >
               <input
                 type="text"
                 placeholder="Event name"
                 value={newEventName}
                 onChange={(e) => setNewEventName(e.target.value)}
-                className="event-input"
+                className="eventspage-event-input"
                 onKeyPress={(e) => e.key === 'Enter' && handleCreateEvent()}
                 autoFocus
               />
-              <div className="form-actions">
+              <div className="eventspage-form-actions">
                 <Button onClick={handleCreateEvent} loading={createEventMutation.isPending}>
                   Create
                 </Button>
@@ -215,7 +215,7 @@ export default function EventsPage() {
             </motion.div>
           )}
 
-          <div className="events-list">
+          <div className="eventspage-events-list">
             <AnimatePresence>
               {filteredEvents.map((event) => {
                 const eventTasks = tasks.filter(task => task.event_id === event.id);
@@ -227,23 +227,23 @@ export default function EventsPage() {
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -20 }}
-                    className="event-container"
+                    className="eventspage-event-container"
                   >
                     <div 
-                      className="event-card"
+                      className="eventspage-event-card"
                       onClick={(e) => {
                         e.stopPropagation();
                         setExpandedEvent(isExpanded ? null : event.id);
                       }}
                     >
-                      <div className="event-header">
-                        <div className="event-info">
-                          <h3 className="event-title">{event.title || event.name}</h3>
-                          <p className="event-meta">
+                      <div className="eventspage-event-header">
+                        <div className="eventspage-event-info">
+                          <h3 className="eventspage-event-title">{event.title || event.name}</h3>
+                          <p className="eventspage-event-meta">
                             {eventTasks.length} tasks
                           </p>
                         </div>
-                        <div className={`expand-icon ${isExpanded ? 'expanded' : ''}`}>▼</div>
+                        <div className={`eventspage-expand-icon ${isExpanded ? 'eventspage-expanded' : ''}`}>▼</div>
                       </div>
                     </div>
                     
@@ -252,13 +252,13 @@ export default function EventsPage() {
                         initial={{ opacity: 0, height: 0 }}
                         animate={{ opacity: 1, height: 'auto' }}
                         exit={{ opacity: 0, height: 0 }}
-                        className="tasks-grid"
+                        className="eventspage-tasks-grid"
                       >
                         {eventTasks.length > 0 ? (
                           eventTasks.map((task) => (
                             <motion.div
                               key={task.id}
-                              className="task-card"
+                              className="eventspage-task-card"
                               onClick={(e) => {
                                 e.stopPropagation();
                                 navigate(`/tasks/${task.id}`);
@@ -267,20 +267,20 @@ export default function EventsPage() {
                               initial={{ opacity: 0, y: 20 }}
                               animate={{ opacity: 1, y: 0 }}
                             >
-                              <h4 className="task-title">{task.title}</h4>
-                              <p className="task-preview">
+                              <h4 className="eventspage-task-title">{task.title}</h4>
+                              <p className="eventspage-task-preview">
                                 {task.description 
                                   ? task.description.substring(0, 80) + '...' 
                                   : 'No description'
                                 }
                               </p>
-                              <span className="task-date">
+                              <span className="eventspage-task-date">
                                 {new Date(task.updated_at).toLocaleDateString()}
                               </span>
                             </motion.div>
                           ))
                         ) : (
-                          <div className="empty-tasks">
+                          <div className="eventspage-empty-tasks">
                             <p>No tasks in this event</p>
                           </div>
                         )}
@@ -293,9 +293,9 @@ export default function EventsPage() {
           </div>
 
           {events.length === 0 && !isCreating && (
-            <div className="empty-state">
-              <h3 className="empty-state__title">No events yet</h3>
-              <p className="empty-state__description">
+            <div className="eventspage-empty-state">
+              <h3 className="eventspage-empty-state__title">No events yet</h3>
+              <p className="eventspage-empty-state__description">
                 Create your first event to organize your tasks
               </p>
             </div>

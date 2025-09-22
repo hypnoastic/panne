@@ -90,21 +90,21 @@ export default function LandingPage() {
   }, [currentSlide]);
 
   return (
-    <div className="landing-page">
+    <div className="landingpage-landing-page">
       {/* Fixed Background */}
-      <div className="fixed-background"></div>
+      <div className="landingpage-fixed-background"></div>
       
       {/* Navigation Arrows */}
-      <div className="nav-arrows">
+      <div className="landingpage-nav-arrows">
         <button 
-          className="nav-arrow left" 
+          className="landingpage-nav-arrow landingpage-left" 
           onClick={prevSlide}
           disabled={currentSlide === 1}
         >
           <img src={arrowImage} alt="Previous" />
         </button>
         <button 
-          className="nav-arrow right" 
+          className="landingpage-nav-arrow landingpage-right" 
           onClick={nextSlide}
           disabled={currentSlide === totalSlides}
         >
@@ -113,36 +113,36 @@ export default function LandingPage() {
       </div>
       
       {/* Slide Dots */}
-      <div className="slide-dots">
+      <div className="landingpage-slide-dots">
         {[1, 2, 3, 4, 5].map((slide) => (
           <div 
             key={slide}
-            className={`slide-dot ${currentSlide === slide ? 'active' : ''}`}
+            className={`landingpage-slide-dot ${currentSlide === slide ? 'landingpage-active' : ''}`}
             onClick={() => goToSlide(slide)}
           />
         ))}
       </div>
       {/* Floating Navigation */}
       <motion.header 
-        className="floating-nav"
+        className="landingpage-floating-nav"
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6 }}
       >
-        <div className="nav-content">
-          <div className="nav-logo">
+        <div className="landingpage-nav-content">
+          <div className="landingpage-nav-logo">
             <button onClick={() => handleNavClick(1)} style={{background: 'none', border: 'none'}}>
               <h1>Panne</h1>
             </button>
           </div>
-          <nav className="nav-links">
-            <button onClick={() => handleNavClick(2)} className="nav-link">Features</button>
-            <button onClick={() => handleNavClick(3)} className="nav-link">About</button>
-            <button onClick={() => handleNavClick(4)} className="nav-link">Testimonials</button>
-            <button onClick={() => handleNavClick(5)} className="nav-link">Contact</button>
+          <nav className="landingpage-nav-links">
+            <button onClick={() => handleNavClick(2)} className="landingpage-nav-link">Features</button>
+            <button onClick={() => handleNavClick(3)} className="landingpage-nav-link">About</button>
+            <button onClick={() => handleNavClick(4)} className="landingpage-nav-link">Testimonials</button>
+            <button onClick={() => handleNavClick(5)} className="landingpage-nav-link">Contact</button>
           </nav>
-          <div className="nav-auth">
-            <Link to="/login" className="nav-link">
+          <div className="landingpage-nav-auth">
+            <Link to="/login" className="landingpage-nav-link">
               {t('auth.login')}
             </Link>
             <Link to="/register">
@@ -153,20 +153,20 @@ export default function LandingPage() {
       </motion.header>
 
       {/* Sections Container */}
-      <div className={`sections-container slide-${currentSlide}`}>
+      <div className={`landingpage-sections-container landingpage-slide-${currentSlide}`}>
         {/* Hero Section */}
-        <section className="hero-section" id="home">
-        <div className="hero-content">
+        <section className="landingpage-hero-section" id="home">
+        <div className="landingpage-hero-content">
           <motion.div
-            className="hero-text"
+            className="landingpage-hero-text"
             initial={{ opacity: 0, y: 50 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8 }}
           >
 
-            <h1 className="hero-title">What will you <span className="green-text">Achieve</span> today?</h1>
-            <p className="hero-tagline">Remember everything and tackle any project with your notes, tasks, and schedule all in one place.</p>
-            <div className="hero-actions">
+            <h1 className="landingpage-hero-title">What will you <span className="landingpage-green-text">Achieve</span> today?</h1>
+            <p className="landingpage-hero-tagline">Remember everything and tackle any project with your notes, tasks, and schedule all in one place.</p>
+            <div className="landingpage-hero-actions">
               <Link to="/register">
                 <Button size="lg">Get Started Free</Button>
               </Link>
@@ -179,27 +179,27 @@ export default function LandingPage() {
       </section>
 
       {/* Features Section */}
-      <section className="features-section" id="features">
-        <div className="section-glass">
-          <h2 className="section-title">Features</h2>
-          <div className="features-grid">
-            <div className="feature-card">
-              <div className="feature-image">
+      <section className="landingpage-features-section" id="features">
+        <div className="landingpage-section-glass">
+          <h2 className="landingpage-section-title">Features</h2>
+          <div className="landingpage-features-grid">
+            <div className="landingpage-feature-card">
+              <div className="landingpage-feature-image">
                 <img src={docsImage} alt="Feature" />
               </div>
             </div>
-            <div className="feature-card">
-              <div className="feature-image">
+            <div className="landingpage-feature-card">
+              <div className="landingpage-feature-image">
                 <img src={journalImage} alt="Feature" />
               </div>
             </div>
-            <div className="feature-card">
-              <div className="feature-image">
+            <div className="landingpage-feature-card">
+              <div className="landingpage-feature-image">
                 <img src={researchImage} alt="Feature" />
               </div>
             </div>
-            <div className="feature-card">
-              <div className="feature-image">
+            <div className="landingpage-feature-card">
+              <div className="landingpage-feature-image">
                 <img src={thoughtsImage} alt="Feature" />
               </div>
             </div>
@@ -208,14 +208,14 @@ export default function LandingPage() {
       </section>
 
       {/* About Section */}
-      <section className="about-section" id="about">
-        <div className="section-glass">
-          <h2 className="section-title">About Panne</h2>
-          <div className="about-content">
-            <div className="about-image left">
+      <section className="landingpage-about-section" id="about">
+        <div className="landingpage-section-glass">
+          <h2 className="landingpage-section-title">About Panne</h2>
+          <div className="landingpage-about-content">
+            <div className="landingpage-about-image landingpage-left">
               <img src={rightImage} alt="About" />
             </div>
-            <div className="about-text">
+            <div className="landingpage-about-text">
               <p>
                 Panne is an intelligent, fluid, and reliable digital workspace that combines 
                 real-time collaboration with AI-powered assistance. Built with modern web 
@@ -230,7 +230,7 @@ export default function LandingPage() {
                 to your workflow and enhances your productivity.
               </p>
             </div>
-            <div className="about-image right">
+            <div className="landingpage-about-image landingpage-right">
               <img src={leftImage} alt="About" />
             </div>
           </div>
@@ -238,70 +238,70 @@ export default function LandingPage() {
       </section>
 
       {/* Testimonials Section */}
-      <section className="testimonials-section" id="testimonials">
-        <div className="section-glass">
-          <h2 className="section-title">What Our Users Say</h2>
-          <div className="testimonials-grid">
-            <div className="testimonial-card">
-              <div className="testimonial-header">
-                <div className="testimonial-avatar">SJ</div>
-                <div className="testimonial-info">
+      <section className="landingpage-testimonials-section" id="testimonials">
+        <div className="landingpage-section-glass">
+          <h2 className="landingpage-section-title">What Our Users Say</h2>
+          <div className="landingpage-testimonials-grid">
+            <div className="landingpage-testimonial-card">
+              <div className="landingpage-testimonial-header">
+                <div className="landingpage-testimonial-avatar">SJ</div>
+                <div className="landingpage-testimonial-info">
                   <h4>Sarah Johnson</h4>
-                  <p className="role">CEO at TechCorp</p>
+                  <p className="landingpage-role">CEO at TechCorp</p>
                 </div>
               </div>
-              <div className="testimonial-rating">
-                <span className="star">★</span>
-                <span className="star">★</span>
-                <span className="star">★</span>
-                <span className="star">★</span>
-                <span className="star">★</span>
+              <div className="landingpage-testimonial-rating">
+                <span className="landingpage-star">★</span>
+                <span className="landingpage-star">★</span>
+                <span className="landingpage-star">★</span>
+                <span className="landingpage-star">★</span>
+                <span className="landingpage-star">★</span>
               </div>
               <p>"Panne has revolutionized our team collaboration. The AI assistance is incredible and has streamlined our workflow beyond expectations. Our productivity has increased significantly since implementation."</p>
-              <div className="testimonial-footer">
-                <span className="testimonial-date">2 weeks ago</span>
+              <div className="landingpage-testimonial-footer">
+                <span className="landingpage-testimonial-date">2 weeks ago</span>
                 <span>Verified Purchase</span>
               </div>
             </div>
-            <div className="testimonial-card">
-              <div className="testimonial-header">
-                <div className="testimonial-avatar">MC</div>
-                <div className="testimonial-info">
+            <div className="landingpage-testimonial-card">
+              <div className="landingpage-testimonial-header">
+                <div className="landingpage-testimonial-avatar">MC</div>
+                <div className="landingpage-testimonial-info">
                   <h4>Mike Chen</h4>
-                  <p className="role">Senior Developer</p>
+                  <p className="landingpage-role">Senior Developer</p>
                 </div>
               </div>
-              <div className="testimonial-rating">
-                <span className="star">★</span>
-                <span className="star">★</span>
-                <span className="star">★</span>
-                <span className="star">★</span>
-                <span className="star">★</span>
+              <div className="landingpage-testimonial-rating">
+                <span className="landingpage-star">★</span>
+                <span className="landingpage-star">★</span>
+                <span className="landingpage-star">★</span>
+                <span className="landingpage-star">★</span>
+                <span className="landingpage-star">★</span>
               </div>
               <p>"The real-time editing features are seamless. Best collaboration tool we've used. The version control system is intuitive and the AI suggestions are spot-on for our development needs."</p>
-              <div className="testimonial-footer">
-                <span className="testimonial-date">1 month ago</span>
+              <div className="landingpage-testimonial-footer">
+                <span className="landingpage-testimonial-date">1 month ago</span>
                 <span>Verified Purchase</span>
               </div>
             </div>
-            <div className="testimonial-card">
-              <div className="testimonial-header">
-                <div className="testimonial-avatar">LW</div>
-                <div className="testimonial-info">
+            <div className="landingpage-testimonial-card">
+              <div className="landingpage-testimonial-header">
+                <div className="landingpage-testimonial-avatar">LW</div>
+                <div className="landingpage-testimonial-info">
                   <h4>Lisa Wang</h4>
-                  <p className="role">UX Designer</p>
+                  <p className="landingpage-role">UX Designer</p>
                 </div>
               </div>
-              <div className="testimonial-rating">
-                <span className="star">★</span>
-                <span className="star">★</span>
-                <span className="star">★</span>
-                <span className="star">★</span>
-                <span className="star">★</span>
+              <div className="landingpage-testimonial-rating">
+                <span className="landingpage-star">★</span>
+                <span className="landingpage-star">★</span>
+                <span className="landingpage-star">★</span>
+                <span className="landingpage-star">★</span>
+                <span className="landingpage-star">★</span>
               </div>
               <p>"Version control and AI suggestions have improved our productivity by 300%. The interface is beautiful and the collaborative features make remote work feel seamless and connected."</p>
-              <div className="testimonial-footer">
-                <span className="testimonial-date">3 weeks ago</span>
+              <div className="landingpage-testimonial-footer">
+                <span className="landingpage-testimonial-date">3 weeks ago</span>
                 <span>Verified Purchase</span>
               </div>
             </div>
@@ -310,29 +310,29 @@ export default function LandingPage() {
       </section>
 
       {/* Contact Section */}
-      <section className="contact-section" id="contact">
-        <div className="section-glass">
-          <h2 className="section-title">Contact Us</h2>
-          <div className="contact-content">
-            <div className="contact-info">
-              <div className="contact-info-icon">
+      <section className="landingpage-contact-section" id="contact">
+        <div className="landingpage-section-glass">
+          <h2 className="landingpage-section-title">Contact Us</h2>
+          <div className="landingpage-contact-content">
+            <div className="landingpage-contact-info">
+              <div className="landingpage-contact-info-icon">
                 <img src={infoImage} alt="Contact Info" />
               </div>
               <p>Ready to transform your collaboration experience?</p>
-              <a href="mailto:hello@panne.com" className="contact-email">
+              <a href="mailto:hello@panne.com" className="landingpage-contact-email">
                 hello@panne.com
               </a>
             </div>
-            <div className="contact-form-container">
-              <form className="contact-form">
-                <div className="form-group">
-                  <input type="text" className="form-input" placeholder="Your Name" />
-                  <input type="email" className="form-input" placeholder="Your Email" />
+            <div className="landingpage-contact-form-container">
+              <form className="landingpage-contact-form">
+                <div className="landingpage-form-group">
+                  <input type="text" className="landingpage-form-input" placeholder="Your Name" />
+                  <input type="email" className="landingpage-form-input" placeholder="Your Email" />
                 </div>
-                <input type="text" className="form-input" placeholder="Subject" />
-                <textarea className="form-textarea" placeholder="Your Message"></textarea>
+                <input type="text" className="landingpage-form-input" placeholder="Subject" />
+                <textarea className="landingpage-form-textarea" placeholder="Your Message"></textarea>
               </form>
-              <div className="contact-actions">
+              <div className="landingpage-contact-actions">
                 <Button size="lg">Send Message</Button>
               </div>
             </div>

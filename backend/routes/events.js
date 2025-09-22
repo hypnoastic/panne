@@ -53,7 +53,42 @@ router.put('/:id', async (req, res) => {
   }
 });
 
-// Delete event
+// Move event to trash
+router.post('/:id/trash', async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    // Get event details
+    const eventResult = await pool.query(
+      'SELECT * FROM events WHERE id = $1 AND user_id = $2::uuid',
+      [id, req.user.id]
+    );
+    
+    if (eventResult.rows.length === 0) {
+      return res.status(404).json({ error: 'Event not found' });
+    }
+    
+    const event = eventResult.rows[0];
+    
+    // Add to trash table
+    await pool.query(
+      'INSERT INTO trash (item_id, item_type, title, user_id) VALUES ($1, $2, $3, $4)',
+      [id, 'event', event.title, req.user.id]
+    );
+    
+    // Delete event
+    await pool.query(
+      'DELETE FROM events WHERE id = $1 AND user_id = $2::uuid',
+      [id, req.user.id]
+    );
+    
+    res.json({ message: 'Event moved to trash' });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Delete event (legacy endpoint)
 router.delete('/:id', async (req, res) => {
   try {
     const { id } = req.params;

@@ -80,6 +80,16 @@ const migrations = [
     password_hash VARCHAR(255),
     expires_at TIMESTAMPTZ,
     created_at TIMESTAMPTZ DEFAULT NOW()
+  )`,
+
+  // AI chats table
+  `CREATE TABLE IF NOT EXISTS ai_chats (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    title VARCHAR(255) NOT NULL,
+    messages JSONB NOT NULL DEFAULT '[]',
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
   )`
 ];
 

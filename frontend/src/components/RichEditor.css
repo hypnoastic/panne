@@ -1,6 +1,5 @@
 .rich-editor {
   border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: var(--radius-lg);
   background: rgba(0, 0, 0, 0.4);
   overflow: hidden;
   display: flex;
@@ -44,6 +43,31 @@
   flex: 1;
   position: relative;
   overflow: hidden;
+}
+
+.ai-floating-button {
+  position: absolute;
+  bottom: 20px;
+  right: 20px;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #2EC4B6 0%, #26A69A 100%);
+  border: none;
+  color: white;
+  font-size: 24px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all var(--transition-fast);
+  z-index: 100;
+}
+
+.ai-floating-button:hover {
+  background: linear-gradient(135deg, #26A69A 0%, #2EC4B6 100%);
+  transform: scale(1.1);
+
 }
 
 .editor-content .ProseMirror {
@@ -574,8 +598,8 @@
 /* Toolbar buttons styling */
 .toolbar-group button {
   padding: var(--spacing-2);
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(124, 124, 124, 0.1);
+
   border-radius: var(--radius-sm);
   color: #E6E8EB !important;
   font-size: var(--font-size-sm);

@@ -123,45 +123,45 @@ export default function SettingsPage() {
 
   return (
     <AppLayout>
-      <div className="settings-page">
-        <div className="settings-container">
-          <div className="settings-header">
+      <div className="settingspage-settings-page">
+        <div className="settingspage-settings-container">
+          <div className="settingspage-settings-header">
             <h1 className="font-h1">Settings</h1>
           </div>
 
-          <div className="settings-layout">
-            <div className="settings-sidebar">
+          <div className="settingspage-settings-layout">
+            <div className="settingspage-settings-sidebar">
               {tabs.map(tab => (
                 <button
                   key={tab.id}
-                  className={`settings-tab ${activeTab === tab.id ? 'active' : ''}`}
+                  className={`settingspage-settings-tab ${activeTab === tab.id ? 'settingspage-active' : ''}`}
                   onClick={() => setActiveTab(tab.id)}
                 >
-                  <span className="tab-icon">{tab.icon}</span>
-                  <span className="tab-label">{tab.label}</span>
+                  <span className="settingspage-tab-icon">{tab.icon}</span>
+                  <span className="settingspage-tab-label">{tab.label}</span>
                 </button>
               ))}
             </div>
 
-            <div className="settings-content">
+            <div className="settingspage-settings-content">
               {activeTab === 'profile' && (
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="settings-section"
+                  className="settingspage-settings-section"
                 >
                   <h2>Profile Information</h2>
                   
-                  <div className="avatar-section">
-                    <div className="avatar-preview">
+                  <div className="settingspage-avatar-section">
+                    <div className="settingspage-avatar-preview">
                       {user?.avatar_url ? (
                         <img src={user.avatar_url} alt="Avatar" />
                       ) : (
                         <span>{user?.name?.charAt(0)?.toUpperCase()}</span>
                       )}
                     </div>
-                    <div className="avatar-actions">
-                      <label className="avatar-upload">
+                    <div className="settingspage-avatar-actions">
+                      <label className="settingspage-avatar-upload">
                         <input
                           type="file"
                           accept="image/*"
@@ -175,33 +175,33 @@ export default function SettingsPage() {
                     </div>
                   </div>
 
-                  <form onSubmit={handleProfileSubmit} className="settings-form">
-                    <div className="form-group">
+                  <form onSubmit={handleProfileSubmit} className="settingspage-settings-form">
+                    <div className="settingspage-form-group">
                       <label>Full Name</label>
                       <input
                         type="text"
                         value={profileData.name}
                         onChange={(e) => setProfileData(prev => ({ ...prev, name: e.target.value }))}
-                        className="form-input"
+                        className="settingspage-form-input"
                       />
                     </div>
 
-                    <div className="form-group">
+                    <div className="settingspage-form-group">
                       <label>Email</label>
                       <input
                         type="email"
                         value={profileData.email}
                         onChange={(e) => setProfileData(prev => ({ ...prev, email: e.target.value }))}
-                        className="form-input"
+                        className="settingspage-form-input"
                       />
                     </div>
 
-                    <div className="form-group">
+                    <div className="settingspage-form-group">
                       <label>Language</label>
                       <select
                         value={profileData.language}
                         onChange={(e) => setProfileData(prev => ({ ...prev, language: e.target.value }))}
-                        className="form-select"
+                        className="settingspage-form-select"
                       >
                         <option value="en">English</option>
                         <option value="es">Spanish</option>
@@ -221,38 +221,38 @@ export default function SettingsPage() {
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="settings-section"
+                  className="settingspage-settings-section"
                 >
                   <h2>Security Settings</h2>
                   
-                  <form onSubmit={handlePasswordSubmit} className="settings-form">
-                    <div className="form-group">
+                  <form onSubmit={handlePasswordSubmit} className="settingspage-settings-form">
+                    <div className="settingspage-form-group">
                       <label>Current Password</label>
                       <input
                         type="password"
                         value={passwordData.currentPassword}
                         onChange={(e) => setPasswordData(prev => ({ ...prev, currentPassword: e.target.value }))}
-                        className="form-input"
+                        className="settingspage-form-input"
                       />
                     </div>
 
-                    <div className="form-group">
+                    <div className="settingspage-form-group">
                       <label>New Password</label>
                       <input
                         type="password"
                         value={passwordData.newPassword}
                         onChange={(e) => setPasswordData(prev => ({ ...prev, newPassword: e.target.value }))}
-                        className="form-input"
+                        className="settingspage-form-input"
                       />
                     </div>
 
-                    <div className="form-group">
+                    <div className="settingspage-form-group">
                       <label>Confirm New Password</label>
                       <input
                         type="password"
                         value={passwordData.confirmPassword}
                         onChange={(e) => setPasswordData(prev => ({ ...prev, confirmPassword: e.target.value }))}
-                        className="form-input"
+                        className="settingspage-form-input"
                       />
                     </div>
 
@@ -267,36 +267,36 @@ export default function SettingsPage() {
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="settings-section"
+                  className="settingspage-settings-section"
                 >
                   <h2>Preferences</h2>
                   
-                  <div className="preference-group">
+                  <div className="settingspage-preference-group">
                     <h3>Notifications</h3>
-                    <div className="preference-item">
-                      <label className="checkbox-label">
+                    <div className="settingspage-preference-item">
+                      <label className="settingspage-checkbox-label">
                         <input type="checkbox" defaultChecked />
                         <span>Email notifications</span>
                       </label>
                     </div>
-                    <div className="preference-item">
-                      <label className="checkbox-label">
+                    <div className="settingspage-preference-item">
+                      <label className="settingspage-checkbox-label">
                         <input type="checkbox" defaultChecked />
                         <span>Push notifications</span>
                       </label>
                     </div>
                   </div>
 
-                  <div className="preference-group">
+                  <div className="settingspage-preference-group">
                     <h3>Editor</h3>
-                    <div className="preference-item">
-                      <label className="checkbox-label">
+                    <div className="settingspage-preference-item">
+                      <label className="settingspage-checkbox-label">
                         <input type="checkbox" defaultChecked />
                         <span>Auto-save</span>
                       </label>
                     </div>
-                    <div className="preference-item">
-                      <label className="checkbox-label">
+                    <div className="settingspage-preference-item">
+                      <label className="settingspage-checkbox-label">
                         <input type="checkbox" />
                         <span>Spell check</span>
                       </label>

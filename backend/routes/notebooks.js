@@ -10,7 +10,7 @@ router.get('/', async (req, res) => {
       SELECT nb.*, COUNT(n.id) as note_count 
       FROM notebooks nb 
       LEFT JOIN notes n ON nb.id = n.notebook_id 
-      WHERE nb.owner_id = $1 
+      WHERE nb.owner_id = $1 AND nb.deleted_at IS NULL
       GROUP BY nb.id 
       ORDER BY nb.updated_at DESC
     `, [req.user.id]);
@@ -60,6 +60,42 @@ router.put('/:id', async (req, res) => {
   } catch (error) {
     console.error('Update notebook error:', error);
     res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Move notebook to trash
+router.post('/:id/trash', async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    // Get notebook details
+    const notebookResult = await pool.query(
+      'SELECT * FROM notebooks WHERE id = $1 AND owner_id = $2',
+      [id, req.user.id]
+    );
+    
+    if (notebookResult.rows.length === 0) {
+      return res.status(404).json({ error: 'Notebook not found' });
+    }
+    
+    const notebook = notebookResult.rows[0];
+    
+    // Add to trash table
+    await pool.query(
+      'INSERT INTO trash (user_id, item_id, item_type, title, data, deleted_at) VALUES ($1, $2, $3, $4, $5, NOW())',
+      [req.user.id, id, 'notebook', notebook.title, JSON.stringify(notebook)]
+    );
+    
+    // Mark as deleted
+    await pool.query(
+      'UPDATE notebooks SET deleted_at = NOW() WHERE id = $1 AND owner_id = $2',
+      [id, req.user.id]
+    );
+    
+    res.json({ message: 'Notebook moved to trash successfully' });
+  } catch (error) {
+    console.error('Move notebook to trash error:', error);
+    res.status(500).json({ error: 'Failed to move notebook to trash' });
   }
 });
 

@@ -12,10 +12,12 @@ import './NotebooksPage.css';
 export default function NotebooksPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const [isCreating, setIsCreating] = useState(false);
+  const [showCreateModal, setShowCreateModal] = useState(false);
   const [newNotebookName, setNewNotebookName] = useState('');
   const [expandedNotebook, setExpandedNotebook] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [notebookToDelete, setNotebookToDelete] = useState(null);
 
   const { data: notebooks = [], isLoading } = useQuery({
     queryKey: ['notebooks'],
@@ -31,8 +33,23 @@ export default function NotebooksPage() {
     mutationFn: notebooksApi.create,
     onSuccess: () => {
       queryClient.invalidateQueries(['notebooks']);
-      setIsCreating(false);
+      setShowCreateModal(false);
       setNewNotebookName('');
+    }
+  });
+
+  const deleteNotebookMutation = useMutation({
+    mutationFn: (id) => fetch(`http://localhost:5000/api/notebooks/${id}/trash`, {
+      method: 'POST',
+      credentials: 'include'
+    }),
+    onSuccess: () => {
+      queryClient.invalidateQueries(['notebooks']);
+      setShowDeleteModal(false);
+      setNotebookToDelete(null);
+      if (expandedNotebook === notebookToDelete) {
+        setExpandedNotebook(null);
+      }
     }
   });
 
@@ -52,7 +69,7 @@ export default function NotebooksPage() {
   if (isLoading) {
     return (
       <AppLayout>
-        <div className="notebooks-loading">
+        <div className="notebookspage-loading">
           <Lottie animationData={sectionLoader} style={{ width: 400, height: 400 }} />
         </div>
       </AppLayout>
@@ -61,57 +78,27 @@ export default function NotebooksPage() {
 
   return (
     <AppLayout>
-      <div className="notebooks-page">
-        <div className="notebooks-container">
-          <div className="notebooks-header">
+      <div className="notebookspage-page">
+        <div className="notebookspage-container">
+          <div className="notebookspage-header">
             <h1 className="font-h1">Notebooks</h1>
-            <div className="header-actions">
+            <div className="notebookspage-header-actions">
               <input
                 type="text"
                 placeholder="Search notebooks..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="search-input"
+                className="notebookspage-search-input"
               />
-              <button className="plus-icon" onClick={() => setIsCreating(true)}>
+              <button className="notebookspage-plus-icon" onClick={() => setShowCreateModal(true)}>
                 +
               </button>
             </div>
           </div>
 
-          {isCreating && (
-            <motion.div
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: 'auto' }}
-              className="create-notebook-form"
-            >
-              <input
-                type="text"
-                placeholder="Notebook name"
-                value={newNotebookName}
-                onChange={(e) => setNewNotebookName(e.target.value)}
-                className="notebook-input"
-                onKeyPress={(e) => e.key === 'Enter' && handleCreateNotebook()}
-                autoFocus
-              />
-              <div className="form-actions">
-                <Button onClick={handleCreateNotebook} loading={createNotebookMutation.isPending}>
-                  Create
-                </Button>
-                <Button
-                  variant="secondary"
-                  onClick={() => {
-                    setIsCreating(false);
-                    setNewNotebookName('');
-                  }}
-                >
-                  Cancel
-                </Button>
-              </div>
-            </motion.div>
-          )}
 
-          <div className="notebooks-list">
+
+          <div className="notebookspage-notebooks-list">
             <AnimatePresence>
               {filteredNotebooks.map((notebook) => {
                 console.log('Notebook:', notebook);
@@ -127,24 +114,39 @@ export default function NotebooksPage() {
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -20 }}
-                    className="notebook-container"
+                    className="notebookspage-notebook-container"
                   >
                     <div 
-                      className="notebook-card"
+                      className="notebookspage-notebook-card"
                       onClick={(e) => {
                         e.stopPropagation();
                         setExpandedNotebook(isExpanded ? null : notebook.id);
                       }}
                     >
-                      <div className="notebook-header">
+                      <div className="notebookspage-notebook-header">
   
-                        <div className="notebook-info">
-                          <h3 className="notebook-title">{notebook.title}</h3>
-                          <p className="notebook-meta">
+                        <div className="notebookspage-notebook-info">
+                          <h3 className="notebookspage-notebook-title">{notebook.title}</h3>
+                          <p className="notebookspage-notebook-meta">
                             {notebookNotes.length} notes
                           </p>
                         </div>
-                        <div className={`expand-icon ${isExpanded ? 'expanded' : ''}`}>▼</div>
+                        <button
+                          className="notebookspage-delete-notebook"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setNotebookToDelete(notebook.id);
+                            setShowDeleteModal(true);
+                          }}
+                          title="Move to trash"
+                        >
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <polyline points="3,6 5,6 21,6"></polyline>
+                            <path d="M19,6v14a2,2,0,0,1-2,2H7a2,2,0,0,1-2-2V6m3,0V4a2,2,0,0,1,2-2h4a2,2,0,0,1,2,2V6"></path>
+                            <line x1="10" y1="11" x2="10" y2="17"></line>
+                            <line x1="14" y1="11" x2="14" y2="17"></line>
+                          </svg>
+                        </button>
                       </div>
                     </div>
                     
@@ -153,13 +155,13 @@ export default function NotebooksPage() {
                         initial={{ opacity: 0, height: 0 }}
                         animate={{ opacity: 1, height: 'auto' }}
                         exit={{ opacity: 0, height: 0 }}
-                        className="notes-grid"
+                        className="notebookspage-notes-grid"
                       >
                         {notebookNotes.length > 0 ? (
                           notebookNotes.map((note) => (
                             <motion.div
                               key={note.id}
-                              className="note-card"
+                              className="notebookspage-note-card"
                               onClick={(e) => {
                                 e.stopPropagation();
                                 navigate(`/notes/${note.id}`);
@@ -168,20 +170,20 @@ export default function NotebooksPage() {
                               initial={{ opacity: 0, y: 20 }}
                               animate={{ opacity: 1, y: 0 }}
                             >
-                              <h4 className="note-title">{note.title}</h4>
-                              <p className="note-preview">
+                              <h4 className="notebookspage-note-title">{note.title}</h4>
+                              <p className="notebookspage-note-preview">
                                 {note.content && typeof note.content === 'string' 
                                   ? note.content.replace(/<[^>]*>/g, '').substring(0, 80) + '...' 
                                   : 'No content'
                                 }
                               </p>
-                              <span className="note-date">
+                              <span className="notebookspage-note-date">
                                 {new Date(note.updated_at).toLocaleDateString()}
                               </span>
                             </motion.div>
                           ))
                         ) : (
-                          <div className="empty-notes">
+                          <div className="notebookspage-empty-notes">
                             <p>No notes in this notebook</p>
                           </div>
                         )}
@@ -193,16 +195,90 @@ export default function NotebooksPage() {
             </AnimatePresence>
           </div>
 
-          {notebooks.length === 0 && !isCreating && (
-            <div className="empty-state">
+          {notebooks.length === 0 && (
+            <div className="notebookspage-empty-state">
   
-              <h3 className="empty-state__title">No notebooks yet</h3>
-              <p className="empty-state__description">
+              <h3 className="notebookspage-empty-state__title">No notebooks yet</h3>
+              <p className="notebookspage-empty-state__description">
                 Create your first notebook to organize your notes
               </p>
             </div>
           )}
         </div>
+
+        {/* Create Notebook Modal */}
+        {showCreateModal && (
+          <div className="notebookspage-modal-overlay" onClick={() => setShowCreateModal(false)}>
+            <div className="notebookspage-create-modal" onClick={(e) => e.stopPropagation()}>
+              <div className="notebookspage-modal-header">
+                <h3>Create New Notebook</h3>
+                <button 
+                  className="notebookspage-close-button" 
+                  onClick={() => setShowCreateModal(false)}
+                >
+                  ×
+                </button>
+              </div>
+              <div className="notebookspage-modal-content">
+                <div className="notebookspage-modal-form">
+                  <input
+                    type="text"
+                    placeholder="Notebook name"
+                    value={newNotebookName}
+                    onChange={(e) => setNewNotebookName(e.target.value)}
+                    className="notebookspage-modal-input"
+                    onKeyPress={(e) => e.key === 'Enter' && handleCreateNotebook()}
+                    autoFocus
+                  />
+                  <div className="notebookspage-modal-actions">
+                    <Button onClick={handleCreateNotebook} loading={createNotebookMutation.isPending}>
+                      Create
+                    </Button>
+                    <Button
+                      variant="secondary"
+                      onClick={() => {
+                        setShowCreateModal(false);
+                        setNewNotebookName('');
+                      }}
+                    >
+                      Cancel
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Delete Notebook Modal */}
+        {showDeleteModal && (
+          <div className="notebookspage-modal-overlay" onClick={() => setShowDeleteModal(false)}>
+            <div className="notebookspage-delete-modal" onClick={(e) => e.stopPropagation()}>
+              <div className="notebookspage-modal-header">
+                <h3>Move Notebook to Trash</h3>
+                <button 
+                  className="notebookspage-close-button" 
+                  onClick={() => setShowDeleteModal(false)}
+                >
+                  ×
+                </button>
+              </div>
+              <div className="notebookspage-modal-content">
+                <p className="notebookspage-delete-message">
+                  Are you sure you want to move this notebook to trash?
+                </p>
+                <div className="notebookspage-modal-actions">
+                  <Button onClick={() => deleteNotebookMutation.mutate(notebookToDelete)} disabled={deleteNotebookMutation.isPending}>
+                    {deleteNotebookMutation.isPending ? 'Moving to Trash...' : 'Move to Trash'}
+                  </Button>
+                  <Button variant="secondary" onClick={() => setShowDeleteModal(false)}>
+                    Cancel
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </AppLayout>
   );

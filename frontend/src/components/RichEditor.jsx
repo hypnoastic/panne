@@ -481,26 +481,44 @@ export default function RichEditor({ content, onChange, placeholder = "Start wri
             className={editor.isActive('link') ? 'is-active' : ''}
             title="Insert Link"
           >
-            Link
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
+              <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
+            </svg>
           </button>
           <button
             onClick={() => fileInputRef.current?.click()}
             title="Insert Image"
             disabled={uploadImageMutation.isPending}
           >
-            {uploadImageMutation.isPending ? '...' : 'IMG'}
+            {uploadImageMutation.isPending ? (
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <circle cx="12" cy="12" r="3"></circle>
+                <path d="M12 1v6m0 6v6m11-7h-6m-6 0H1"></path>
+              </svg>
+            ) : (
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                <polyline points="21,15 16,10 5,21"></polyline>
+              </svg>
+            )}
           </button>
           <button
             onClick={() => setShowTableModal(true)}
             title="Insert Table"
           >
-            Table
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M9 3H5a2 2 0 0 0-2 2v4m6-6h10a2 2 0 0 1 2 2v4M9 3v18m0 0h10a2 2 0 0 0 2-2V9M9 21H5a2 2 0 0 1-2-2V9m0 0h18"></path>
+            </svg>
           </button>
           <button
             onClick={() => editor.chain().focus().setHorizontalRule().run()}
             title="Insert Divider"
           >
-            ─ Divider
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <line x1="3" y1="12" x2="21" y2="12"></line>
+            </svg>
           </button>
         </div>
 
@@ -511,27 +529,24 @@ export default function RichEditor({ content, onChange, placeholder = "Start wri
             className={editor.isActive('blockquote') ? 'is-active' : ''}
             title="Quote"
           >
-            " Quote
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M3 21c3 0 7-1 7-8V5c0-1.25-.756-2.017-2-2H4c-1.25 0-2 .75-2 1.972V11c0 1.25.75 2 2 2 1 0 1 0 1 1v1c0 1-1 2-2 2s-1 .008-1 1.031V20c0 1 0 1 1 1z"></path>
+              <path d="M15 21c3 0 7-1 7-8V5c0-1.25-.757-2.017-2-2h-4c-1.25 0-2 .75-2 1.972V11c0 1.25.75 2 2 2h.75c0 2.25.25 4-2.75 4v3c0 1 0 1 1 1z"></path>
+            </svg>
           </button>
           <button
             onClick={() => editor.chain().focus().toggleCodeBlock().run()}
             className={editor.isActive('codeBlock') ? 'is-active' : ''}
             title="Code Block"
           >
-            Code
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <polyline points="16,18 22,12 16,6"></polyline>
+              <polyline points="8,6 2,12 8,18"></polyline>
+            </svg>
           </button>
         </div>
 
-        {/* AI Assistant */}
-        <div className="toolbar-group">
-          <button
-            onClick={handleOpenAI}
-            className="ai-button"
-            title="AI Assistant"
-          >
-            ✦ AI
-          </button>
-        </div>
+
 
 
       </div>
@@ -539,6 +554,15 @@ export default function RichEditor({ content, onChange, placeholder = "Start wri
       {/* Editor Content */}
       <div className="editor-content-wrapper">
         <EditorContent editor={editor} className="editor-content" />
+
+        {/* Floating AI Button */}
+        <button
+          onClick={handleOpenAI}
+          className="ai-floating-button"
+          title="AI Assistant"
+        >
+          ✦
+        </button>
 
         {/* AI Popup */}
         {showAIPopup && (

@@ -7,53 +7,76 @@ import Button from '../components/Button';
 import sectionLoader from '../assets/section_loader.json';
 import './TrashPage.css';
 
-// Mock API for trash items
+// Trash API
 const trashApi = {
-  getAll: async () => {
-    // Mock data - replace with actual API
-    return [
-      { id: 1, type: 'note', title: 'Deleted Note 1', deletedAt: new Date().toISOString() },
-      { id: 2, type: 'notebook', title: 'Old Notebook', deletedAt: new Date().toISOString() },
-      { id: 3, type: 'agenda', title: 'Completed Agenda', deletedAt: new Date().toISOString() },
-      { id: 4, type: 'task', title: 'Old Task', deletedAt: new Date().toISOString() },
-    ];
+  getAll: async (search = '', type = 'all') => {
+    const params = new URLSearchParams();
+    if (search) params.append('search', search);
+    if (type !== 'all') params.append('type', type);
+    
+    const response = await fetch(`http://localhost:5000/api/trash?${params}`, {
+      credentials: 'include'
+    });
+    if (!response.ok) throw new Error('Failed to fetch trash items');
+    return response.json();
   },
   restore: async (id) => {
-    // Mock restore - replace with actual API
-    return { success: true };
+    const response = await fetch(`http://localhost:5000/api/trash/${id}/restore`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include'
+    });
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to restore item');
+    }
+    return response.json();
   },
   permanentDelete: async (id) => {
-    // Mock delete - replace with actual API
-    return { success: true };
+    const response = await fetch(`http://localhost:5000/api/trash/${id}`, {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include'
+    });
+    if (!response.ok) throw new Error('Failed to delete item');
+    return response.json();
   }
 };
 
 export default function TrashPage() {
   const queryClient = useQueryClient();
   const [selectedType, setSelectedType] = useState('all');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');
 
   const { data: trashItems = [], isLoading } = useQuery({
-    queryKey: ['trash'],
-    queryFn: trashApi.getAll
+    queryKey: ['trash', searchTerm, selectedType],
+    queryFn: () => trashApi.getAll(searchTerm, selectedType)
   });
 
   const restoreMutation = useMutation({
-    mutationFn: trashApi.restore,
+    mutationFn: ({ id }) => trashApi.restore(id),
     onSuccess: () => {
       queryClient.invalidateQueries(['trash']);
+      setErrorMessage('');
+    },
+    onError: (error) => {
+      setErrorMessage(error.message);
     }
   });
 
   const deleteMutation = useMutation({
-    mutationFn: trashApi.permanentDelete,
+    mutationFn: ({ id }) => trashApi.permanentDelete(id),
     onSuccess: () => {
       queryClient.invalidateQueries(['trash']);
+      setErrorMessage('');
+    },
+    onError: (error) => {
+      setErrorMessage(error.message);
     }
   });
 
-  const filteredItems = selectedType === 'all' 
-    ? trashItems 
-    : trashItems.filter(item => item.type === selectedType);
+  const filteredItems = trashItems;
 
   const getTypeIcon = (type) => {
     switch (type) {
@@ -65,9 +88,23 @@ export default function TrashPage() {
         return '📅';
       case 'task':
         return '✅';
+      case 'event':
+        return '📅';
+      case 'chat':
+        return '💬';
       default:
         return '📄';
     }
+  };
+
+  const handleRestore = (item) => {
+    setErrorMessage('');
+    restoreMutation.mutate({ id: item.id });
+  };
+
+  const handleDelete = (item) => {
+    setErrorMessage('');
+    deleteMutation.mutate({ id: item.id });
   };
 
   if (isLoading) {
@@ -98,17 +135,34 @@ export default function TrashPage() {
             </div>
           </div>
 
-          <div className="filter-tabs">
-            {['all', 'note', 'notebook', 'agenda', 'task'].map(type => (
-              <button
-                key={type}
-                className={`filter-tab ${selectedType === type ? 'active' : ''}`}
-                onClick={() => setSelectedType(type)}
-              >
-                {type === 'all' ? 'All Items' : `${type.charAt(0).toUpperCase() + type.slice(1)}s`}
-              </button>
-            ))}
+          <div className="search-and-filters">
+            <div className="search-box">
+              <input
+                type="text"
+                placeholder="Search trash..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="search-input"
+              />
+            </div>
+            <div className="filter-tabs">
+              {['all', 'note', 'notebook', 'agenda', 'task', 'event', 'chat'].map(type => (
+                <button
+                  key={type}
+                  className={`filter-tab ${selectedType === type ? 'active' : ''}`}
+                  onClick={() => setSelectedType(type)}
+                >
+                  {type === 'all' ? 'All Items' : `${type?.charAt(0).toUpperCase() + type?.slice(1) || 'Item'}s`}
+                </button>
+              ))}
+            </div>
           </div>
+
+          {errorMessage && (
+            <div className="error-message">
+              {errorMessage}
+            </div>
+          )}
 
           <div className="trash-list">
             <AnimatePresence>
@@ -121,26 +175,26 @@ export default function TrashPage() {
                   className="trash-item"
                 >
                   <div className="item-info">
-                    <div className="item-icon">{getTypeIcon(item.type)}</div>
+                    <div className="item-icon">{getTypeIcon(item.item_type || 'unknown')}</div>
                     <div className="item-details">
                       <h3 className="item-title">{item.title}</h3>
                       <p className="item-meta">
-                        {item.type.charAt(0).toUpperCase() + item.type.slice(1)} • 
-                        Deleted {new Date(item.deletedAt).toLocaleDateString()}
+                        {item.item_type?.charAt(0).toUpperCase() + item.item_type?.slice(1) || 'Item'} • 
+                        Deleted {new Date(item.deleted_at).toLocaleDateString()}
                       </p>
                     </div>
                   </div>
                   <div className="item-actions">
                     <Button
                       variant="secondary"
-                      onClick={() => restoreMutation.mutate(item.id)}
+                      onClick={() => handleRestore(item)}
                       loading={restoreMutation.isPending}
                     >
                       Restore
                     </Button>
                     <Button
                       variant="danger"
-                      onClick={() => deleteMutation.mutate(item.id)}
+                      onClick={() => handleDelete(item)}
                       loading={deleteMutation.isPending}
                     >
                       Delete Forever
@@ -155,10 +209,10 @@ export default function TrashPage() {
             <div className="empty-state">
               <div className="empty-icon">🗑️</div>
               <h3 className="empty-state__title">
-                {selectedType === 'all' ? 'Trash is empty' : `No deleted ${selectedType}s`}
+                {searchTerm ? 'No matching items found' : selectedType === 'all' ? 'Trash is empty' : `No deleted ${selectedType}s`}
               </h3>
               <p className="empty-state__description">
-                Deleted items will appear here and can be restored within 30 days
+                {searchTerm ? 'Try adjusting your search terms' : 'Deleted items will appear here and can be restored within 30 days'}
               </p>
             </div>
           )}

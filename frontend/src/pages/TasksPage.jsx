@@ -85,8 +85,8 @@ const tasksApi = {
     return response.json();
   },
   delete: async (id) => {
-    const response = await fetch(`http://localhost:5000/api/tasks/${id}`, {
-      method: 'DELETE',
+    const response = await fetch(`http://localhost:5000/api/tasks/${id}/trash`, {
+      method: 'POST',
       credentials: 'include'
     });
     if (!response.ok) throw new Error('Failed to delete task');
@@ -138,10 +138,12 @@ export default function TasksPage() {
   const queryClient = useQueryClient();
   const [selectedAgenda, setSelectedAgenda] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
-  const [isCreatingAgenda, setIsCreatingAgenda] = useState(false);
+  const [showCreateAgendaModal, setShowCreateAgendaModal] = useState(false);
   const [isCreatingTask, setIsCreatingTask] = useState(false);
   const [newAgendaName, setNewAgendaName] = useState('');
   const [newTaskName, setNewTaskName] = useState('');
+  const [showDeleteTaskModal, setShowDeleteTaskModal] = useState(false);
+  const [taskToDelete, setTaskToDelete] = useState(null);
 
   const { data: agendas = [] } = useQuery({
     queryKey: ['agendas'],
@@ -169,7 +171,7 @@ export default function TasksPage() {
     mutationFn: agendasApi.create,
     onSuccess: () => {
       queryClient.invalidateQueries(['agendas']);
-      setIsCreatingAgenda(false);
+      setShowCreateAgendaModal(false);
       setNewAgendaName('');
     }
   });
@@ -193,7 +195,11 @@ export default function TasksPage() {
     mutationFn: tasksApi.delete,
     onSuccess: () => {
       queryClient.invalidateQueries(['tasks']);
-      navigate('/tasks');
+      setShowDeleteTaskModal(false);
+      setTaskToDelete(null);
+      if (taskId === taskToDelete?.id) {
+        navigate('/tasks');
+      }
     }
   });
 
@@ -258,43 +264,13 @@ export default function TasksPage() {
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => setIsCreatingAgenda(true)}
+                onClick={() => setShowCreateAgendaModal(true)}
               >
                 +
               </Button>
             </div>
 
-            {isCreatingAgenda && (
-              <motion.div
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: 'auto' }}
-                className="create-agenda"
-              >
-                <input
-                  type="text"
-                  placeholder="Agenda name"
-                  value={newAgendaName}
-                  onChange={(e) => setNewAgendaName(e.target.value)}
-                  className="create-agenda__input"
-                  onKeyPress={(e) => e.key === 'Enter' && handleCreateAgenda()}
-                />
-                <div className="create-agenda__actions">
-                  <Button size="sm" onClick={handleCreateAgenda}>
-                    Create
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => {
-                      setIsCreatingAgenda(false);
-                      setNewAgendaName('');
-                    }}
-                  >
-                    Cancel
-                  </Button>
-                </div>
-              </motion.div>
-            )}
+
 
             <div className="agendas-list">
               <button
@@ -333,9 +309,13 @@ export default function TasksPage() {
                   className="search-input"
                 />
               </div>
-              <Button onClick={() => setIsCreatingTask(true)} loading={createTaskMutation.isPending}>
-                New Task
-              </Button>
+              <button 
+                className="tasks-plus-icon" 
+                onClick={handleCreateTask}
+                disabled={createTaskMutation.isPending}
+              >
+                +
+              </button>
             </div>
 
             <div className="tasks-items">
@@ -362,6 +342,22 @@ export default function TasksPage() {
                         </span>
                       </div>
                     </Link>
+                    <button
+                      className="task-delete-btn"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        setTaskToDelete(task);
+                        setShowDeleteTaskModal(true);
+                      }}
+                    >
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <polyline points="3,6 5,6 21,6"></polyline>
+                        <path d="M19,6v14a2,2,0,0,1-2,2H7a2,2,0,0,1-2-2V6m3,0V4a2,2,0,0,1,2-2h4a2,2,0,0,1,2,2V6"></path>
+                        <line x1="10" y1="11" x2="10" y2="17"></line>
+                        <line x1="14" y1="11" x2="14" y2="17"></line>
+                      </svg>
+                    </button>
                   </motion.div>
                 ))}
               </AnimatePresence>
@@ -400,9 +396,8 @@ export default function TasksPage() {
                       variant="ghost" 
                       size="sm"
                       onClick={() => {
-                        if (confirm('Delete this task?')) {
-                          deleteTaskMutation.mutate(currentTask.id);
-                        }
+                        setTaskToDelete(currentTask);
+                        setShowDeleteTaskModal(true);
                       }}
                       loading={deleteTaskMutation.isPending}
                     >
@@ -446,7 +441,7 @@ export default function TasksPage() {
               <div className="editor-empty">
                 <div className="empty-state">
                   <div className="empty-state__image">
-                    <Lottie animationData={eventsAnimation} style={{ width: 200, height: 150 }} />
+                    <Lottie animationData={eventsAnimation} style={{ width: 400, height: 300 }} />
                   </div>
                   <h4 className="empty-state__title">Select a task to start editing</h4>
                   <p className="empty-state__description">
@@ -457,6 +452,89 @@ export default function TasksPage() {
             )}
           </div>
         </div>
+
+        {/* Create Agenda Modal */}
+        {showCreateAgendaModal && (
+          <div className="taskspage-modal-overlay" onClick={() => setShowCreateAgendaModal(false)}>
+            <div className="taskspage-create-agenda-modal" onClick={(e) => e.stopPropagation()}>
+              <div className="taskspage-modal-header">
+                <h3>Create New Agenda</h3>
+                <button 
+                  className="taskspage-modal-close" 
+                  onClick={() => setShowCreateAgendaModal(false)}
+                >
+                  ×
+                </button>
+              </div>
+              <div className="taskspage-modal-content">
+                <div className="taskspage-modal-form">
+                  <input
+                    type="text"
+                    placeholder="Agenda name"
+                    value={newAgendaName}
+                    onChange={(e) => setNewAgendaName(e.target.value)}
+                    className="taskspage-modal-input"
+                    onKeyPress={(e) => e.key === 'Enter' && handleCreateAgenda()}
+                    autoFocus
+                  />
+                  <div className="taskspage-modal-actions">
+                    <Button onClick={handleCreateAgenda} loading={createAgendaMutation.isPending}>
+                      Create
+                    </Button>
+                    <Button
+                      variant="secondary"
+                      onClick={() => {
+                        setShowCreateAgendaModal(false);
+                        setNewAgendaName('');
+                      }}
+                    >
+                      Cancel
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Delete Task Modal */}
+        {showDeleteTaskModal && taskToDelete && (
+          <div className="taskspage-modal-overlay" onClick={() => setShowDeleteTaskModal(false)}>
+            <div className="taskspage-delete-task-modal" onClick={(e) => e.stopPropagation()}>
+              <div className="taskspage-modal-header">
+                <h3>Delete Task</h3>
+                <button 
+                  className="taskspage-modal-close" 
+                  onClick={() => setShowDeleteTaskModal(false)}
+                >
+                  ×
+                </button>
+              </div>
+              <div className="taskspage-modal-content">
+                <p className="taskspage-delete-message">
+                  Are you sure you want to move "{taskToDelete.title}" to trash?
+                </p>
+                <div className="taskspage-modal-actions">
+                  <Button 
+                    onClick={() => deleteTaskMutation.mutate(taskToDelete.id)}
+                    loading={deleteTaskMutation.isPending}
+                  >
+                    Move to Trash
+                  </Button>
+                  <Button
+                    variant="secondary"
+                    onClick={() => {
+                      setShowDeleteTaskModal(false);
+                      setTaskToDelete(null);
+                    }}
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </AppLayout>
   );
