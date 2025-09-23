@@ -6,10 +6,13 @@ const router = express.Router();
 // Get all tasks for user
 router.get('/', async (req, res) => {
   try {
-    const result = await pool.query(
-      'SELECT * FROM tasks WHERE user_id = $1 ORDER BY created_at DESC',
-      [req.user.id]
-    );
+    const result = await pool.query(`
+      SELECT t.*, a.name as agenda_name 
+      FROM tasks t 
+      LEFT JOIN agendas a ON t.agenda_id = a.id 
+      WHERE t.user_id = $1 
+      ORDER BY t.created_at DESC
+    `, [req.user.id]);
     res.json(result.rows);
   } catch (error) {
     res.status(500).json({ error: error.message });

@@ -6,7 +6,7 @@ import Lottie from 'lottie-react';
 import { notebooksApi, notesApi } from '../services/api';
 import AppLayout from '../components/AppLayout';
 import Button from '../components/Button';
-import sectionLoader from '../assets/section_loader.json';
+import SectionLoader from '../components/SectionLoader';
 import './NotebooksPage.css';
 
 export default function NotebooksPage() {
@@ -69,9 +69,7 @@ export default function NotebooksPage() {
   if (isLoading) {
     return (
       <AppLayout>
-        <div className="notebookspage-loading">
-          <Lottie animationData={sectionLoader} style={{ width: 400, height: 400 }} />
-        </div>
+        <SectionLoader size="lg" />
       </AppLayout>
     );
   }

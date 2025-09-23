@@ -4,8 +4,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useLocation } from 'react-router-dom';
 import Lottie from 'lottie-react';
 import AppLayout from '../components/AppLayout';
+import SectionLoader from '../components/SectionLoader';
 
-import sectionLoader from '../assets/section_loader.json';
 import calendarAnimation from '../assets/calendar.json';
 import './CalendarPage.css';
 
@@ -168,9 +168,7 @@ export default function CalendarPage() {
   if (isLoading) {
     return (
       <AppLayout>
-        <div className="calendarpage-loading">
-          <Lottie animationData={sectionLoader} style={{ width: 400, height: 400 }} />
-        </div>
+        <SectionLoader size="lg" />
       </AppLayout>
     );
   }

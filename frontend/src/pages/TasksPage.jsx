@@ -6,7 +6,7 @@ import Lottie from 'lottie-react';
 import AppLayout from '../components/AppLayout';
 
 import Button from '../components/Button';
-import LoadingSpinner from '../components/LoadingSpinner';
+import SectionLoader from '../components/SectionLoader';
 import eventsAnimation from '../assets/events.json';
 import './TasksPage.css';
 
@@ -160,6 +160,14 @@ export default function TasksPage() {
     queryFn: () => tasksApi.getById(taskId),
     enabled: !!taskId
   });
+
+  if (taskLoading && taskId) {
+    return (
+      <AppLayout>
+        <SectionLoader size="lg" />
+      </AppLayout>
+    );
+  }
 
   const { data: todoItems = [] } = useQuery({
     queryKey: ['todoItems', taskId],

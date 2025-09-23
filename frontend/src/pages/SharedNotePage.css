@@ -27,7 +27,6 @@
   justify-content: space-between;
   padding: var(--spacing-4);
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-  background: rgba(255, 255, 255, 0.05);
 }
 
 .sharednotepage-title-section h1 {
@@ -61,13 +60,7 @@
   flex-direction: column;
   overflow: hidden;
   position: relative;
-}
-
-.sharednotepage-editor-wrapper {
-  flex: 1;
-  overflow-y: auto;
-  padding: var(--spacing-4);
-  max-height: calc(100vh - 140px);
+  background: rgba(0, 0, 0, 0.6);
 }
 
 .sharednotepage-online-users-indicator {
@@ -198,6 +191,35 @@
   opacity: 0.6;
   cursor: not-allowed;
   transform: none;
+}
+
+.sharednotepage-request-section {
+  margin-top: var(--spacing-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-3);
+}
+
+.sharednotepage-request-textarea {
+  width: 100%;
+  padding: var(--spacing-3);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: var(--radius-md);
+  color: white;
+  font-size: var(--font-size-sm);
+  font-family: inherit;
+  resize: vertical;
+  min-height: 80px;
+}
+
+.sharednotepage-request-textarea::placeholder {
+  color: #9CA3AF;
+}
+
+.sharednotepage-request-textarea:focus {
+  border-color: #2EC4B6;
+  outline: none;
 }
 
 .sharednotepage-status-pending {
@@ -348,46 +370,25 @@
   box-shadow: 0 0 6px rgba(16, 185, 129, 0.5);
 }
 
-/* AI Features */
-.sharednotepage-ai-toolbar {
+/* AI Overlay */
+.sharednotepage-ai-overlay {
   position: absolute;
-  top: var(--spacing-4);
+  bottom: var(--spacing-4);
   right: var(--spacing-4);
   z-index: 10;
+  
 }
 
-.sharednotepage-ai-btn {
-  padding: var(--spacing-2) var(--spacing-3);
-  background: rgba(138, 43, 226, 0.2);
-  border: 1px solid rgba(138, 43, 226, 0.3);
-  border-radius: var(--radius-md);
-  color: #9F7AEA;
-  font-size: var(--font-size-sm);
-  cursor: pointer;
-  transition: all var(--transition-fast);
-}
-
-.sharednotepage-ai-btn:hover {
-  background: rgba(138, 43, 226, 0.3);
-  border-color: rgba(138, 43, 226, 0.5);
-}
 
 /* Responsive */
 @media (max-width: 768px) {
-  .sharednotepage-header {
-    flex-direction: column;
-    align-items: flex-start;
-    height: auto;
-    padding: var(--spacing-4);
-  }
-  
   .sharednotepage-online-users-indicator {
     bottom: var(--spacing-2);
     left: var(--spacing-2);
   }
   
-  .sharednotepage-ai-toolbar {
-    top: var(--spacing-2);
+  .sharednotepage-ai-overlay {
+    bottom: var(--spacing-2);
     right: var(--spacing-2);
   }
 }

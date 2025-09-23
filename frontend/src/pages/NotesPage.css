@@ -238,17 +238,14 @@
 }
 
 .notespage-note-item__notebook {
-  background: var(--color-primary-light);
-  color: var(--color-primary-dark);
+  background: rgba(138, 43, 226, 0.2);
+  color: #9F7AEA;
   padding: var(--spacing-1) var(--spacing-2);
   border-radius: var(--radius-sm);
   font-weight: 500;
 }
 
-.notespage-note-item--active .notespage-note-item__notebook {
-  background: var(--color-deep-space);
-  color: var(--color-primary);
-}
+
 
 /* Editor */
 .notespage-notes-editor {
@@ -743,29 +740,7 @@
   font-size: 10px;
 }
 
-/* AI Features */
-.notespage-ai-toolbar {
-  position: absolute;
-  top: var(--spacing-4);
-  right: var(--spacing-4);
-  z-index: 10;
-}
 
-.notespage-ai-btn {
-  padding: var(--spacing-2) var(--spacing-3);
-  background: rgba(138, 43, 226, 0.2);
-  border: 1px solid rgba(138, 43, 226, 0.3);
-  border-radius: var(--radius-md);
-  color: #9F7AEA;
-  font-size: var(--font-size-sm);
-  cursor: pointer;
-  transition: all var(--transition-fast);
-}
-
-.notespage-ai-btn:hover {
-  background: rgba(138, 43, 226, 0.3);
-  border-color: rgba(138, 43, 226, 0.5);
-}
 
 /* Responsive */
 @media (max-width: 1024px) {

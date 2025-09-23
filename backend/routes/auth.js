@@ -1,8 +1,20 @@
 import express from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
+import multer from 'multer';
+import { v2 as cloudinary } from 'cloudinary';
 import pool from '../config/database.js';
 import { authenticateToken } from '../middleware/auth.js';
+
+// Configure multer for memory storage
+const upload = multer({ storage: multer.memoryStorage() });
+
+// Configure Cloudinary
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET
+});
 
 const router = express.Router();
 
@@ -62,7 +74,7 @@ router.post('/login', async (req, res) => {
     
     // Find user
     const result = await pool.query(
-      'SELECT id, email, name, password_hash, avatar_url FROM users WHERE email = $1',
+      'SELECT id, email, name, password_hash, avatar_url, language FROM users WHERE email = $1',
       [email]
     );
     
@@ -109,8 +121,22 @@ router.post('/logout', (req, res) => {
 });
 
 // Get current user
-router.get('/me', authenticateToken, (req, res) => {
-  res.json({ user: req.user });
+router.get('/me', authenticateToken, async (req, res) => {
+  try {
+    const result = await pool.query(
+      'SELECT id, email, name, avatar_url, language FROM users WHERE id = $1',
+      [req.user.id]
+    );
+    
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    
+    res.json({ user: result.rows[0] });
+  } catch (error) {
+    console.error('Get user error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
 });
 
 // Update profile
@@ -175,21 +201,39 @@ router.post('/change-password', authenticateToken, async (req, res) => {
 });
 
 // Upload avatar
-router.post('/avatar', authenticateToken, async (req, res) => {
+router.post('/avatar', authenticateToken, upload.single('avatar'), async (req, res) => {
   try {
-    // For now, return a placeholder response
-    // In a real implementation, you would handle file upload with multer and cloudinary
-    const avatarUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(req.user.name)}&background=2EC4B6&color=fff&size=200`;
-    
+    if (!req.file) {
+      return res.status(400).json({ error: 'No file uploaded' });
+    }
+
+    // Upload to Cloudinary
+    const uploadResult = await new Promise((resolve, reject) => {
+      cloudinary.uploader.upload_stream(
+        {
+          resource_type: 'image',
+          folder: 'panne/avatars',
+          transformation: [
+            { width: 200, height: 200, crop: 'fill', gravity: 'face' },
+            { quality: 'auto', format: 'auto' }
+          ]
+        },
+        (error, result) => {
+          if (error) reject(error);
+          else resolve(result);
+        }
+      ).end(req.file.buffer);
+    });
+
     const result = await pool.query(
       'UPDATE users SET avatar_url = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2 RETURNING id, email, name, language, avatar_url',
-      [avatarUrl, req.user.id]
+      [uploadResult.secure_url, req.user.id]
     );
     
     res.json({ user: result.rows[0] });
   } catch (error) {
     console.error('Avatar upload error:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    res.status(500).json({ error: 'Failed to upload avatar' });
   }
 });
 

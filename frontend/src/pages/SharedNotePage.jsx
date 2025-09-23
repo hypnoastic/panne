@@ -5,7 +5,7 @@ import { notesApi } from '../services/api';
 import api from '../services/api';
 import AppLayout from '../components/AppLayout';
 import RichEditor from '../components/RichEditor';
-import LoadingSpinner from '../components/LoadingSpinner';
+import SectionLoader from '../components/SectionLoader';
 import { useCollaboration } from '../hooks/useCollaboration';
 import './SharedNotePage.css';
 
@@ -13,6 +13,7 @@ export default function SharedNotePage() {
   const { shareId } = useParams();
   const queryClient = useQueryClient();
   const [showOnlineUsersModal, setShowOnlineUsersModal] = useState(false);
+  const [requestMessage, setRequestMessage] = useState('');
 
   const { data: sharedNote, isLoading, error } = useQuery({
     queryKey: ['shared-note', shareId],
@@ -26,8 +27,7 @@ export default function SharedNotePage() {
     mutationFn: ({ shareId, message }) => 
       api.post(`/notes/shared/${shareId}/request`, { message }).then(res => res.data),
     onSuccess: () => {
-      alert('Access request sent to note owner!');
-      // Refetch to get updated status
+      setRequestMessage('');
       setTimeout(() => {
         queryClient.invalidateQueries(['shared-note', shareId]);
       }, 1000);
@@ -42,7 +42,7 @@ export default function SharedNotePage() {
   });
 
   const handleNoteChange = (content) => {
-    if (sharedNote && sharedNote.permission === 'edit') {
+    if (sharedNote && (sharedNote.permission === 'edit' || sharedNote.permission === 'write')) {
       updateNoteMutation.mutate({
         id: sharedNote.id,
         title: sharedNote.title,
@@ -54,13 +54,7 @@ export default function SharedNotePage() {
   if (isLoading) {
     return (
       <AppLayout>
-        <div className="sharednotepage-shared-note-page">
-          <div className="sharednotepage-container">
-            <div className="sharednotepage-loading">
-              <LoadingSpinner />
-            </div>
-          </div>
-        </div>
+        <SectionLoader size="lg" />
       </AppLayout>
     );
   }
@@ -97,19 +91,27 @@ export default function SharedNotePage() {
                   <div className="sharednotepage-error-details">
                     <p>You need permission from the note owner to access this private note.</p>
                     <p>Your email: <span className="sharednotepage-user-email">{error.response.data.userEmail}</span></p>
-                    <button 
-                      className="sharednotepage-request-btn"
-                      onClick={() => {
-                        const message = prompt('Optional message to note owner:');
-                        requestAccessMutation.mutate({
-                          shareId,
-                          message: message || ''
-                        });
-                      }}
-                      disabled={requestAccessMutation.isPending}
-                    >
-                      {requestAccessMutation.isPending ? 'Requesting...' : 'Request Access'}
-                    </button>
+                    <div className="sharednotepage-request-section">
+                      <textarea
+                        value={requestMessage}
+                        onChange={(e) => setRequestMessage(e.target.value)}
+                        placeholder="Optional message to note owner..."
+                        className="sharednotepage-request-textarea"
+                        rows={3}
+                      />
+                      <button 
+                        className="sharednotepage-request-btn"
+                        onClick={() => {
+                          requestAccessMutation.mutate({
+                            shareId,
+                            message: requestMessage
+                          });
+                        }}
+                        disabled={requestAccessMutation.isPending}
+                      >
+                        {requestAccessMutation.isPending ? 'Requesting...' : 'Request Access'}
+                      </button>
+                    </div>
                   </div>
                 )}
               </div>
@@ -144,29 +146,21 @@ export default function SharedNotePage() {
           <div className="sharednotepage-header">
             <div className="sharednotepage-title-section">
               <h1>{sharedNote.title}</h1>
-              <div className="sharednotepage-subtitle">
-                Shared note
-                <span className="sharednotepage-permission-badge">
-                  {sharedNote.permission === 'edit' ? 'Can edit' : 'View only'}
-                </span>
-              </div>
+            </div>
+            <div className="sharednotepage-subtitle">
+              Shared note
+              <span className="sharednotepage-permission-badge">
+                {(sharedNote.permission === 'edit' || sharedNote.permission === 'write') ? 'Can edit' : 'View only'}
+              </span>
             </div>
           </div>
           
           <div className="sharednotepage-editor-container">
-            <div className="sharednotepage-ai-toolbar">
-              <button className="sharednotepage-ai-btn">
-                ✨ AI
-              </button>
-            </div>
-            
-            <div className="sharednotepage-editor-wrapper">
-              <RichEditor
-                content={sharedNote.content}
-                onChange={sharedNote.permission === 'edit' ? handleNoteChange : undefined}
-                placeholder={sharedNote.permission === 'edit' ? "Start editing..." : "This note is read-only"}
-              />
-            </div>
+            <RichEditor
+              content={sharedNote.content}
+              onChange={(sharedNote.permission === 'edit' || sharedNote.permission === 'write') ? handleNoteChange : undefined}
+              placeholder={(sharedNote.permission === 'edit' || sharedNote.permission === 'write') ? "Start editing..." : "This note is read-only"}
+            />
             
             {connectedUsers.length > 0 && (
               <div className="sharednotepage-online-users-indicator">
@@ -181,7 +175,6 @@ export default function SharedNotePage() {
             )}
           </div>
         </div>
-        
         {/* Online Users Modal */}
         {showOnlineUsersModal && (
           <div className="sharednotepage-modal-overlay" onClick={() => setShowOnlineUsersModal(false)}>

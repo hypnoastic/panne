@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import Lottie from 'lottie-react';
 import AppLayout from '../components/AppLayout';
 import Button from '../components/Button';
-import sectionLoader from '../assets/section_loader.json';
+import SectionLoader from '../components/SectionLoader';
 import './AgendaPage.css';
 
 // API calls
@@ -173,9 +173,7 @@ export default function AgendaPage() {
   if (isLoading) {
     return (
       <AppLayout>
-        <div className="agendapage-loading">
-          <Lottie animationData={sectionLoader} style={{ width: 400, height: 400 }} />
-        </div>
+        <SectionLoader size="lg" />
       </AppLayout>
     );
   }

@@ -1,0 +1,43 @@
+.section-loader {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 2rem;
+}
+
+.section-loader--fullscreen {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(1, 1, 1, 0.95);
+  backdrop-filter: blur(8px);
+  z-index: 9999;
+  padding: 0;
+}
+
+.section-loader__animation--sm {
+  width: 100px;
+  height: 100px;
+}
+
+.section-loader__animation--md {
+  width: 150px;
+  height: 150px;
+}
+
+.section-loader__animation--lg {
+  width: 200px;
+  height: 200px;
+}
+
+.section-loader__animation--fullscreen {
+  width: 200px;
+  height: 200px;
+}
+
+.section-loader__animation {
+  flex-shrink: 0;
+}

@@ -22,22 +22,25 @@ router.get('/', async (req, res) => {
   }
 });
 
-// Get collaborative notes (notes user owns or collaborates on)
+// Get collaborative notes (notes user owns or has access to via sharing)
 router.get('/collab', async (req, res) => {
   try {
     const result = await pool.query(`
       SELECT DISTINCT n.*, nb.title as notebook_name,
              CASE WHEN n.owner_id = $1 THEN true ELSE false END as is_owner,
-             c.role as permission,
+             CASE WHEN n.owner_id = $1 THEN 'edit'
+                  ELSE COALESCE(sl.permission, 'view')
+             END as permission,
              (
                SELECT COUNT(*) 
-               FROM collaborators c2 
-               WHERE c2.note_id = n.id
+               FROM permission_requests pr2
+               WHERE pr2.note_id = n.id AND pr2.status = 'approved'
              ) as collaborator_count
       FROM notes n
       LEFT JOIN notebooks nb ON n.notebook_id = nb.id
-      LEFT JOIN collaborators c ON n.id = c.note_id AND c.user_id = $1
-      WHERE (n.owner_id = $1 OR c.user_id = $1) 
+      LEFT JOIN sharing_links sl ON n.id = sl.note_id
+      LEFT JOIN permission_requests pr ON n.id = pr.note_id AND pr.requester_id = $1 AND pr.status = 'approved'
+      WHERE (n.owner_id = $1 OR pr.requester_id = $1) 
         AND n.deleted_at IS NULL
       ORDER BY n.updated_at DESC
     `, [req.user.id]);
@@ -115,29 +118,41 @@ router.put('/:id', async (req, res) => {
   try {
     const { title, content } = req.body;
     
-    // Create version before updating
-    const currentNote = await pool.query(
-      'SELECT content FROM notes WHERE id = $1 AND owner_id = $2',
-      [req.params.id, req.user.id]
-    );
+    // Check if user can edit this note (owner or has edit permission via sharing)
+    const noteCheck = await pool.query(`
+      SELECT n.*, 
+             CASE WHEN n.owner_id = $2 THEN true
+                  WHEN EXISTS (
+                    SELECT 1 FROM sharing_links sl 
+                    JOIN permission_requests pr ON sl.note_id = pr.note_id 
+                    WHERE sl.note_id = n.id AND sl.permission = 'edit' 
+                    AND pr.requester_id = $2 AND pr.status = 'approved'
+                  ) THEN true
+                  ELSE false
+             END as can_edit
+      FROM notes n
+      WHERE n.id = $1
+    `, [req.params.id, req.user.id]);
     
-    if (currentNote.rows.length === 0) {
-      return res.status(404).json({ error: 'Note not found' });
+    if (noteCheck.rows.length === 0 || !noteCheck.rows[0].can_edit) {
+      return res.status(404).json({ error: 'Note not found or no edit permission' });
     }
+    
+    const currentNote = noteCheck.rows[0];
     
     // Save current content as version
     await pool.query(`
       INSERT INTO versions (note_id, content, user_id) 
       VALUES ($1, $2, $3)
-    `, [req.params.id, currentNote.rows[0].content, req.user.id]);
+    `, [req.params.id, currentNote.content, req.user.id]);
     
     // Update note
     const result = await pool.query(`
       UPDATE notes 
       SET title = $1, content = $2, updated_at = NOW() 
-      WHERE id = $3 AND owner_id = $4 
+      WHERE id = $3
       RETURNING *
-    `, [title, content, req.params.id, req.user.id]);
+    `, [title, content, req.params.id]);
     
     res.json(result.rows[0]);
   } catch (error) {
@@ -431,7 +446,7 @@ const permissionRouter = express.Router();
 permissionRouter.get('/', async (req, res) => {
   try {
     const result = await pool.query(`
-      SELECT pr.*, n.title as note_title, u.name as requester_name 
+      SELECT pr.*, n.title as note_title, u.name as requester_name, u.avatar_url as requester_avatar 
       FROM permission_requests pr 
       JOIN notes n ON pr.note_id = n.id 
       JOIN users u ON pr.requester_id = u.id 

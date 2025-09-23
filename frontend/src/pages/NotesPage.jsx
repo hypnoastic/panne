@@ -7,7 +7,7 @@ import { notesApi, notebooksApi } from '../services/api';
 import AppLayout from '../components/AppLayout';
 import RichEditor from '../components/RichEditor';
 import Button from '../components/Button';
-import LoadingSpinner from '../components/LoadingSpinner';
+import SectionLoader from '../components/SectionLoader';
 import { useCollaboration } from '../hooks/useCollaboration';
 
 import notesAnimation from '../assets/notes.json';
@@ -80,6 +80,14 @@ export default function NotesPage() {
     queryFn: () => notesApi.getById(noteId),
     enabled: !!noteId
   });
+
+  if (noteLoading && noteId) {
+    return (
+      <AppLayout>
+        <SectionLoader size="lg" />
+      </AppLayout>
+    );
+  }
 
   const { data: versions = [] } = useQuery({
     queryKey: ['notes', noteId, 'versions'],
@@ -374,12 +382,6 @@ export default function NotesPage() {
                   </div>
                 </div>
                 <div className="notespage-editor-collaboration">
-                  <div className="notespage-ai-toolbar">
-                    <button className="notespage-ai-btn">
-                      ✨ AI
-                    </button>
-                  </div>
-                  
                   <RichEditor
                     content={currentNote.content}
                     onChange={handleNoteChange}

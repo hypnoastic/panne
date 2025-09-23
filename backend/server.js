@@ -116,6 +116,11 @@ app.get('/api/notes/shared/:shareId', async (req, res) => {
         
         const user = userResult.rows[0];
         
+        // Check if user is the owner
+        if (sharedNote.owner_id === user.id) {
+          return res.json(sharedNote);
+        }
+        
         // Check if user has approved permission
         const permissionResult = await pool.query(
           'SELECT status FROM permission_requests WHERE note_id = $1 AND requester_id = $2',

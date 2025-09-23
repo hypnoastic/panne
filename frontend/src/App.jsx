@@ -17,13 +17,12 @@ import TrashPage from './pages/TrashPage';
 import SharePage from './pages/SharePage';
 import SharedNotePage from './pages/SharedNotePage';
 import CollabPage from './pages/CollabPage';
-import LoadingSpinner from './components/LoadingSpinner';
-import NotificationToast from './components/NotificationToast';
+import SectionLoader from './components/SectionLoader';
+
 import './App.css';
 
 function App() {
-  const [notification, setNotification] = useState(null);
-  const [lastRequestCount, setLastRequestCount] = useState(0);
+
 
   const { data: user, isLoading } = useQuery({
     queryKey: ['auth', 'me'],
@@ -32,25 +31,10 @@ function App() {
     staleTime: Infinity
   });
 
-  // Check for new permission requests
-  const { data: permissionRequests = [] } = useQuery({
-    queryKey: ['permission-requests'],
-    queryFn: () => notesApi.getPermissionRequests(),
-    enabled: !!user,
-    refetchInterval: 5000
-  });
 
-  // Show notification when new request arrives
-  useEffect(() => {
-    if (permissionRequests.length > lastRequestCount && lastRequestCount > 0) {
-      const newRequest = permissionRequests[0]; // Get the latest request
-      setNotification(newRequest);
-    }
-    setLastRequestCount(permissionRequests.length);
-  }, [permissionRequests.length, lastRequestCount]);
 
   if (isLoading) {
-    return <LoadingSpinner />;
+    return <SectionLoader fullScreen={true} />;
   }
 
   return (
@@ -78,12 +62,7 @@ function App() {
       {/* Catch all */}
       <Route path="*" element={<Navigate to={user ? "/dashboard" : "/"} />} />
     </Routes>
-    {user && (
-      <NotificationToast 
-        notification={notification}
-        onClose={() => setNotification(null)}
-      />
-    )}
+
     </>
   );
 }

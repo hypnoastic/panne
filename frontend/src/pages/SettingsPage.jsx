@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
 import AppLayout from '../components/AppLayout';
 import Button from '../components/Button';
+import SectionLoader from '../components/SectionLoader';
 import { authApi } from '../services/api';
 import './SettingsPage.css';
 
@@ -54,10 +55,18 @@ export default function SettingsPage() {
     confirmPassword: ''
   });
 
-  const { data: user } = useQuery({
+  const { data: user, isLoading: userLoading } = useQuery({
     queryKey: ['auth', 'me'],
     queryFn: authApi.getCurrentUser
   });
+
+  if (userLoading) {
+    return (
+      <AppLayout>
+        <SectionLoader size="lg" />
+      </AppLayout>
+    );
+  }
 
   // Update profile data when user data loads
   useEffect(() => {
@@ -92,6 +101,10 @@ export default function SettingsPage() {
     mutationFn: settingsApi.uploadAvatar,
     onSuccess: () => {
       queryClient.invalidateQueries(['auth', 'me']);
+      alert('Avatar updated successfully!');
+    },
+    onError: (error) => {
+      alert('Failed to upload avatar: ' + error.message);
     }
   });
 
@@ -164,17 +177,20 @@ export default function SettingsPage() {
                       )}
                     </div>
                     <div className="settingspage-avatar-actions">
-                      <label className="settingspage-avatar-upload">
-                        <input
-                          type="file"
-                          accept="image/*"
-                          onChange={handleAvatarChange}
-                          hidden
-                        />
-                        <Button loading={uploadAvatarMutation.isPending}>
-                          Change Photo
-                        </Button>
-                      </label>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleAvatarChange}
+                        style={{ display: 'none' }}
+                        id="avatar-upload"
+                      />
+                      <Button 
+                        onClick={() => document.getElementById('avatar-upload').click()}
+                        loading={uploadAvatarMutation.isPending}
+                        disabled={uploadAvatarMutation.isPending}
+                      >
+                        {uploadAvatarMutation.isPending ? 'Uploading...' : 'Change Photo'}
+                      </Button>
                     </div>
                   </div>
 

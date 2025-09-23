@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next';
 import Lottie from 'lottie-react';
 import { authApi } from '../services/api';
 import Button from '../components/Button';
+import SectionLoader from '../components/SectionLoader';
 import signupAnimation from '../assets/signup.json';
 import './AuthPage.css';
 
@@ -64,6 +65,10 @@ export default function RegisterPage() {
       setErrors(prev => ({ ...prev, [e.target.name]: '' }));
     }
   };
+
+  if (registerMutation.isPending) {
+    return <SectionLoader fullScreen={true} />;
+  }
 
   return (
     <div className="auth-page">

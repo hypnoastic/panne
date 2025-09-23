@@ -261,16 +261,16 @@
 }
 
 .task-item__agenda {
-  background: var(--color-primary-light);
-  color: var(--color-primary-dark);
+  background: rgba(138, 43, 226, 0.2);
+  color: #9F7AEA;
   padding: var(--spacing-1) var(--spacing-2);
   border-radius: var(--radius-sm);
   font-weight: 500;
 }
 
 .task-item--active .task-item__agenda {
-  background: var(--color-deep-space);
-  color: var(--color-primary);
+  background: rgba(138, 43, 226, 0.3);
+  color: #9F7AEA;
 }
 
 /* Editor */

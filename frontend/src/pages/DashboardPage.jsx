@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import Lottie from 'lottie-react';
 import AppLayout from '../components/AppLayout';
 import Button from '../components/Button';
+import SectionLoader from '../components/SectionLoader';
 import { authApi, notesApi } from '../services/api';
 import aiAnimation from '../assets/ai.json';
 import helloAnimation from '../assets/hello.json';
@@ -57,10 +58,18 @@ export default function DashboardPage() {
   const [showNotesModal, setShowNotesModal] = useState(false);
   const [selectedNotes, setSelectedNotes] = useState([]);
 
-  const { data: user } = useQuery({
+  const { data: user, isLoading: userLoading } = useQuery({
     queryKey: ['auth', 'me'],
     queryFn: authApi.getCurrentUser
   });
+
+  if (userLoading) {
+    return (
+      <AppLayout>
+        <SectionLoader size="lg" />
+      </AppLayout>
+    );
+  }
 
   // Real data queries
   const { data: notes = [] } = useQuery({
@@ -224,8 +233,7 @@ export default function DashboardPage() {
           <div className="dashboardpage-ai-input-section">
             <div className="dashboardpage-ai-input-container">
               <button className="dashboardpage-ai-plus-btn" onClick={() => {
-                console.log('Plus button clicked in dashboard');
-                setShowNotesModal(true);
+                navigate('/ai', { state: { openNotesModal: true } });
               }}>
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <line x1="12" y1="5" x2="12" y2="19"></line>

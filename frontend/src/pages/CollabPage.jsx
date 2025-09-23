@@ -3,13 +3,16 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { notesApi } from '../services/api';
 import AppLayout from '../components/AppLayout';
-import LoadingSpinner from '../components/LoadingSpinner';
+import SectionLoader from '../components/SectionLoader';
+import Lottie from 'lottie-react';
+import collabAnimation from '../assets/collab.json';
 import './CollabPage.css';
 
 export default function CollabPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [selectedRequest, setSelectedRequest] = useState(null);
+  const [searchTerm, setSearchTerm] = useState('');
 
   const { data: collabNotes = [], isLoading: notesLoading } = useQuery({
     queryKey: ['collab-notes'],
@@ -50,9 +53,7 @@ export default function CollabPage() {
   if (notesLoading || requestsLoading) {
     return (
       <AppLayout>
-        <div className="collabpage-loading">
-          <LoadingSpinner />
-        </div>
+        <SectionLoader size="lg" />
       </AppLayout>
     );
   }
@@ -63,26 +64,37 @@ export default function CollabPage() {
         <div className="collabpage-container">
           <div className="collabpage-header">
             <h1>Collaboration</h1>
-            <p>Manage your shared notes and collaboration requests</p>
+            <div className="collabpage-search-box">
+              <input
+                type="text"
+                placeholder="Search notes..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="collabpage-search-input"
+              />
+            </div>
           </div>
 
           <div className="collabpage-content">
             {/* Collaborative Notes Section - 70% */}
             <div className="collabpage-notes-section">
               <div className="collabpage-section-header">
-                <h2>Collaborative Notes</h2>
+                <h2>Notes</h2>
                 <span className="collabpage-count">{collabNotes.length}</span>
               </div>
 
               {collabNotes.length === 0 ? (
                 <div className="collabpage-empty-state">
-                  <div className="collabpage-empty-icon">🤝</div>
+                  <div className="collabpage-empty-icon"></div>
                   <h3>No collaborative notes yet</h3>
                   <p>Notes you share or that are shared with you will appear here</p>
                 </div>
               ) : (
                 <div className="collabpage-notes-grid">
-                  {collabNotes.map((note) => (
+                  {collabNotes.filter(note => 
+                    note.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                    (note.content?.content?.[0]?.content?.[0]?.text || '').toLowerCase().includes(searchTerm.toLowerCase())
+                  ).map((note) => (
                     <div 
                       key={note.id} 
                       className="collabpage-note-card"
@@ -102,7 +114,7 @@ export default function CollabPage() {
                       <div className="collabpage-note-meta">
                         <div className="collabpage-collaborators">
                           <span className="collabpage-collab-count">
-                            👥 {note.collaborator_count || 0} collaborators
+                            {note.collaborator_count || 0} collaborators
                           </span>
                         </div>
                         <div className="collabpage-note-date">
@@ -112,7 +124,7 @@ export default function CollabPage() {
                       
                       {note.permission && (
                         <div className="collabpage-permission-badge">
-                          {note.permission === 'edit' ? '✏️ Can edit' : '👁️ View only'}
+                          {note.permission === 'edit' ? 'Can edit' : 'View only'}
                         </div>
                       )}
                     </div>
@@ -130,7 +142,9 @@ export default function CollabPage() {
 
               {permissionRequests.length === 0 ? (
                 <div className="collabpage-empty-state collabpage-empty-state--small">
-                  <div className="collabpage-empty-icon">📬</div>
+                  <div className="collabpage-empty-icon">
+                    <Lottie animationData={collabAnimation} style={{ width: 300, height: 300 }} />
+                  </div>
                   <h4>No pending requests</h4>
                   <p>Permission requests will appear here</p>
                 </div>
@@ -145,11 +159,15 @@ export default function CollabPage() {
                       <div className="collabpage-request-header">
                         <div className="collabpage-requester-info">
                           <div className="collabpage-requester-avatar">
-                            {request.requesterName?.charAt(0)?.toUpperCase()}
+                            {request.requester_avatar ? (
+                              <img src={request.requester_avatar} alt={request.requester_name} />
+                            ) : (
+                              <span>{request.requester_name?.charAt(0)?.toUpperCase()}</span>
+                            )}
                           </div>
                           <div>
-                            <div className="collabpage-requester-name">{request.requesterName}</div>
-                            <div className="collabpage-request-note">{request.noteTitle}</div>
+                            <div className="collabpage-requester-name">{request.requester_name}</div>
+                            <div className="collabpage-request-note">{request.note_title}</div>
                           </div>
                         </div>
                         <div 

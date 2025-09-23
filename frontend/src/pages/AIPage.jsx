@@ -5,6 +5,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import Lottie from 'lottie-react';
 import AppLayout from '../components/AppLayout';
 import Button from '../components/Button';
+import SectionLoader from '../components/SectionLoader';
 import { notesApi } from '../services/api';
 import aiAnimation from '../assets/ai.json';
 import './AIPage.css';
@@ -133,6 +134,14 @@ export default function AIPage() {
         handleSendMessage(location.state.initialMessage, location.state.selectedNotes || []);
       }, 100);
     }
+    
+    // Handle opening notes modal from dashboard
+    if (location.state?.openNotesModal) {
+      setTempSelectedNotes(selectedNotes);
+      setShowNotesModal(true);
+      // Clear the state to prevent reopening
+      navigate(location.pathname, { replace: true });
+    }
   }, [location.state]);
 
   // Update messages when chat changes
@@ -145,10 +154,18 @@ export default function AIPage() {
     }
   }, [currentChatId, chats]);
 
-  const { data: notes = [] } = useQuery({
+  const { data: notes = [], isLoading: notesLoading } = useQuery({
     queryKey: ['notes'],
     queryFn: notesApi.getAll
   });
+
+  if (notesLoading) {
+    return (
+      <AppLayout>
+        <SectionLoader size="lg" />
+      </AppLayout>
+    );
+  }
 
   const sendMessageMutation = useMutation({
     mutationFn: ({ message, context, chatId }) => aiChatApi.sendMessage(message, context, chatId),

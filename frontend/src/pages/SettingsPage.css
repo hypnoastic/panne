@@ -55,13 +55,13 @@
 }
 
 .settingspage-settings-tab:hover {
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(156, 163, 175, 0.2);
   color: #E6E8EB;
 }
 
 .settingspage-settings-tab.settingspage-active {
-  background: #2EC4B6;
-  border-color: #2EC4B6;
+  background: rgba(156, 163, 175, 0.2);
+  border-color: rgba(156, 163, 175, 0.2);
   color: white;
 }
 
