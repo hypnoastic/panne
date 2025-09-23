@@ -244,26 +244,128 @@
 
 /* Responsive */
 @media (max-width: 768px) {
+  .auth-page {
+    padding: var(--spacing-4);
+  }
+  
+  .auth-container {
+    padding: var(--spacing-2);
+  }
+  
   .auth-content {
     flex-direction: column !important;
-    gap: var(--spacing-8);
-    padding: var(--spacing-6);
+    gap: var(--spacing-4);
+    padding: var(--spacing-2);
+    max-width: 100%;
   }
   
-  .auth-image-container {
-    order: -1;
+  .auth-form-container {
+    max-width: 100%;
+    order: 2;
   }
   
-  .auth-image {
-    max-width: 300px;
+  .auth-lottie-container {
+    order: 1;
+  }
+  
+  .auth-lottie {
+    max-width: 250px;
+    height: 250px;
   }
   
   .auth-card {
-    padding: var(--spacing-8);
+    padding: var(--spacing-4);
+    margin: 0;
   }
   
   .auth-logo-link {
-    top: 20px;
-    left: 20px;
+    top: 15px;
+    left: 15px;
+  }
+  
+  .auth-logo-link h1 {
+    font-size: var(--font-size-lg);
+  }
+  
+  .auth-title {
+    font-size: var(--font-size-xl);
+  }
+  
+  .auth-subtitle {
+    font-size: var(--font-size-sm);
+  }
+  
+  .form-input {
+    padding: var(--spacing-2);
+    font-size: var(--font-size-sm);
+  }
+  
+  .input-icon {
+    left: 0.8rem;
+    width: 18px;
+    height: 18px;
+  }
+  
+  .auth-form {
+    gap: var(--spacing-3);
+  }
+  
+  .auth-footer {
+    margin-top: var(--spacing-4);
+    padding-top: var(--spacing-4);
+  }
+}
+
+@media (max-width: 480px) {
+  .auth-page {
+    padding: var(--spacing-2);
+  }
+  
+  .auth-content {
+    gap: var(--spacing-3);
+    padding: var(--spacing-1);
+  }
+  
+  .auth-lottie {
+    max-width: 200px;
+    height: 200px;
+  }
+  
+  .auth-card {
+    padding: var(--spacing-3);
+  }
+  
+  .auth-logo-link {
+    top: 10px;
+    left: 10px;
+  }
+  
+  .auth-logo-link h1 {
+    font-size: var(--font-size-base);
+  }
+  
+  .auth-title {
+    font-size: var(--font-size-lg);
+  }
+  
+  .form-input {
+    padding: var(--spacing-2);
+  }
+  
+  .input-icon {
+    left: 0.7rem;
+    width: 16px;
+    height: 16px;
+  }
+}
+
+@media (max-width: 1024px) and (min-width: 769px) {
+  .auth-content {
+    gap: var(--spacing-6);
+  }
+  
+  .auth-lottie {
+    max-width: 350px;
+    height: 350px;
   }
 }

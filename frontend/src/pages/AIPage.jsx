@@ -159,14 +159,6 @@ export default function AIPage() {
     queryFn: notesApi.getAll
   });
 
-  if (notesLoading) {
-    return (
-      <AppLayout>
-        <SectionLoader size="lg" />
-      </AppLayout>
-    );
-  }
-
   const sendMessageMutation = useMutation({
     mutationFn: ({ message, context, chatId }) => aiChatApi.sendMessage(message, context, chatId),
     onMutate: () => {
@@ -320,6 +312,14 @@ export default function AIPage() {
   const filteredChats = chats.filter(chat => 
     chat.title.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  if (notesLoading) {
+    return (
+      <AppLayout>
+        <SectionLoader size="lg" />
+      </AppLayout>
+    );
+  }
 
   return (
     <AppLayout>

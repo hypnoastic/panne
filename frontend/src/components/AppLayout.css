@@ -11,4 +11,27 @@
   display: flex;
   flex-direction: column;
   padding: var(--spacing-2);
+  position: relative;
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+  .app-layout {
+    flex-direction: column;
+  }
+  
+  .app-main {
+    margin-left: 0;
+    padding: var(--spacing-1);
+    position: relative;
+    z-index: 1;
+  }
+}
+
+@media (max-width: 480px) {
+  .app-main {
+    padding: var(--spacing-1);
+    position: relative;
+    z-index: 1;
+  }
 }

@@ -208,18 +208,148 @@
 }
 
 @media (max-width: 768px) {
+  .settingspage-settings-container {
+    padding: var(--spacing-4);
+    height: auto;
+    min-height: calc(100vh - var(--spacing-2));
+  }
+  
+  .settingspage-settings-header h1 {
+    font-size: var(--font-size-xl);
+  }
+  
   .settingspage-settings-layout {
     grid-template-columns: 1fr;
     gap: var(--spacing-4);
+    height: auto;
   }
   
   .settingspage-settings-sidebar {
     flex-direction: row;
     overflow-x: auto;
+    gap: var(--spacing-1);
+    padding-bottom: var(--spacing-2);
   }
   
   .settingspage-settings-tab {
-    min-width: 120px;
+    min-width: 100px;
     justify-content: center;
+    padding: var(--spacing-2) var(--spacing-3);
+    font-size: var(--font-size-sm);
+  }
+  
+  .settingspage-tab-label {
+    font-size: var(--font-size-sm);
+  }
+  
+  .settingspage-settings-content {
+    padding-right: 0;
+  }
+  
+  .settingspage-settings-section {
+    padding: var(--spacing-4);
+  }
+  
+  .settingspage-settings-section h2 {
+    font-size: var(--font-size-lg);
+    margin-bottom: var(--spacing-4);
+  }
+  
+  .settingspage-avatar-section {
+    flex-direction: column;
+    text-align: center;
+    gap: var(--spacing-3);
+    padding: var(--spacing-3);
+  }
+  
+  .settingspage-avatar-preview {
+    width: 60px;
+    height: 60px;
+    font-size: 24px;
+  }
+  
+  .settingspage-settings-form {
+    gap: var(--spacing-3);
+  }
+  
+  .settingspage-form-input,
+  .settingspage-form-select {
+    padding: var(--spacing-2);
+    font-size: var(--font-size-sm);
+  }
+  
+  .settingspage-preference-group h3 {
+    font-size: var(--font-size-base);
+    margin-bottom: var(--spacing-3);
+  }
+  
+  .settingspage-checkbox-label {
+    font-size: var(--font-size-sm);
+    gap: var(--spacing-2);
+  }
+  
+  .settingspage-checkbox-label input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+  }
+}
+
+@media (max-width: 480px) {
+  .settingspage-settings-container {
+    padding: var(--spacing-2);
+  }
+  
+  .settingspage-settings-header h1 {
+    font-size: var(--font-size-lg);
+  }
+  
+  .settingspage-settings-tab {
+    min-width: 80px;
+    padding: var(--spacing-1) var(--spacing-2);
+    font-size: var(--font-size-xs);
+  }
+  
+  .settingspage-tab-label {
+    font-size: var(--font-size-xs);
+  }
+  
+  .settingspage-settings-section {
+    padding: var(--spacing-3);
+  }
+  
+  .settingspage-settings-section h2 {
+    font-size: var(--font-size-base);
+  }
+  
+  .settingspage-avatar-preview {
+    width: 50px;
+    height: 50px;
+    font-size: 20px;
+  }
+  
+  .settingspage-form-input,
+  .settingspage-form-select {
+    padding: var(--spacing-1);
+    font-size: var(--font-size-xs);
+  }
+  
+  .settingspage-preference-group h3 {
+    font-size: var(--font-size-sm);
+  }
+  
+  .settingspage-checkbox-label {
+    font-size: var(--font-size-xs);
+  }
+  
+  .settingspage-checkbox-label input[type="checkbox"] {
+    width: 14px;
+    height: 14px;
+  }
+}
+
+@media (max-width: 1024px) and (min-width: 769px) {
+  .settingspage-settings-layout {
+    grid-template-columns: 200px 1fr;
+    gap: var(--spacing-6);
   }
 }

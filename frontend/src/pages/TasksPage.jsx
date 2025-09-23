@@ -161,14 +161,6 @@ export default function TasksPage() {
     enabled: !!taskId
   });
 
-  if (taskLoading && taskId) {
-    return (
-      <AppLayout>
-        <SectionLoader size="lg" />
-      </AppLayout>
-    );
-  }
-
   const { data: todoItems = [] } = useQuery({
     queryKey: ['todoItems', taskId],
     queryFn: () => todoItemsApi.getByTaskId(taskId),
@@ -225,6 +217,8 @@ export default function TasksPage() {
     }
   });
 
+
+
   const filteredTasks = tasks.filter(task => {
     const matchesSearch = task.title.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesAgenda = !selectedAgenda || task.agenda_id === selectedAgenda;
@@ -264,7 +258,7 @@ export default function TasksPage() {
   return (
     <AppLayout>
       <div className="tasks-page">
-        <div className="tasks-layout">
+        <div className={`tasks-layout ${taskId ? 'task-selected' : ''}`}>
           {/* Agendas Sidebar */}
           <div className="tasks-sidebar">
             <div className="sidebar-header">
@@ -383,9 +377,19 @@ export default function TasksPage() {
 
           {/* Editor */}
           <div className="tasks-editor">
-            {currentTask ? (
+            {taskLoading && taskId ? (
+              <div className="editor-loading">
+                <SectionLoader size="md" />
+              </div>
+            ) : currentTask ? (
               <div className="editor-container">
                 <div className="editor-header">
+                  <button 
+                    className="tasks-mobile-back-btn"
+                    onClick={() => navigate('/tasks')}
+                  >
+                    ←
+                  </button>
                   <input
                     type="text"
                     value={currentTask.title}

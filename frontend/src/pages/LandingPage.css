@@ -645,24 +645,198 @@ section {
 @media (max-width: 768px) {
   .landingpage-floating-nav {
     width: 95%;
-    padding: var(--spacing-2) var(--spacing-4);
+    padding: var(--spacing-2) var(--spacing-3);
+    margin: 1% 2.5%;
   }
   
   .landingpage-nav-content {
     flex-direction: column;
-    gap: var(--spacing-4);
+    gap: var(--spacing-2);
   }
   
   .landingpage-nav-links {
-    gap: var(--spacing-4);
+    gap: var(--spacing-2);
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  
+  .landingpage-nav-auth {
+    gap: var(--spacing-2);
+  }
+  
+  .landingpage-nav-link {
+    padding: var(--spacing-1) var(--spacing-2);
+    font-size: var(--font-size-xs);
+  }
+  
+  .landingpage-hero-title {
+    font-size: clamp(2.5rem, 6vw, 4rem);
+    margin-top: 15%;
+  }
+  
+  .landingpage-hero-tagline {
+    font-size: var(--font-size-lg);
+    margin-bottom: var(--spacing-6);
+    padding: 0 var(--spacing-4);
   }
   
   .landingpage-hero-actions {
     flex-direction: column;
     align-items: center;
+    gap: var(--spacing-3);
+    padding: 0 var(--spacing-4);
+  }
+  
+  .landingpage-section-glass {
+    width: 95%;
+    max-height: 85vh;
+    margin: 0 auto;
+  }
+  
+  .landingpage-features-section .landingpage-section-glass {
+    padding: var(--spacing-6) var(--spacing-4);
+  }
+  
+  .landingpage-features-grid {
+    grid-template-columns: 1fr;
+    gap: var(--spacing-4);
+  }
+  
+  .landingpage-feature-card {
+    padding: var(--spacing-4);
+  }
+  
+  .landingpage-about-section .landingpage-section-glass {
+    padding: var(--spacing-4) 0;
+  }
+  
+  .landingpage-about-text {
+    padding: var(--spacing-4) var(--spacing-4);
+    font-size: var(--font-size-base);
+  }
+  
+  .landingpage-about-image {
+    display: none;
+  }
+  
+  .landingpage-testimonials-section .landingpage-section-glass {
+    padding: var(--spacing-6) var(--spacing-4);
+  }
+  
+  .landingpage-testimonials-grid {
+    grid-template-columns: 1fr;
+    gap: var(--spacing-4);
+  }
+  
+  .landingpage-testimonial-card {
+    padding: var(--spacing-4);
+  }
+  
+  .landingpage-contact-section .landingpage-section-glass {
+    padding: var(--spacing-6) var(--spacing-4);
+  }
+  
+  .landingpage-contact-content {
+    flex-direction: column;
+    gap: var(--spacing-4);
+  }
+  
+  .landingpage-contact-info-icon {
+    width: 150px;
+    height: 150px;
   }
   
   .landingpage-contact-actions {
     flex-direction: column;
+    gap: var(--spacing-3);
+  }
+  
+  .landingpage-form-group {
+    flex-direction: column;
+  }
+  
+  .landingpage-nav-arrows {
+    padding: 0 var(--spacing-3);
+  }
+  
+  .landingpage-nav-arrow img {
+    width: 32px;
+    height: 32px;
+  }
+  
+  .landingpage-slide-dots {
+    bottom: 20px;
+    gap: var(--spacing-2);
+  }
+  
+  .landingpage-slide-dot {
+    width: 10px;
+    height: 10px;
+  }
+}
+
+@media (max-width: 480px) {
+  .landingpage-floating-nav {
+    width: 98%;
+    margin: 1% 1%;
+    padding: var(--spacing-1) var(--spacing-2);
+  }
+  
+  .landingpage-nav-logo h1 {
+    font-size: var(--font-size-lg);
+  }
+  
+  .landingpage-hero-title {
+    font-size: clamp(2rem, 5vw, 3rem);
+    margin-top: 20%;
+  }
+  
+  .landingpage-hero-tagline {
+    font-size: var(--font-size-base);
+    padding: 0 var(--spacing-2);
+  }
+  
+  .landingpage-hero-actions {
+    padding: 0 var(--spacing-2);
+  }
+  
+  .landingpage-section-glass {
+    width: 98%;
+  }
+  
+  .landingpage-features-section .landingpage-section-glass,
+  .landingpage-testimonials-section .landingpage-section-glass,
+  .landingpage-contact-section .landingpage-section-glass {
+    padding: var(--spacing-4) var(--spacing-2);
+  }
+  
+  .landingpage-about-text {
+    padding: var(--spacing-3) var(--spacing-2);
+    font-size: var(--font-size-sm);
+  }
+  
+  .landingpage-section-title {
+    font-size: clamp(1.5rem, 4vw, 2rem);
+    margin-bottom: var(--spacing-4);
+  }
+  
+  .landingpage-contact-info-icon {
+    width: 120px;
+    height: 120px;
+  }
+}
+
+@media (max-width: 1024px) and (min-width: 769px) {
+  .landingpage-features-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--spacing-4);
+  }
+  
+  .landingpage-testimonials-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .landingpage-about-text {
+    padding: var(--spacing-6) var(--spacing-8);
   }
 }

@@ -61,9 +61,7 @@ export default function LoginPage() {
     }
   };
 
-  if (loginMutation.isPending) {
-    return <SectionLoader fullScreen={true} />;
-  }
+
 
   return (
     <div className="auth-page">

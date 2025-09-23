@@ -81,14 +81,6 @@ export default function NotesPage() {
     enabled: !!noteId
   });
 
-  if (noteLoading && noteId) {
-    return (
-      <AppLayout>
-        <SectionLoader size="lg" />
-      </AppLayout>
-    );
-  }
-
   const { data: versions = [] } = useQuery({
     queryKey: ['notes', noteId, 'versions'],
     queryFn: () => notesApi.getVersions(noteId),
@@ -145,7 +137,7 @@ export default function NotesPage() {
   const requestPermissionMutation = useMutation({
     mutationFn: ({ noteId, message }) => notesApi.requestPermission(noteId, { message }),
     onSuccess: () => {
-      setShowPermissionRequestModal(false);
+      // Permission request sent successfully
     }
   });
 
@@ -210,7 +202,7 @@ export default function NotesPage() {
   return (
     <AppLayout>
       <div className="notespage-notes-page">
-        <div className="notespage-notes-layout">
+        <div className={`notespage-notes-layout ${noteId ? 'notespage-note-selected' : ''}`}>
           {/* Notebooks Sidebar */}
           <div className="notespage-notes-sidebar">
             <div className="notespage-sidebar-header">
@@ -329,10 +321,20 @@ export default function NotesPage() {
 
           {/* Editor */}
           <div className="notespage-notes-editor">
-            {currentNote ? (
+            {noteLoading && noteId ? (
+              <div className="editor-loading">
+                <SectionLoader size="md" />
+              </div>
+            ) : currentNote ? (
               <div className="notespage-editor-container">
                 <div className="notespage-editor-header">
                   <div className="notespage-title-section">
+                    <button 
+                      className="notespage-mobile-back-btn"
+                      onClick={() => navigate('/notes')}
+                    >
+                      ←
+                    </button>
                     <input
                       type="text"
                       value={currentNote.title}

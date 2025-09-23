@@ -43,6 +43,8 @@
   flex: 1;
   position: relative;
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 
 .ai-floating-button {
@@ -72,10 +74,11 @@
 
 .editor-content .ProseMirror {
   position: relative;
+  min-height: 100%;
 }
 
 .editor-content {
-  height: 100%;
+  flex: 1;
   padding: var(--spacing-6);
   overflow-y: auto;
 }
@@ -949,29 +952,302 @@
 
 /* Responsive */
 @media (max-width: 768px) {
+  .rich-editor {
+    border-radius: 8px;
+  }
+  
   .editor-toolbar {
-    flex-direction: column;
-    align-items: stretch;
-    gap: var(--spacing-2);
+    flex-wrap: wrap;
+    padding: var(--spacing-2);
+    gap: var(--spacing-1);
   }
   
   .toolbar-group {
     border-right: none;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
-    padding-bottom: var(--spacing-2);
+    border-bottom: none;
     padding-right: 0;
+    padding-bottom: 0;
+    gap: var(--spacing-1);
   }
   
-  .toolbar-group:last-child {
-    border-bottom: none;
+  .toolbar-group button {
+    min-width: 32px;
+    height: 32px;
+    padding: var(--spacing-1);
+    font-size: var(--font-size-xs);
+  }
+  
+  .font-family-select,
+  .font-size-select {
+    min-width: 100px;
+    height: 32px;
+    padding: var(--spacing-1);
+    font-size: var(--font-size-xs);
+  }
+  
+  .color-picker {
+    width: 32px;
+    height: 32px;
+  }
+  
+  .editor-content {
+    flex: 1;
+    padding: var(--spacing-3);
+    overflow-y: auto;
+  }
+  
+  .ai-floating-button {
+    width: 48px;
+    height: 48px;
+    bottom: 15px;
+    right: 15px;
+    font-size: 20px;
+  }
+  
+  .ai-overlay-button {
+    width: 40px;
+    height: 40px;
+    bottom: 15px;
+    right: 15px;
+    font-size: 16px;
+  }
+  
+  .ai-popup {
+    width: 90%;
+    min-width: 280px;
+    max-width: 400px;
+    padding: 8px;
+  }
+  
+  .ai-popup-input {
+    padding: 6px 10px;
+    font-size: 13px;
+  }
+  
+  .ai-popup-send {
+    padding: 6px 10px;
+    font-size: 13px;
+    min-width: 35px;
+  }
+  
+  .bubble-menu {
+    padding: var(--spacing-1);
+  }
+  
+  .bubble-menu button {
+    min-width: 28px;
+    height: 28px;
+    font-size: var(--font-size-xs);
+  }
+  
+  .floating-menu {
+    padding: var(--spacing-1);
+  }
+  
+  .floating-menu button {
+    min-width: 28px;
+    height: 28px;
+    font-size: var(--font-size-xs);
   }
   
   .modal {
     width: 95%;
-    margin: var(--spacing-4);
+    margin: var(--spacing-2);
   }
   
   .ai-modal {
-    height: 80vh;
+    width: 95%;
+    max-width: none;
+    height: 85vh;
+  }
+  
+  .modal__content {
+    padding: var(--spacing-3);
+  }
+  
+  .ai-mode-selector {
+    gap: var(--spacing-1);
+    margin-bottom: var(--spacing-3);
+  }
+  
+  .ai-mode-button {
+    padding: var(--spacing-1) var(--spacing-2);
+    font-size: var(--font-size-xs);
+  }
+  
+  .ai-messages {
+    margin-bottom: var(--spacing-3);
+    padding: var(--spacing-1);
+  }
+  
+  .ai-message {
+    margin-bottom: var(--spacing-2);
+    padding: var(--spacing-2);
+    max-width: 90%;
+    font-size: var(--font-size-sm);
+  }
+  
+  .ai-input {
+    padding: var(--spacing-2);
+    font-size: var(--font-size-sm);
+  }
+  
+  .link-input {
+    padding: var(--spacing-2);
+    font-size: var(--font-size-sm);
+    margin-bottom: var(--spacing-3);
+  }
+  
+  .table-config {
+    flex-direction: column;
+    gap: var(--spacing-2);
+  }
+  
+  .table-config input {
+    width: 60px;
+  }
+  
+  .editor-content h1 {
+    font-size: 2rem;
+    margin: 1.5rem 0 0.75rem 0;
+  }
+  
+  .editor-content h2 {
+    font-size: 1.5rem;
+    margin: 1.25rem 0 0.5rem 0;
+  }
+  
+  .editor-content h3 {
+    font-size: 1.25rem;
+    margin: 1rem 0 0.5rem 0;
+  }
+  
+  .editor-content p {
+    margin: var(--spacing-2) 0;
+    font-size: var(--font-size-sm);
+  }
+  
+  .editor-content ul,
+  .editor-content ol {
+    margin: var(--spacing-2) 0;
+    padding-left: 1.5rem;
+  }
+  
+  .editor-content blockquote {
+    padding-left: var(--spacing-3);
+    margin: var(--spacing-3) 0;
+  }
+  
+  .editor-content pre {
+    padding: var(--spacing-3);
+    margin: var(--spacing-3) 0;
+    font-size: var(--font-size-xs);
+    overflow-x: auto;
+  }
+}
+
+@media (max-width: 480px) {
+  .editor-toolbar {
+    padding: var(--spacing-1);
+  }
+  
+  .toolbar-group button {
+    min-width: 28px;
+    height: 28px;
+    font-size: 11px;
+  }
+  
+  .font-family-select,
+  .font-size-select {
+    min-width: 80px;
+    height: 28px;
+    font-size: 11px;
+  }
+  
+  .color-picker {
+    width: 28px;
+    height: 28px;
+  }
+  
+  .editor-content {
+    padding: var(--spacing-2);
+  }
+  
+  .ai-floating-button {
+    width: 44px;
+    height: 44px;
+    bottom: 12px;
+    right: 12px;
+    font-size: 18px;
+  }
+  
+  .ai-overlay-button {
+    width: 36px;
+    height: 36px;
+    bottom: 12px;
+    right: 12px;
+    font-size: 14px;
+  }
+  
+  .ai-popup {
+    width: 95%;
+    min-width: 250px;
+    padding: 6px;
+  }
+  
+  .ai-popup-input {
+    padding: 5px 8px;
+    font-size: 12px;
+  }
+  
+  .ai-popup-send {
+    padding: 5px 8px;
+    font-size: 12px;
+    min-width: 30px;
+  }
+  
+  .ai-modal {
+    height: 90vh;
+  }
+  
+  .modal__content {
+    padding: var(--spacing-2);
+  }
+  
+  .ai-message {
+    padding: var(--spacing-1);
+    font-size: var(--font-size-xs);
+  }
+  
+  .ai-input {
+    padding: var(--spacing-1);
+    font-size: var(--font-size-xs);
+  }
+  
+  .editor-content h1 {
+    font-size: 1.75rem;
+  }
+  
+  .editor-content h2 {
+    font-size: 1.25rem;
+  }
+  
+  .editor-content h3 {
+    font-size: 1.125rem;
+  }
+  
+  .editor-content p {
+    font-size: var(--font-size-xs);
+  }
+}
+
+@media (max-width: 1024px) and (min-width: 769px) {
+  .toolbar-group {
+    gap: var(--spacing-1);
+  }
+  
+  .ai-modal {
+    width: 90%;
+    height: 75vh;
   }
 }

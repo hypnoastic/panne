@@ -546,21 +546,234 @@
 
 /* Responsive Design */
 @media (max-width: 768px) {
-  .calendarpage-layout {
-    flex-direction: column;
-    gap: var(--spacing-4);
+  .calendarpage-container {
+    padding: var(--spacing-4);
+    height: auto;
+    min-height: calc(100vh - var(--spacing-2));
   }
   
-  .calendarpage-events-sidebar {
-    width: 100%;
-    height: 300px;
+  .calendarpage-header h1 {
+    font-size: var(--font-size-xl);
+  }
+  
+  .calendarpage-layout {
+    flex-direction: column;
+    gap: var(--spacing-3);
+    height: auto;
+  }
+  
+  .calendarpage-nav {
+    margin-bottom: var(--spacing-3);
+    padding: 0;
+  }
+  
+  .calendarpage-nav-arrow {
+    font-size: 1.5rem;
+    padding: 6px;
+  }
+  
+  .calendarpage-month-year {
+    font-size: var(--font-size-lg);
+  }
+  
+  .calendarpage-grid {
+    border-radius: 8px;
+  }
+  
+  .calendarpage-day-header {
+    padding: var(--spacing-2);
+    font-size: var(--font-size-xs);
   }
   
   .calendarpage-day {
-    min-height: 60px;
+    min-height: 50px;
+    padding: var(--spacing-1);
   }
   
   .calendarpage-day-number {
     font-size: var(--font-size-xs);
+    margin-bottom: 2px;
+  }
+  
+  .calendarpage-event-dot {
+    width: 4px;
+    height: 4px;
+  }
+  
+  .calendarpage-more-events {
+    font-size: 8px;
+  }
+  
+  .calendarpage-events-sidebar {
+    width: 100%;
+    height: auto;
+    max-height: 400px;
+    padding: var(--spacing-3);
+  }
+  
+  .calendarpage-selected-date-header h3 {
+    font-size: var(--font-size-base);
+  }
+  
+  .calendarpage-add-event-button {
+    width: 28px;
+    height: 28px;
+    font-size: 1.2rem;
+  }
+  
+  .calendarpage-event-input,
+  .calendarpage-event-textarea {
+    padding: var(--spacing-2);
+    font-size: var(--font-size-sm);
+  }
+  
+  .calendarpage-create-button,
+  .calendarpage-cancel-button {
+    padding: var(--spacing-2) var(--spacing-3);
+    font-size: var(--font-size-xs);
+  }
+  
+  .calendarpage-events-list {
+    gap: var(--spacing-2);
+    max-height: 250px;
+  }
+  
+  .calendarpage-event-item {
+    padding: var(--spacing-2);
+  }
+  
+  .calendarpage-event-title {
+    font-size: var(--font-size-sm);
+  }
+  
+  .calendarpage-event-time {
+    font-size: var(--font-size-xs);
+  }
+  
+  .calendarpage-event-description {
+    font-size: var(--font-size-xs);
+  }
+  
+  .calendarpage-delete-button {
+    width: 20px;
+    height: 20px;
+  }
+  
+  .calendarpage-delete-modal,
+  .calendarpage-modal-overlay {
+    width: 95%;
+    max-width: none;
+  }
+  
+  .calendarpage-placeholder-icon {
+    font-size: 3rem;
+  }
+  
+  .calendarpage-placeholder-content h3 {
+    font-size: var(--font-size-base);
+  }
+  
+  .calendarpage-placeholder-content p {
+    font-size: var(--font-size-xs);
+  }
+}
+
+@media (max-width: 480px) {
+  .calendarpage-container {
+    padding: var(--spacing-2);
+  }
+  
+  .calendarpage-header h1 {
+    font-size: var(--font-size-lg);
+  }
+  
+  .calendarpage-nav-arrow {
+    font-size: 1.25rem;
+    padding: 4px;
+  }
+  
+  .calendarpage-month-year {
+    font-size: var(--font-size-base);
+  }
+  
+  .calendarpage-day {
+    min-height: 40px;
+    padding: 2px;
+  }
+  
+  .calendarpage-day-number {
+    font-size: 11px;
+  }
+  
+  .calendarpage-day-header {
+    padding: var(--spacing-1);
+    font-size: 10px;
+  }
+  
+  .calendarpage-events-sidebar {
+    padding: var(--spacing-2);
+    max-height: 350px;
+  }
+  
+  .calendarpage-selected-date-header h3 {
+    font-size: var(--font-size-sm);
+  }
+  
+  .calendarpage-add-event-button {
+    width: 24px;
+    height: 24px;
+    font-size: 1rem;
+  }
+  
+  .calendarpage-event-input,
+  .calendarpage-event-textarea {
+    padding: var(--spacing-1);
+    font-size: var(--font-size-xs);
+  }
+  
+  .calendarpage-create-button,
+  .calendarpage-cancel-button {
+    padding: var(--spacing-1) var(--spacing-2);
+    font-size: 11px;
+  }
+  
+  .calendarpage-events-list {
+    max-height: 200px;
+  }
+  
+  .calendarpage-event-item {
+    padding: var(--spacing-1);
+  }
+  
+  .calendarpage-event-title {
+    font-size: var(--font-size-xs);
+  }
+  
+  .calendarpage-event-time,
+  .calendarpage-event-description {
+    font-size: 11px;
+  }
+  
+  .calendarpage-delete-button {
+    width: 18px;
+    height: 18px;
+  }
+  
+  .calendarpage-placeholder-icon {
+    font-size: 2.5rem;
+  }
+  
+  .calendarpage-placeholder-content h3 {
+    font-size: var(--font-size-sm);
+  }
+}
+
+@media (max-width: 1024px) and (min-width: 769px) {
+  .calendarpage-events-sidebar {
+    width: 300px;
+  }
+  
+  .calendarpage-day {
+    min-height: 70px;
   }
 }

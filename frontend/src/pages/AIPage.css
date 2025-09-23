@@ -563,6 +563,19 @@
 .aipage-input-area {
   border-top: 1px solid rgba(255, 255, 255, 0.1);
   padding: var(--spacing-4) var(--spacing-6);
+  flex-shrink: 0;
+  background: rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(10px);
+}
+
+.aipage-main {
+  display: flex;
+  flex-direction: column;
+}
+
+.aipage-chat-area {
+  flex: 1;
+  overflow-y: auto;
 }
 
 .aipage-input-container {
@@ -714,18 +727,324 @@
   overflow-y: auto !important;
 }
 
-/* Responsive */
-@media (max-width: 768px) {
-  .message {
-    max-width: 85%;
+/* Responsive Media Queries */
+
+/* Tablet and Desktop (769px - 1024px) */
+@media (max-width: 1024px) and (min-width: 769px) {
+  .aipage-layout {
+    display: flex;
+    flex-direction: row;
   }
   
-  .input-container {
+  .aipage-sidebar {
+    width: 25%;
+  }
+  
+  .aipage-main {
+    flex: 1;
+    display: flex;
     flex-direction: column;
-    gap: var(--spacing-2);
   }
   
-  .ai-input {
+  .aipage-chat-area {
+    flex: 1;
+    overflow-y: auto;
+  }
+  
+  .aipage-input-area {
+    padding: var(--spacing-3) var(--spacing-4);
+    background: rgba(0, 0, 0, 0.8);
+    backdrop-filter: blur(10px);
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    flex-shrink: 0;
+  }
+  
+  .aipage-input-container {
+    display: flex;
+    align-items: center;
+    min-height: 50px;
+  }
+  
+  .aipage-export-btn {
+    width: 140px;
+  }
+}
+
+/* Mobile (up to 768px) */
+@media (max-width: 768px) {
+  .aipage-container {
+    height: 100vh;
+    overflow: hidden;
+  }
+  
+  .aipage-layout {
+    flex-direction: column;
+    height: 100%;
+    border-radius: 12px;
+  }
+  
+  .aipage-sidebar {
     width: 100%;
+    height: auto;
+    max-height: 120px;
+    border-right: none;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    flex-shrink: 0;
+  }
+  
+  .aipage-sidebar-header {
+    height: 40px;
+    padding: var(--spacing-1);
+  }
+  
+  .aipage-chat-title {
+    font-size: var(--font-size-sm);
+  }
+  
+  .aipage-plus-icon {
+    width: 18px;
+    height: 18px;
+  }
+  
+  .aipage-search-chats {
+    padding: var(--spacing-1);
+  }
+  
+  .aipage-search-input {
+    padding: var(--spacing-1);
+    font-size: var(--font-size-xs);
+  }
+  
+  .aipage-chats-list {
+    padding: var(--spacing-1);
+    max-height: 60px;
+    overflow-y: auto;
+  }
+  
+  .aipage-chat-item {
+    padding: var(--spacing-1);
+    margin-bottom: 0;
+    font-size: 10px;
+  }
+  
+  .aipage-delete-chat {
+    padding: 2px;
+  }
+  
+  .aipage-main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+  }
+  
+  .aipage-header {
+    height: 40px;
+    padding: var(--spacing-1) var(--spacing-2);
+    flex-shrink: 0;
+  }
+  
+  .aipage-header h1 {
+    font-size: var(--font-size-base);
+  }
+  
+  .aipage-export-btn {
+    width: 100px;
+    padding: var(--spacing-1);
+    font-size: 10px;
+  }
+  
+  .aipage-chat-area {
+    flex: 1;
+    overflow-y: auto;
+    padding: var(--spacing-1);
+    padding-bottom: 80px;
+    min-height: 0;
+  }
+  
+  .aipage-messages-container {
+    gap: var(--spacing-1);
+    padding: var(--spacing-1);
+  }
+  
+  .aipage-message {
+    margin-bottom: var(--spacing-1);
+  }
+  
+  .aipage-user-message {
+    max-width: 90%;
+    padding: var(--spacing-1) var(--spacing-2);
+    font-size: var(--font-size-xs);
+    border-radius: 10px;
+  }
+  
+  .aipage-ai-response {
+    max-width: 95%;
+    font-size: var(--font-size-xs);
+    padding: var(--spacing-1) 0;
+  }
+  
+  .aipage-input-area {
+    padding: var(--spacing-2);
+    background: rgba(0, 0, 0, 0.95);
+    backdrop-filter: blur(15px);
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    flex-shrink: 0;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 1000;
+  }
+  
+  .aipage-input-container {
+    display: flex;
+    align-items: center;
+    padding: var(--spacing-2);
+    border-radius: 20px;
+    min-height: 48px;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+  }
+  
+  .aipage-context-button,
+  .aipage-send-button {
+    width: 32px;
+    height: 32px;
+    flex-shrink: 0;
+  }
+  
+  .aipage-context-button {
+    margin-right: var(--spacing-2);
+  }
+  
+  .aipage-send-button {
+    margin-left: var(--spacing-2);
+    margin-right: 0;
+  }
+  
+  .aipage-input {
+    flex: 1;
+    padding: var(--spacing-2) 0;
+    font-size: var(--font-size-sm);
+    background: transparent;
+    border: none;
+    outline: none;
+    color: #E6E8EB;
+  }
+  
+  .aipage-selected-notes-outside {
+    gap: var(--spacing-1);
+    margin-bottom: var(--spacing-2);
+  }
+  
+  .aipage-note-chip-inline {
+    padding: 2px var(--spacing-1);
+    font-size: 10px;
+    border-radius: 8px;
+  }
+  
+  .aipage-chat-empty h3 {
+    font-size: var(--font-size-base);
+  }
+  
+  .aipage-modal-overlay .ai-modal {
+    width: 95%;
+    max-width: none;
+    max-height: 85vh;
+  }
+  
+  .aipage-notes-modal,
+  .aipage-create-modal,
+  .aipage-delete-modal {
+    width: 95%;
+    max-width: none;
+  }
+  
+  .aipage-modal-body {
+    max-height: 200px;
+  }
+}
+
+/* Small Mobile (up to 480px) */
+@media (max-width: 480px) {
+  .aipage-layout {
+    border-radius: 8px;
+  }
+  
+  .aipage-sidebar {
+    max-height: 100px;
+  }
+  
+  .aipage-sidebar-header,
+  .aipage-header {
+    height: 35px;
+    padding: 4px var(--spacing-1);
+  }
+  
+  .aipage-chat-title,
+  .aipage-header h1 {
+    font-size: var(--font-size-xs);
+  }
+  
+  .aipage-export-btn {
+    width: 80px;
+    font-size: 9px;
+    padding: 2px;
+  }
+  
+  .aipage-chats-list {
+    max-height: 50px;
+  }
+  
+  .aipage-chat-item {
+    padding: 2px;
+    font-size: 9px;
+  }
+  
+  .aipage-chat-area {
+    padding: var(--spacing-1);
+    padding-bottom: 70px;
+  }
+  
+  .aipage-messages-container {
+    padding: var(--spacing-1);
+  }
+  
+  .aipage-user-message {
+    padding: var(--spacing-1);
+    font-size: 10px;
+  }
+  
+  .aipage-ai-response {
+    font-size: 10px;
+  }
+  
+  .aipage-input-area {
+    padding: var(--spacing-1);
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 1000;
+    background: rgba(0, 0, 0, 0.95);
+    backdrop-filter: blur(15px);
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+  }
+  
+  .aipage-input-container {
+    min-height: 44px;
+    padding: var(--spacing-1);
+  }
+  
+  .aipage-context-button,
+  .aipage-send-button {
+    width: 28px;
+    height: 28px;
+  }
+  
+  .aipage-input {
+    font-size: 10px;
+    padding: var(--spacing-1) 0;
   }
 }

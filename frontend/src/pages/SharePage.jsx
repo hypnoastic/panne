@@ -26,9 +26,7 @@ export default function SharePage() {
     }
   }, [currentUser, userLoading, shareId, navigate]);
 
-  if (userLoading) {
-    return <SectionLoader fullScreen={true} />;
-  }
+
 
   return null;
 }

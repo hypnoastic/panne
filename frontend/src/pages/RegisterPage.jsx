@@ -66,9 +66,7 @@ export default function RegisterPage() {
     }
   };
 
-  if (registerMutation.isPending) {
-    return <SectionLoader fullScreen={true} />;
-  }
+
 
   return (
     <div className="auth-page">

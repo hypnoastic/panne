@@ -24,8 +24,8 @@ api.interceptors.request.use(
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401) {
-      // Handle unauthorized access
+    if (error.response?.status === 401 && !window.location.pathname.includes('/login')) {
+      // Handle unauthorized access, but avoid redirect loops
       window.location.href = '/login';
     }
     return Promise.reject(error);
