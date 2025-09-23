@@ -28,21 +28,24 @@ dotenv.config();
 
 const app = express();
 const server = createServer(app);
+
+// Clean and validate frontend URL
+const frontendUrl = (process.env.FRONTEND_URL || "http://localhost:5173").trim();
+console.log('Frontend URL:', frontendUrl);
+
 const io = new Server(server, {
   cors: {
-    origin: process.env.FRONTEND_URL || "http://localhost:5173",
+    origin: frontendUrl,
     credentials: true
   }
 });
-
-
 
 // Middleware
 app.use(helmet({
   crossOriginResourcePolicy: { policy: "cross-origin" }
 }));
 app.use(cors({
-  origin: process.env.FRONTEND_URL || "http://localhost:5173",
+  origin: frontendUrl,
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'Cookie', 'X-Requested-With'],
