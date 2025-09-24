@@ -9,44 +9,7 @@ import SectionLoader from '../components/SectionLoader';
 import calendarAnimation from '../assets/calendar.json';
 import './CalendarPage.css';
 
-// Calendar Events API
-const API_BASE_URL = import.meta.env.VITE_API_URL;
-
-const calendarEventsApi = {
-  getAll: async () => {
-    const response = await fetch(`${API_BASE_URL}/events`, {
-      credentials: 'include'
-    });
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-    return response.json();
-  },
-  create: async (event) => {
-    const response = await fetch(`${API_BASE_URL}/events`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      credentials: 'include',
-      body: JSON.stringify(event)
-    });
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-    return response.json();
-  },
-  delete: async (id) => {
-    const response = await fetch(`${API_BASE_URL}/events/${id}/trash`, {
-      method: 'POST',
-      credentials: 'include'
-    });
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-    return response.json();
-  }
-};
+import { eventsApi } from '../services/api';
 
 const MONTHS = [
   'January', 'February', 'March', 'April', 'May', 'June',
@@ -72,11 +35,11 @@ export default function CalendarPage() {
 
   const { data: events = [], isLoading } = useQuery({
     queryKey: ['events'],
-    queryFn: calendarEventsApi.getAll
+    queryFn: eventsApi.getAll
   });
 
   const createEventMutation = useMutation({
-    mutationFn: calendarEventsApi.create,
+    mutationFn: eventsApi.create,
     onSuccess: () => {
       queryClient.invalidateQueries(['events']);
       setIsCreatingEvent(false);
@@ -85,7 +48,7 @@ export default function CalendarPage() {
   });
 
   const deleteEventMutation = useMutation({
-    mutationFn: calendarEventsApi.delete,
+    mutationFn: eventsApi.delete,
     onSuccess: () => {
       queryClient.invalidateQueries(['events']);
       setShowDeleteModal(false);

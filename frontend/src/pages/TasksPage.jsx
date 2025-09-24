@@ -10,122 +10,48 @@ import SectionLoader from '../components/SectionLoader';
 import eventsAnimation from '../assets/events.json';
 import './TasksPage.css';
 
-// Real API calls to database
-const agendasApi = {
-  getAll: async () => {
-    const response = await fetch(`${import.meta.env.VITE_API_URL}/agendas`, {
-      credentials: 'include'
-    });
-    if (!response.ok) throw new Error('Failed to fetch agendas');
-    return response.json();
-  },
-  create: async (agenda) => {
-    const response = await fetch(`${import.meta.env.VITE_API_URL}/agendas`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
-      body: JSON.stringify(agenda)
-    });
-    if (!response.ok) throw new Error('Failed to create agenda');
-    return response.json();
-  },
-  update: async (id, updates) => {
-    const response = await fetch(`${import.meta.env.VITE_API_URL}/agendas/${id}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
-      body: JSON.stringify(updates)
-    });
-    if (!response.ok) throw new Error('Failed to update agenda');
-    return response.json();
-  },
-  delete: async (id) => {
-    const response = await fetch(`${import.meta.env.VITE_API_URL}/agendas/${id}`, {
-      method: 'DELETE',
-      credentials: 'include'
-    });
-    if (!response.ok) throw new Error('Failed to delete agenda');
-    return response.json();
-  }
-};
-
-const tasksApi = {
-  getAll: async () => {
-    const response = await fetch(`${import.meta.env.VITE_API_URL}/tasks`, {
-      credentials: 'include'
-    });
-    if (!response.ok) throw new Error('Failed to fetch tasks');
-    return response.json();
-  },
-  getById: async (id) => {
-    const response = await fetch(`${import.meta.env.VITE_API_URL}/tasks/${id}`, {
-      credentials: 'include'
-    });
-    if (!response.ok) throw new Error('Failed to fetch task');
-    return response.json();
-  },
-  create: async (task) => {
-    const response = await fetch(`${import.meta.env.VITE_API_URL}/tasks`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
-      body: JSON.stringify(task)
-    });
-    if (!response.ok) throw new Error('Failed to create task');
-    return response.json();
-  },
-  update: async (id, updates) => {
-    const response = await fetch(`${import.meta.env.VITE_API_URL}/tasks/${id}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
-      body: JSON.stringify(updates)
-    });
-    if (!response.ok) throw new Error('Failed to update task');
-    return response.json();
-  },
-  delete: async (id) => {
-    const response = await fetch(`${import.meta.env.VITE_API_URL}/tasks/${id}/trash`, {
-      method: 'POST',
-      credentials: 'include'
-    });
-    if (!response.ok) throw new Error('Failed to delete task');
-    return response.json();
-  }
-};
+import { agendasApi, tasksApi } from '../services/api';
 
 const todoItemsApi = {
   getByTaskId: async (taskId) => {
+    const token = localStorage.getItem('token');
     const response = await fetch(`${import.meta.env.VITE_API_URL}/tasks/${taskId}/todos`, {
-      credentials: 'include'
+      headers: { 'Authorization': `Bearer ${token}` }
     });
     if (!response.ok) throw new Error('Failed to fetch todos');
     return response.json();
   },
   create: async (item) => {
+    const token = localStorage.getItem('token');
     const response = await fetch(`${import.meta.env.VITE_API_URL}/todos`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
+      headers: { 
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
       body: JSON.stringify(item)
     });
     if (!response.ok) throw new Error('Failed to create todo');
     return response.json();
   },
   update: async (id, updates) => {
+    const token = localStorage.getItem('token');
     const response = await fetch(`${import.meta.env.VITE_API_URL}/todos/${id}`, {
       method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
+      headers: { 
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
       body: JSON.stringify(updates)
     });
     if (!response.ok) throw new Error('Failed to update todo');
     return response.json();
   },
   delete: async (id) => {
+    const token = localStorage.getItem('token');
     const response = await fetch(`${import.meta.env.VITE_API_URL}/todos/${id}`, {
       method: 'DELETE',
-      credentials: 'include'
+      headers: { 'Authorization': `Bearer ${token}` }
     });
     if (!response.ok) throw new Error('Failed to delete todo');
     return response.json();

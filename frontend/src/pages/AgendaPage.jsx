@@ -8,69 +8,38 @@ import Button from '../components/Button';
 import SectionLoader from '../components/SectionLoader';
 import './AgendaPage.css';
 
-// API calls
-const API_BASE_URL = import.meta.env.VITE_API_URL;
-
-const agendasApi = {
-  getAll: async () => {
-    const response = await fetch(`${API_BASE_URL}/agendas`, {
-      credentials: 'include'
-    });
-    if (!response.ok) throw new Error('Failed to fetch agendas');
-    return response.json();
-  },
-  create: async (agenda) => {
-    const response = await fetch(`${API_BASE_URL}/agendas`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
-      body: JSON.stringify(agenda)
-    });
-    if (!response.ok) throw new Error('Failed to create agenda');
-    return response.json();
-  }
-};
-
-const tasksApi = {
-  getAll: async () => {
-    const response = await fetch(`${API_BASE_URL}/tasks`, {
-      credentials: 'include'
-    });
-    if (!response.ok) throw new Error('Failed to fetch tasks');
-    return response.json();
-  },
-  getById: async (id) => {
-    const response = await fetch(`${API_BASE_URL}/tasks/${id}`, {
-      credentials: 'include'
-    });
-    if (!response.ok) throw new Error('Failed to fetch task');
-    return response.json();
-  }
-};
+import { agendasApi, tasksApi } from '../services/api';
 
 const todoItemsApi = {
   getByTaskId: async (taskId) => {
-    const response = await fetch(`${API_BASE_URL}/tasks/${taskId}/todos`, {
-      credentials: 'include'
+    const token = localStorage.getItem('token');
+    const response = await fetch(`${import.meta.env.VITE_API_URL}/tasks/${taskId}/todos`, {
+      headers: { 'Authorization': `Bearer ${token}` }
     });
     if (!response.ok) throw new Error('Failed to fetch todos');
     return response.json();
   },
   create: async (item) => {
-    const response = await fetch(`${API_BASE_URL}/todos`, {
+    const token = localStorage.getItem('token');
+    const response = await fetch(`${import.meta.env.VITE_API_URL}/todos`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
+      headers: { 
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
       body: JSON.stringify(item)
     });
     if (!response.ok) throw new Error('Failed to create todo');
     return response.json();
   },
   update: async (id, updates) => {
-    const response = await fetch(`${API_BASE_URL}/todos/${id}`, {
+    const token = localStorage.getItem('token');
+    const response = await fetch(`${import.meta.env.VITE_API_URL}/todos/${id}`, {
       method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
+      headers: { 
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
       body: JSON.stringify(updates)
     });
     if (!response.ok) throw new Error('Failed to update todo');
@@ -126,10 +95,7 @@ export default function AgendaPage() {
   });
 
   const deleteAgendaMutation = useMutation({
-    mutationFn: (id) => fetch(`${API_BASE_URL}/agendas/${id}/trash`, {
-      method: 'POST',
-      credentials: 'include'
-    }),
+    mutationFn: agendasApi.delete,
     onSuccess: () => {
       queryClient.invalidateQueries(['agendas']);
       setShowDeleteModal(false);
