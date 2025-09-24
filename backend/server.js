@@ -49,14 +49,19 @@ app.use(cors({
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'Cookie', 'X-Requested-With'],
-  exposedHeaders: ['Set-Cookie']
+  exposedHeaders: ['Set-Cookie'],
+  preflightContinue: false,
+  optionsSuccessStatus: 200
 }));
 
-// Configure cookie parser for Safari compatibility
-app.use(cookieParser(undefined, {
-  sameSite: 'none',
-  secure: process.env.NODE_ENV === 'production'
-}));
+// Safari-specific middleware
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Credentials', 'true');
+  res.header('Vary', 'Origin');
+  next();
+});
+
+app.use(cookieParser());
 app.use(express.json({ limit: '10mb' }));
 
 

@@ -6,6 +6,19 @@ import { v2 as cloudinary } from 'cloudinary';
 import pool from '../config/database.js';
 import { authenticateToken } from '../middleware/auth.js';
 
+// Constants
+const SALT_ROUNDS = 12;
+const isProduction = process.env.NODE_ENV === 'production';
+
+// Cookie configuration
+const COOKIE_CONFIG = {
+  httpOnly: true,
+  secure: true,
+  sameSite: 'none',
+  maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+  domain: process.env.NODE_ENV === 'production' ? undefined : undefined
+};
+
 // Configure multer for memory storage
 const upload = multer({ storage: multer.memoryStorage() });
 
@@ -34,8 +47,7 @@ router.post('/register', async (req, res) => {
     }
     
     // Hash password
-    const saltRounds = 12;
-    const passwordHash = await bcrypt.hash(password, saltRounds);
+    const passwordHash = await bcrypt.hash(password, SALT_ROUNDS);
     
     // Create user
     const result = await pool.query(
@@ -53,12 +65,7 @@ router.post('/register', async (req, res) => {
     );
     
     // Set cookie
-    res.cookie('token', token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
-      maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
-    });
+    res.cookie('token', token, COOKIE_CONFIG);
     
     res.status(201).json({ user });
   } catch (error) {
@@ -99,12 +106,7 @@ router.post('/login', async (req, res) => {
     );
     
     // Set cookie
-    res.cookie('token', token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
-      maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
-    });
+    res.cookie('token', token, COOKIE_CONFIG);
     
     const { password_hash, ...userWithoutPassword } = user;
     res.json({ user: userWithoutPassword });
@@ -118,8 +120,8 @@ router.post('/login', async (req, res) => {
 router.post('/logout', (req, res) => {
   res.clearCookie('token', {
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax'
+    secure: true,
+    sameSite: 'none'
   });
   res.json({ message: 'Logged out successfully' });
 });
@@ -188,8 +190,7 @@ router.post('/change-password', authenticateToken, async (req, res) => {
     }
     
     // Hash new password
-    const saltRounds = 12;
-    const newPasswordHash = await bcrypt.hash(newPassword, saltRounds);
+    const newPasswordHash = await bcrypt.hash(newPassword, SALT_ROUNDS);
     
     // Update password
     await pool.query(
