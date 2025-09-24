@@ -14,9 +14,8 @@ const isProduction = process.env.NODE_ENV === 'production';
 const COOKIE_CONFIG = {
   httpOnly: true,
   secure: true,
-  sameSite: 'none',
-  maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-  domain: process.env.NODE_ENV === 'production' ? undefined : undefined
+  sameSite: 'lax',
+  maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
 };
 
 // Configure multer for memory storage
@@ -121,7 +120,7 @@ router.post('/logout', (req, res) => {
   res.clearCookie('token', {
     httpOnly: true,
     secure: true,
-    sameSite: 'none'
+    sameSite: 'lax'
   });
   res.json({ message: 'Logged out successfully' });
 });
