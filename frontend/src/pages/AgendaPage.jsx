@@ -9,16 +9,18 @@ import SectionLoader from '../components/SectionLoader';
 import './AgendaPage.css';
 
 // API calls
+const API_BASE_URL = import.meta.env.VITE_API_URL;
+
 const agendasApi = {
   getAll: async () => {
-    const response = await fetch('http://localhost:5000/api/agendas', {
+    const response = await fetch(`${API_BASE_URL}/agendas`, {
       credentials: 'include'
     });
     if (!response.ok) throw new Error('Failed to fetch agendas');
     return response.json();
   },
   create: async (agenda) => {
-    const response = await fetch('http://localhost:5000/api/agendas', {
+    const response = await fetch(`${API_BASE_URL}/agendas`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include',
@@ -31,14 +33,14 @@ const agendasApi = {
 
 const tasksApi = {
   getAll: async () => {
-    const response = await fetch('http://localhost:5000/api/tasks', {
+    const response = await fetch(`${API_BASE_URL}/tasks`, {
       credentials: 'include'
     });
     if (!response.ok) throw new Error('Failed to fetch tasks');
     return response.json();
   },
   getById: async (id) => {
-    const response = await fetch(`http://localhost:5000/api/tasks/${id}`, {
+    const response = await fetch(`${API_BASE_URL}/tasks/${id}`, {
       credentials: 'include'
     });
     if (!response.ok) throw new Error('Failed to fetch task');
@@ -48,14 +50,14 @@ const tasksApi = {
 
 const todoItemsApi = {
   getByTaskId: async (taskId) => {
-    const response = await fetch(`http://localhost:5000/api/tasks/${taskId}/todos`, {
+    const response = await fetch(`${API_BASE_URL}/tasks/${taskId}/todos`, {
       credentials: 'include'
     });
     if (!response.ok) throw new Error('Failed to fetch todos');
     return response.json();
   },
   create: async (item) => {
-    const response = await fetch('http://localhost:5000/api/todos', {
+    const response = await fetch(`${API_BASE_URL}/todos`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include',
@@ -65,7 +67,7 @@ const todoItemsApi = {
     return response.json();
   },
   update: async (id, updates) => {
-    const response = await fetch(`http://localhost:5000/api/todos/${id}`, {
+    const response = await fetch(`${API_BASE_URL}/todos/${id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include',
@@ -124,7 +126,7 @@ export default function AgendaPage() {
   });
 
   const deleteAgendaMutation = useMutation({
-    mutationFn: (id) => fetch(`http://localhost:5000/api/agendas/${id}/trash`, {
+    mutationFn: (id) => fetch(`${API_BASE_URL}/agendas/${id}/trash`, {
       method: 'POST',
       credentials: 'include'
     }),

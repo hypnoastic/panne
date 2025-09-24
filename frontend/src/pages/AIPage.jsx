@@ -11,9 +11,11 @@ import aiAnimation from '../assets/ai.json';
 import './AIPage.css';
 
 // AI Chat API
+const API_BASE_URL = import.meta.env.VITE_API_URL;
+
 const aiChatApi = {
   sendMessage: async (message, context = [], chatId = null) => {
-    const response = await fetch('http://localhost:5000/api/ai/chat', {
+    const response = await fetch(`${API_BASE_URL}/ai/chat`, {
       method: 'POST',
       headers: { 
         'Content-Type': 'application/json'
@@ -30,7 +32,7 @@ const aiChatApi = {
     return data;
   },
   exportToNote: async (chatId, selectedNotes = []) => {
-    const response = await fetch('http://localhost:5000/api/ai/export-to-note', {
+    const response = await fetch(`${API_BASE_URL}/ai/export-to-note`, {
       method: 'POST',
       headers: { 
         'Content-Type': 'application/json'
@@ -47,7 +49,7 @@ const aiChatApi = {
     return data;
   },
   saveChat: async (chatData) => {
-    const response = await fetch('http://localhost:5000/api/ai/chats', {
+    const response = await fetch(`${API_BASE_URL}/ai/chats`, {
       method: 'POST',
       headers: { 
         'Content-Type': 'application/json'
@@ -63,7 +65,7 @@ const aiChatApi = {
     return response.json();
   },
   getChats: async () => {
-    const response = await fetch('http://localhost:5000/api/ai/chats', {
+    const response = await fetch(`${API_BASE_URL}/ai/chats`, {
       credentials: 'include'
     });
     
@@ -74,7 +76,7 @@ const aiChatApi = {
     return response.json();
   },
   deleteChat: async (chatId) => {
-    const response = await fetch(`http://localhost:5000/api/ai/chats/${chatId}/trash`, {
+    const response = await fetch(`${API_BASE_URL}/ai/chats/${chatId}/trash`, {
       method: 'POST',
       credentials: 'include'
     });

@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+const API_BASE_URL = import.meta.env.VITE_API_URL;
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -77,6 +77,9 @@ export const notebooksApi = {
 // AI API
 export const aiApi = {
   query: (queryData) => api.post('/ai/query', queryData).then(res => res.data),
+  getChats: () => api.get('/ai/chats').then(res => res.data),
+  createChat: (chatData) => api.post('/ai/chats', chatData).then(res => res.data),
+  deleteChat: (id) => api.delete(`/ai/chats/${id}`).then(res => res.data),
 };
 
 // Upload API
@@ -105,6 +108,30 @@ export const usersApi = {
 export const notificationsApi = {
   getUnread: () => api.get('/notifications/unread').then(res => res.data),
   markAsRead: (id) => api.put(`/notifications/${id}/read`).then(res => res.data),
+};
+
+// Tasks API
+export const tasksApi = {
+  getAll: () => api.get('/tasks').then(res => res.data),
+  create: (taskData) => api.post('/tasks', taskData).then(res => res.data),
+  update: (id, taskData) => api.put(`/tasks/${id}`, taskData).then(res => res.data),
+  delete: (id) => api.post(`/tasks/${id}/trash`).then(res => res.data),
+};
+
+// Agendas API
+export const agendasApi = {
+  getAll: () => api.get('/agendas').then(res => res.data),
+  create: (agendaData) => api.post('/agendas', agendaData).then(res => res.data),
+  update: (id, agendaData) => api.put(`/agendas/${id}`, agendaData).then(res => res.data),
+  delete: (id) => api.delete(`/agendas/${id}`).then(res => res.data),
+};
+
+// Events API
+export const eventsApi = {
+  getAll: () => api.get('/events').then(res => res.data),
+  create: (eventData) => api.post('/events', eventData).then(res => res.data),
+  update: (id, eventData) => api.put(`/events/${id}`, eventData).then(res => res.data),
+  delete: (id) => api.post(`/events/${id}/trash`).then(res => res.data),
 };
 
 export default api;

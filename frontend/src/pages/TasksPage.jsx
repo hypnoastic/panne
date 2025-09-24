@@ -13,14 +13,14 @@ import './TasksPage.css';
 // Real API calls to database
 const agendasApi = {
   getAll: async () => {
-    const response = await fetch('http://localhost:5000/api/agendas', {
+    const response = await fetch(`${import.meta.env.VITE_API_URL}/agendas`, {
       credentials: 'include'
     });
     if (!response.ok) throw new Error('Failed to fetch agendas');
     return response.json();
   },
   create: async (agenda) => {
-    const response = await fetch('http://localhost:5000/api/agendas', {
+    const response = await fetch(`${import.meta.env.VITE_API_URL}/agendas`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include',
@@ -30,7 +30,7 @@ const agendasApi = {
     return response.json();
   },
   update: async (id, updates) => {
-    const response = await fetch(`http://localhost:5000/api/agendas/${id}`, {
+    const response = await fetch(`${import.meta.env.VITE_API_URL}/agendas/${id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include',
@@ -40,7 +40,7 @@ const agendasApi = {
     return response.json();
   },
   delete: async (id) => {
-    const response = await fetch(`http://localhost:5000/api/agendas/${id}`, {
+    const response = await fetch(`${import.meta.env.VITE_API_URL}/agendas/${id}`, {
       method: 'DELETE',
       credentials: 'include'
     });
@@ -51,21 +51,21 @@ const agendasApi = {
 
 const tasksApi = {
   getAll: async () => {
-    const response = await fetch('http://localhost:5000/api/tasks', {
+    const response = await fetch(`${import.meta.env.VITE_API_URL}/tasks`, {
       credentials: 'include'
     });
     if (!response.ok) throw new Error('Failed to fetch tasks');
     return response.json();
   },
   getById: async (id) => {
-    const response = await fetch(`http://localhost:5000/api/tasks/${id}`, {
+    const response = await fetch(`${import.meta.env.VITE_API_URL}/tasks/${id}`, {
       credentials: 'include'
     });
     if (!response.ok) throw new Error('Failed to fetch task');
     return response.json();
   },
   create: async (task) => {
-    const response = await fetch('http://localhost:5000/api/tasks', {
+    const response = await fetch(`${import.meta.env.VITE_API_URL}/tasks`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include',
@@ -75,7 +75,7 @@ const tasksApi = {
     return response.json();
   },
   update: async (id, updates) => {
-    const response = await fetch(`http://localhost:5000/api/tasks/${id}`, {
+    const response = await fetch(`${import.meta.env.VITE_API_URL}/tasks/${id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include',
@@ -85,7 +85,7 @@ const tasksApi = {
     return response.json();
   },
   delete: async (id) => {
-    const response = await fetch(`http://localhost:5000/api/tasks/${id}/trash`, {
+    const response = await fetch(`${import.meta.env.VITE_API_URL}/tasks/${id}/trash`, {
       method: 'POST',
       credentials: 'include'
     });
@@ -96,14 +96,14 @@ const tasksApi = {
 
 const todoItemsApi = {
   getByTaskId: async (taskId) => {
-    const response = await fetch(`http://localhost:5000/api/tasks/${taskId}/todos`, {
+    const response = await fetch(`${import.meta.env.VITE_API_URL}/tasks/${taskId}/todos`, {
       credentials: 'include'
     });
     if (!response.ok) throw new Error('Failed to fetch todos');
     return response.json();
   },
   create: async (item) => {
-    const response = await fetch('http://localhost:5000/api/todos', {
+    const response = await fetch(`${import.meta.env.VITE_API_URL}/todos`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include',
@@ -113,7 +113,7 @@ const todoItemsApi = {
     return response.json();
   },
   update: async (id, updates) => {
-    const response = await fetch(`http://localhost:5000/api/todos/${id}`, {
+    const response = await fetch(`${import.meta.env.VITE_API_URL}/todos/${id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include',
@@ -123,7 +123,7 @@ const todoItemsApi = {
     return response.json();
   },
   delete: async (id) => {
-    const response = await fetch(`http://localhost:5000/api/todos/${id}`, {
+    const response = await fetch(`${import.meta.env.VITE_API_URL}/todos/${id}`, {
       method: 'DELETE',
       credentials: 'include'
     });

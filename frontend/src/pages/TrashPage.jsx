@@ -14,14 +14,14 @@ const trashApi = {
     if (search) params.append('search', search);
     if (type !== 'all') params.append('type', type);
     
-    const response = await fetch(`http://localhost:5000/api/trash?${params}`, {
+    const response = await fetch(`${import.meta.env.VITE_API_URL}/trash?${params}`, {
       credentials: 'include'
     });
     if (!response.ok) throw new Error('Failed to fetch trash items');
     return response.json();
   },
   restore: async (id) => {
-    const response = await fetch(`http://localhost:5000/api/trash/${id}/restore`, {
+    const response = await fetch(`${import.meta.env.VITE_API_URL}/trash/${id}/restore`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include'
@@ -33,7 +33,7 @@ const trashApi = {
     return response.json();
   },
   permanentDelete: async (id) => {
-    const response = await fetch(`http://localhost:5000/api/trash/${id}`, {
+    const response = await fetch(`${import.meta.env.VITE_API_URL}/trash/${id}`, {
       method: 'DELETE',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include'

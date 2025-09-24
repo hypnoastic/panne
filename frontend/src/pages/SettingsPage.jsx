@@ -9,7 +9,7 @@ import './SettingsPage.css';
 
 const settingsApi = {
   updateProfile: async (data) => {
-    const response = await fetch('http://localhost:5000/api/auth/profile', {
+    const response = await fetch(`${import.meta.env.VITE_API_URL}/auth/profile`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include',
@@ -19,7 +19,7 @@ const settingsApi = {
     return response.json();
   },
   changePassword: async (data) => {
-    const response = await fetch('http://localhost:5000/api/auth/change-password', {
+    const response = await fetch(`${import.meta.env.VITE_API_URL}/auth/change-password`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include',
@@ -31,7 +31,7 @@ const settingsApi = {
   uploadAvatar: async (file) => {
     const formData = new FormData();
     formData.append('avatar', file);
-    const response = await fetch('http://localhost:5000/api/auth/avatar', {
+    const response = await fetch(`${import.meta.env.VITE_API_URL}/auth/avatar`, {
       method: 'POST',
       credentials: 'include',
       body: formData

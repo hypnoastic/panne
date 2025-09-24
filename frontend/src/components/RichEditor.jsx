@@ -84,7 +84,7 @@ export default function RichEditor({ content, onChange, placeholder = "Start wri
     mutationFn: async ({ message, context }) => {
       const prompt = `You are an AI editor. Edit the provided text according to the user's instructions. Return ONLY the edited text, no explanations or additional text.\n\nOriginal text: ${context}\n\nEdit instruction: ${message}\n\nEdited text:`;
       
-      const response = await fetch('http://localhost:5000/api/ai/query', {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/ai/query`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',

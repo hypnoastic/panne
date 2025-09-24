@@ -39,7 +39,7 @@ export default function NotebooksPage() {
   });
 
   const deleteNotebookMutation = useMutation({
-    mutationFn: (id) => fetch(`http://localhost:5000/api/notebooks/${id}/trash`, {
+    mutationFn: (id) => fetch(`${import.meta.env.VITE_API_URL}/notebooks/${id}/trash`, {
       method: 'POST',
       credentials: 'include'
     }),

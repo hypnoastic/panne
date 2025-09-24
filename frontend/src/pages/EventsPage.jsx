@@ -11,14 +11,14 @@ import './EventsPage.css';
 // API calls
 const eventsApi = {
   getAll: async () => {
-    const response = await fetch('http://localhost:5000/api/events', {
+    const response = await fetch(`${import.meta.env.VITE_API_URL}/events`, {
       credentials: 'include'
     });
     if (!response.ok) throw new Error('Failed to fetch events');
     return response.json();
   },
   create: async (event) => {
-    const response = await fetch('http://localhost:5000/api/events', {
+    const response = await fetch(`${import.meta.env.VITE_API_URL}/events`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include',
@@ -31,14 +31,14 @@ const eventsApi = {
 
 const tasksApi = {
   getAll: async () => {
-    const response = await fetch('http://localhost:5000/api/tasks', {
+    const response = await fetch(`${import.meta.env.VITE_API_URL}/tasks`, {
       credentials: 'include'
     });
     if (!response.ok) throw new Error('Failed to fetch tasks');
     return response.json();
   },
   getById: async (id) => {
-    const response = await fetch(`http://localhost:5000/api/tasks/${id}`, {
+    const response = await fetch(`${import.meta.env.VITE_API_URL}/tasks/${id}`, {
       credentials: 'include'
     });
     if (!response.ok) throw new Error('Failed to fetch task');
@@ -48,14 +48,14 @@ const tasksApi = {
 
 const todoItemsApi = {
   getByTaskId: async (taskId) => {
-    const response = await fetch(`http://localhost:5000/api/tasks/${taskId}/todos`, {
+    const response = await fetch(`${import.meta.env.VITE_API_URL}/tasks/${taskId}/todos`, {
       credentials: 'include'
     });
     if (!response.ok) throw new Error('Failed to fetch todos');
     return response.json();
   },
   create: async (item) => {
-    const response = await fetch('http://localhost:5000/api/todos', {
+    const response = await fetch(`${import.meta.env.VITE_API_URL}/todos`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include',
@@ -65,7 +65,7 @@ const todoItemsApi = {
     return response.json();
   },
   update: async (id, updates) => {
-    const response = await fetch(`http://localhost:5000/api/todos/${id}`, {
+    const response = await fetch(`${import.meta.env.VITE_API_URL}/todos/${id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include',

@@ -12,9 +12,11 @@ import helloAnimation from '../assets/hello.json';
 import './DashboardPage.css';
 
 // AI Chat API
+const API_BASE_URL = import.meta.env.VITE_API_URL;
+
 const aiChatApi = {
   sendMessage: async (message) => {
-    const response = await fetch('http://localhost:5000/api/ai/chat', {
+    const response = await fetch(`${API_BASE_URL}/ai/chat`, {
       method: 'POST',
       headers: { 
         'Content-Type': 'application/json'
@@ -31,7 +33,7 @@ const aiChatApi = {
     return data;
   },
   formatToNote: async (chatHistory) => {
-    const response = await fetch('http://localhost:5000/api/ai/format-note', {
+    const response = await fetch(`${API_BASE_URL}/ai/format-note`, {
       method: 'POST',
       headers: { 
         'Content-Type': 'application/json'
@@ -39,6 +41,7 @@ const aiChatApi = {
       credentials: 'include',
       body: JSON.stringify({ chatHistory })
     });
+    
     
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
@@ -82,7 +85,7 @@ export default function DashboardPage() {
     queryKey: ['events'],
     queryFn: async () => {
       try {
-        const response = await fetch('http://localhost:5000/api/events', {
+        const response = await fetch(`${API_BASE_URL}/events`, {
           credentials: 'include'
         });
         if (!response.ok) return [];
@@ -104,7 +107,7 @@ export default function DashboardPage() {
     queryKey: ['tasks'],
     queryFn: async () => {
       try {
-        const response = await fetch('http://localhost:5000/api/tasks', {
+        const response = await fetch(`${API_BASE_URL}/tasks`, {
           credentials: 'include'
         });
         if (!response.ok) return [];
@@ -120,7 +123,7 @@ export default function DashboardPage() {
     queryKey: ['agendas'],
     queryFn: async () => {
       try {
-        const response = await fetch('http://localhost:5000/api/agendas', {
+        const response = await fetch(`${API_BASE_URL}/agendas`, {
           credentials: 'include'
         });
         if (!response.ok) return [];

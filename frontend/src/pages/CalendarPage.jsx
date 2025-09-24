@@ -10,9 +10,11 @@ import calendarAnimation from '../assets/calendar.json';
 import './CalendarPage.css';
 
 // Calendar Events API
+const API_BASE_URL = import.meta.env.VITE_API_URL;
+
 const calendarEventsApi = {
   getAll: async () => {
-    const response = await fetch('http://localhost:5000/api/events', {
+    const response = await fetch(`${API_BASE_URL}/events`, {
       credentials: 'include'
     });
     if (!response.ok) {
@@ -21,7 +23,7 @@ const calendarEventsApi = {
     return response.json();
   },
   create: async (event) => {
-    const response = await fetch('http://localhost:5000/api/events', {
+    const response = await fetch(`${API_BASE_URL}/events`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
@@ -35,7 +37,7 @@ const calendarEventsApi = {
     return response.json();
   },
   delete: async (id) => {
-    const response = await fetch(`http://localhost:5000/api/events/${id}/trash`, {
+    const response = await fetch(`${API_BASE_URL}/events/${id}/trash`, {
       method: 'POST',
       credentials: 'include'
     });
