@@ -7,7 +7,6 @@ const api = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
-  withCredentials: true,
 });
 
 // Add request interceptor to include JWT token
@@ -144,7 +143,7 @@ export const agendasApi = {
   getAll: () => api.get('/agendas').then(res => res.data),
   create: (agendaData) => api.post('/agendas', agendaData).then(res => res.data),
   update: (id, agendaData) => api.put(`/agendas/${id}`, agendaData).then(res => res.data),
-  delete: (id) => api.delete(`/agendas/${id}`).then(res => res.data),
+  delete: (id) => api.post(`/agendas/${id}/trash`).then(res => res.data),
 };
 
 // Events API
