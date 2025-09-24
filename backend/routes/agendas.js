@@ -72,8 +72,8 @@ router.post('/:id/trash', async (req, res) => {
     
     // Add to trash table
     await pool.query(
-      'INSERT INTO trash (user_id, item_id, item_type, title, data, deleted_at) VALUES ($1, $2, $3, $4, $5, NOW())',
-      [req.user.id, id, 'agenda', agenda.name, JSON.stringify(agenda)]
+      'INSERT INTO trash (item_id, item_type, title, user_id) VALUES ($1::uuid, $2, $3, $4::uuid)',
+      [id, 'agenda', agenda.name, req.user.id]
     );
     
     // Mark as deleted

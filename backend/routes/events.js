@@ -72,7 +72,7 @@ router.post('/:id/trash', async (req, res) => {
     
     // Add to trash table
     await pool.query(
-      'INSERT INTO trash (item_id, item_type, title, user_id) VALUES ($1, $2, $3, $4)',
+      'INSERT INTO trash (item_id, item_type, title, user_id) VALUES ($1::uuid, $2, $3, $4::uuid)',
       [id, 'event', event.title, req.user.id]
     );
     
