@@ -3,7 +3,8 @@ import pool from '../config/database.js';
 
 export const authenticateToken = async (req, res, next) => {
   try {
-    const token = req.cookies.token;
+    const authHeader = req.headers.authorization;
+    const token = authHeader && authHeader.split(' ')[1];
     
     if (!token) {
       return res.status(401).json({ error: 'Access token required' });
@@ -29,7 +30,8 @@ export const authenticateToken = async (req, res, next) => {
 
 export const optionalAuth = async (req, res, next) => {
   try {
-    const token = req.cookies.token;
+    const authHeader = req.headers.authorization;
+    const token = authHeader && authHeader.split(' ')[1];
     
     if (token) {
       const decoded = jwt.verify(token, process.env.JWT_SECRET);

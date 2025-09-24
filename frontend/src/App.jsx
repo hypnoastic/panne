@@ -31,80 +31,84 @@ function App() {
     queryKey: ['auth', 'me'],
     queryFn: authApi.getCurrentUser,
     retry: false,
+    enabled: authApi.isAuthenticated(),
   });
 
   // ✅ Show loader while auth check is running
-  if (isLoading) {
+  if (isLoading && authApi.isAuthenticated()) {
     return <SectionLoader fullScreen />;
   }
+
+  // If no token, user is not authenticated
+  const isAuthenticated = authApi.isAuthenticated() && user;
 
   return (
     <Routes>
       {/* Public routes */}
       <Route
         path="/"
-        element={!user ? <LandingPage /> : <Navigate to="/dashboard" />}
+        element={!isAuthenticated ? <LandingPage /> : <Navigate to="/dashboard" />}
       />
       <Route
         path="/login"
-        element={!user ? <LoginPage /> : <Navigate to="/dashboard" />}
+        element={!isAuthenticated ? <LoginPage /> : <Navigate to="/dashboard" />}
       />
       <Route
         path="/register"
-        element={!user ? <RegisterPage /> : <Navigate to="/dashboard" />}
+        element={!isAuthenticated ? <RegisterPage /> : <Navigate to="/dashboard" />}
       />
       <Route path="/share/:shareId" element={<SharePage />} />
       <Route
         path="/notes/shared/:shareId"
-        element={user ? <SharedNotePage /> : <Navigate to="/login" />}
+        element={isAuthenticated ? <SharedNotePage /> : <Navigate to="/login" />}
       />
 
       {/* Protected routes */}
       <Route
         path="/dashboard"
-        element={user ? <DashboardPage /> : <Navigate to="/login" />}
+        element={isAuthenticated ? <DashboardPage /> : <Navigate to="/login" />}
       />
       <Route
         path="/ai"
-        element={user ? <AIPage /> : <Navigate to="/login" />}
+        element={isAuthenticated ? <AIPage /> : <Navigate to="/login" />}
       />
       <Route
         path="/notebooks"
-        element={user ? <NotebooksPage /> : <Navigate to="/login" />}
+        element={isAuthenticated ? <NotebooksPage /> : <Navigate to="/login" />}
       />
       <Route
         path="/notes/:noteId?"
-        element={user ? <NotesPage /> : <Navigate to="/login" />}
+        element={isAuthenticated ? <NotesPage /> : <Navigate to="/login" />}
       />
       <Route
         path="/agenda/:taskId?"
-        element={user ? <AgendaPage /> : <Navigate to="/login" />}
+        element={isAuthenticated ? <AgendaPage /> : <Navigate to="/login" />}
       />
       <Route
         path="/tasks/:taskId?"
-        element={user ? <TasksPage /> : <Navigate to="/login" />}
+        element={isAuthenticated ? <TasksPage /> : <Navigate to="/login" />}
       />
       <Route
         path="/calendar"
-        element={user ? <CalendarPage /> : <Navigate to="/login" />}
+        element={isAuthenticated ? <CalendarPage /> : <Navigate to="/login" />}
       />
       <Route
         path="/settings"
-        element={user ? <SettingsPage /> : <Navigate to="/login" />}
+        element={isAuthenticated ? <SettingsPage /> : <Navigate to="/login" />}
       />
       <Route
         path="/trash"
-        element={user ? <TrashPage /> : <Navigate to="/login" />}
+        element={isAuthenticated ? <TrashPage /> : <Navigate to="/login" />}
       />
       <Route
         path="/collab"
-        element={user ? <CollabPage /> : <Navigate to="/login" />}
+        element={isAuthenticated ? <CollabPage /> : <Navigate to="/login" />}
       />
 
       {/* Catch all */}
       <Route
         path="*"
-        element={<Navigate to={user ? '/dashboard' : '/'} />}
+        element={<Navigate to={isAuthenticated ? '/dashboard' : '/'} />}
       />
     </Routes>
   );

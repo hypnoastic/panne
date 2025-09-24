@@ -4,15 +4,18 @@ const API_BASE_URL = import.meta.env.VITE_API_URL;
 
 const api = axios.create({
   baseURL: API_BASE_URL,
-  withCredentials: true,
   headers: {
     'Content-Type': 'application/json',
   },
 });
 
-// Add request interceptor for debugging
+// Add request interceptor to include JWT token
 api.interceptors.request.use(
   (config) => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
     return config;
   },
   (error) => {
@@ -24,11 +27,12 @@ api.interceptors.request.use(
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401 && 
-        !window.location.pathname.includes('/login') && 
-        !window.location.pathname.includes('/register') &&
-        error.config?.url !== '/auth/me') {
-      window.location.href = '/login';
+    if (error.response?.status === 401) {
+      localStorage.removeItem('token');
+      if (!window.location.pathname.includes('/login') && 
+          !window.location.pathname.includes('/register')) {
+        window.location.href = '/login';
+      }
     }
     return Promise.reject(error);
   }
@@ -36,10 +40,24 @@ api.interceptors.response.use(
 
 // Auth API
 export const authApi = {
-  login: (credentials) => api.post('/auth/login', credentials).then(res => res.data),
-  register: (userData) => api.post('/auth/register', userData).then(res => res.data),
-  logout: () => api.post('/auth/logout').then(res => res.data),
+  login: (credentials) => api.post('/auth/login', credentials).then(res => {
+    if (res.data.token) {
+      localStorage.setItem('token', res.data.token);
+    }
+    return res.data;
+  }),
+  register: (userData) => api.post('/auth/register', userData).then(res => {
+    if (res.data.token) {
+      localStorage.setItem('token', res.data.token);
+    }
+    return res.data;
+  }),
+  logout: () => {
+    localStorage.removeItem('token');
+    return api.post('/auth/logout').then(res => res.data);
+  },
   getCurrentUser: () => api.get('/auth/me').then(res => res.data.user),
+  isAuthenticated: () => !!localStorage.getItem('token'),
 };
 
 // Notes API

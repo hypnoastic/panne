@@ -8,15 +8,6 @@ import { authenticateToken } from '../middleware/auth.js';
 
 // Constants
 const SALT_ROUNDS = 12;
-const isProduction = process.env.NODE_ENV === 'production';
-
-// Cookie configuration
-const COOKIE_CONFIG = {
-  httpOnly: true,
-  secure: true,
-  sameSite: 'lax',
-  maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
-};
 
 // Configure multer for memory storage
 const upload = multer({ storage: multer.memoryStorage() });
@@ -63,10 +54,7 @@ router.post('/register', async (req, res) => {
       { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
     );
     
-    // Set cookie
-    res.cookie('token', token, COOKIE_CONFIG);
-    
-    res.status(201).json({ user });
+    res.status(201).json({ user, token });
   } catch (error) {
     console.error('Registration error:', error);
     res.status(500).json({ error: 'Internal server error' });
@@ -104,11 +92,8 @@ router.post('/login', async (req, res) => {
       { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
     );
     
-    // Set cookie
-    res.cookie('token', token, COOKIE_CONFIG);
-    
     const { password_hash, ...userWithoutPassword } = user;
-    res.json({ user: userWithoutPassword });
+    res.json({ user: userWithoutPassword, token });
   } catch (error) {
     console.error('Login error:', error);
     res.status(500).json({ error: 'Internal server error' });
@@ -117,11 +102,6 @@ router.post('/login', async (req, res) => {
 
 // Logout
 router.post('/logout', (req, res) => {
-  res.clearCookie('token', {
-    httpOnly: true,
-    secure: true,
-    sameSite: 'lax'
-  });
   res.json({ message: 'Logged out successfully' });
 });
 

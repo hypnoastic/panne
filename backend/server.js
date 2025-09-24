@@ -2,7 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import dotenv from 'dotenv';
-import cookieParser from 'cookie-parser';
+
 import { createServer } from 'http';
 import { Server } from 'socket.io';
 
@@ -46,22 +46,11 @@ app.use(helmet({
 }));
 app.use(cors({
   origin: frontendUrl,
-  credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'Cookie', 'X-Requested-With'],
-  exposedHeaders: ['Set-Cookie'],
-  preflightContinue: false,
-  optionsSuccessStatus: 200
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
 }));
 
-// Safari-specific middleware
-app.use((req, res, next) => {
-  res.header('Access-Control-Allow-Credentials', 'true');
-  res.header('Vary', 'Origin');
-  next();
-});
 
-app.use(cookieParser());
 app.use(express.json({ limit: '10mb' }));
 
 
@@ -93,7 +82,8 @@ app.get('/api/notes/shared/:shareId', async (req, res) => {
     // For private notes, check authentication and handle permission requests
     if (sharedNote.visibility === 'private') {
       // Try to authenticate the user
-      const token = req.cookies.token;
+      const authHeader = req.headers.authorization;
+      const token = authHeader && authHeader.split(' ')[1];
       if (!token) {
         return res.status(403).json({ 
           error: 'Login required to request access',
