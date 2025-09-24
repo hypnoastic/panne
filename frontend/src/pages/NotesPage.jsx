@@ -36,6 +36,7 @@ export default function NotesPage() {
   const [toastMessage, setToastMessage] = useState('');
   const [showToast, setShowToast] = useState(false);
   const [lastRequestCount, setLastRequestCount] = useState(0);
+  const [copyButtonText, setCopyButtonText] = useState('Copy');
 
 
   
@@ -510,54 +511,26 @@ export default function NotesPage() {
                 <div className="notespage-share-options">
                   <div className="notespage-option-group">
                     <label>Permission</label>
-                    <div className="notespage-radio-group">
-                      <label className="notespage-radio-label">
-                        <input
-                          type="radio"
-                          name="permission"
-                          value="read"
-                          checked={sharePermission === 'read'}
-                          onChange={(e) => setSharePermission(e.target.value)}
-                        />
-                        <span>Read Only</span>
-                      </label>
-                      <label className="notespage-radio-label">
-                        <input
-                          type="radio"
-                          name="permission"
-                          value="write"
-                          checked={sharePermission === 'write'}
-                          onChange={(e) => setSharePermission(e.target.value)}
-                        />
-                        <span>Read & Write</span>
-                      </label>
-                    </div>
+                    <select 
+                      value={sharePermission} 
+                      onChange={(e) => setSharePermission(e.target.value)}
+                      className="notespage-modal-select"
+                    >
+                      <option value="read">Read Only</option>
+                      <option value="write">Read & Write</option>
+                    </select>
                   </div>
                   
                   <div className="notespage-option-group">
                     <label>Visibility</label>
-                    <div className="notespage-radio-group">
-                      <label className="notespage-radio-label">
-                        <input
-                          type="radio"
-                          name="visibility"
-                          value="private"
-                          checked={shareVisibility === 'private'}
-                          onChange={(e) => setShareVisibility(e.target.value)}
-                        />
-                        <span>Private (Request required)</span>
-                      </label>
-                      <label className="notespage-radio-label">
-                        <input
-                          type="radio"
-                          name="visibility"
-                          value="public"
-                          checked={shareVisibility === 'public'}
-                          onChange={(e) => setShareVisibility(e.target.value)}
-                        />
-                        <span>Public (Anyone logged in)</span>
-                      </label>
-                    </div>
+                    <select 
+                      value={shareVisibility} 
+                      onChange={(e) => setShareVisibility(e.target.value)}
+                      className="notespage-modal-select"
+                    >
+                      <option value="private">Private (Request required)</option>
+                      <option value="public">Public (Anyone logged in)</option>
+                    </select>
                   </div>
                 </div>
                 
@@ -597,9 +570,11 @@ export default function NotesPage() {
                         variant="ghost"
                         onClick={() => {
                           navigator.clipboard.writeText(shareLink);
+                          setCopyButtonText('Copied!');
+                          setTimeout(() => setCopyButtonText('Copy'), 2000);
                         }}
                       >
-                        Copy
+                        {copyButtonText}
                       </Button>
                     </div>
                   </div>

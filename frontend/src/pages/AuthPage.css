@@ -265,12 +265,7 @@
   }
   
   .auth-lottie-container {
-    order: 1;
-  }
-  
-  .auth-lottie {
-    max-width: 250px;
-    height: 250px;
+    display: none;
   }
   
   .auth-card {
@@ -326,9 +321,8 @@
     padding: var(--spacing-1);
   }
   
-  .auth-lottie {
-    max-width: 200px;
-    height: 200px;
+  .auth-lottie-container {
+    display: none;
   }
   
   .auth-card {

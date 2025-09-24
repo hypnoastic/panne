@@ -671,7 +671,7 @@ section {
   
   .landingpage-hero-title {
     font-size: clamp(2.5rem, 6vw, 4rem);
-    margin-top: 15%;
+    margin-top: 25%;
   }
   
   .landingpage-hero-tagline {
@@ -691,6 +691,7 @@ section {
     width: 95%;
     max-height: 85vh;
     margin: 0 auto;
+    margin-top: 120px;
   }
   
   .landingpage-features-section .landingpage-section-glass {
@@ -788,7 +789,7 @@ section {
   
   .landingpage-hero-title {
     font-size: clamp(2rem, 5vw, 3rem);
-    margin-top: 20%;
+    margin-top: 30%;
   }
   
   .landingpage-hero-tagline {
@@ -802,6 +803,7 @@ section {
   
   .landingpage-section-glass {
     width: 98%;
+    margin-top: 140px;
   }
   
   .landingpage-features-section .landingpage-section-glass,

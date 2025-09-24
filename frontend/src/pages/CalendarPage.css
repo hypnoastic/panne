@@ -544,12 +544,11 @@
   transform: scale(1.2);
 }
 
-/* Responsive Design */
 @media (max-width: 768px) {
   .calendarpage-container {
     padding: var(--spacing-4);
-    height: auto;
-    min-height: calc(100vh - var(--spacing-2));
+    height: calc(100vh - 120px);
+    overflow-y: auto;
   }
   
   .calendarpage-header h1 {
@@ -560,6 +559,7 @@
     flex-direction: column;
     gap: var(--spacing-3);
     height: auto;
+    overflow-y: auto;
   }
   
   .calendarpage-nav {
@@ -609,6 +609,7 @@
     height: auto;
     max-height: 400px;
     padding: var(--spacing-3);
+    overflow-y: auto;
   }
   
   .calendarpage-selected-date-header h3 {
@@ -666,7 +667,12 @@
   }
   
   .calendarpage-placeholder-icon {
-    font-size: 3rem;
+    font-size: 2rem;
+  }
+  
+  .calendarpage-placeholder-content > div {
+    width: 150px !important;
+    height: 150px !important;
   }
   
   .calendarpage-placeholder-content h3 {
@@ -713,6 +719,7 @@
   .calendarpage-events-sidebar {
     padding: var(--spacing-2);
     max-height: 350px;
+    overflow-y: auto;
   }
   
   .calendarpage-selected-date-header h3 {
@@ -760,7 +767,12 @@
   }
   
   .calendarpage-placeholder-icon {
-    font-size: 2.5rem;
+    font-size: 1.5rem;
+  }
+  
+  .calendarpage-placeholder-content > div {
+    width: 120px !important;
+    height: 120px !important;
   }
   
   .calendarpage-placeholder-content h3 {
@@ -775,5 +787,14 @@
   
   .calendarpage-day {
     min-height: 70px;
+  }
+  
+  .calendarpage-placeholder-icon {
+    font-size: 2.5rem;
+  }
+  
+  .calendarpage-placeholder-content > div {
+    width: 200px !important;
+    height: 200px !important;
   }
 }

@@ -393,11 +393,11 @@
   }
   
   .notebookspage-header-actions {
-    justify-content: space-between;
+    justify-content: center;
   }
   
   .notebookspage-search-input {
-    width: 200px;
+    width: 100%;
     padding: var(--spacing-2);
     font-size: var(--font-size-sm);
   }
@@ -475,8 +475,9 @@
   }
   
   .notebookspage-search-input {
-    width: 150px;
+    width: 100%;
     padding: var(--spacing-1);
+    font-size: var(--font-size-xs);
   }
   
   .notebookspage-plus-icon {

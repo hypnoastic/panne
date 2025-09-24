@@ -768,6 +768,10 @@
   .aipage-export-btn {
     width: 140px;
   }
+  
+  .aipage-empty-animation {
+    transform: scale(0.7);
+  }
 }
 
 /* Mobile (up to 768px) */
@@ -948,6 +952,10 @@
     font-size: var(--font-size-base);
   }
   
+  .aipage-empty-animation {
+    transform: scale(0.6);
+  }
+  
   .aipage-modal-overlay .ai-modal {
     width: 95%;
     max-width: none;
@@ -1046,5 +1054,9 @@
   .aipage-input {
     font-size: 10px;
     padding: var(--spacing-1) 0;
+  }
+  
+  .aipage-empty-animation {
+    transform: scale(0.4);
   }
 }

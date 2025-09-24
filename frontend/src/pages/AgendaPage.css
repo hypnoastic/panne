@@ -254,6 +254,59 @@
   color: #9CA3AF;
 }
 
+/* Responsive */
+@media (max-width: 768px) {
+  .agendapage-main {
+    padding: var(--spacing-4);
+  }
+  
+  .agendapage-header {
+    flex-direction: column;
+    gap: var(--spacing-3);
+    align-items: stretch;
+  }
+  
+  .agendapage-header h1 {
+    font-size: var(--font-size-xl);
+    text-align: center;
+  }
+  
+  .agendapage-header-actions {
+    justify-content: center;
+  }
+  
+  .agendapage-search-input {
+    width: 100%;
+    padding: var(--spacing-2);
+    font-size: var(--font-size-sm);
+  }
+  
+  .agendapage-tasks-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 480px) {
+  .agendapage-main {
+    padding: var(--spacing-2);
+  }
+  
+  .agendapage-search-input {
+    padding: var(--spacing-1);
+    font-size: var(--font-size-xs);
+  }
+  
+  .agendapage-plus-icon {
+    width: 40px;
+    height: 40px;
+    font-size: 24px;
+  }
+  
+  .agendapage-plus-icon:hover {
+    font-size: 28px;
+  }
+}
+
 /* Modal Styles */
 .agendapage-modal-overlay {
   position: fixed;

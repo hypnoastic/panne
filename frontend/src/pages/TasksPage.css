@@ -569,33 +569,53 @@
 /* Mobile Responsive */
 @media (max-width: 768px) {
   .tasks-page {
-    height: auto;
-    min-height: calc(100vh - var(--spacing-2));
+    height: calc(100vh - 60px);
+    overflow: hidden;
   }
   
   .tasks-layout {
     grid-template-columns: 1fr;
-    grid-template-rows: auto auto 1fr;
-    height: auto;
-    min-height: calc(100vh - var(--spacing-2));
+    grid-template-rows: auto 1fr;
+    height: 100%;
     border-radius: 12px;
   }
   
-  /* Hide sidebar and tasks list when a task is selected */
-  .tasks-layout.task-selected .tasks-sidebar,
+  /* Show agenda sidebar on mobile but compact */
+  .tasks-sidebar {
+    display: flex;
+    height: auto;
+    max-height: 120px;
+    border-right: none;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  }
+  
+  .tasks-layout.task-selected .tasks-sidebar {
+    display: none;
+  }
+  
+  /* Show tasks list by default, hide when task selected */
+  .tasks-list {
+    display: flex;
+    height: 100%;
+    border-right: none;
+  }
+  
   .tasks-layout.task-selected .tasks-list {
     display: none;
   }
   
-  .tasks-layout.task-selected {
-    grid-template-rows: 1fr;
+  /* Hide editor by default, show when task selected */
+  .tasks-editor {
+    display: none;
   }
   
-  .tasks-sidebar {
-    height: auto;
-    border-right: none;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  .tasks-layout.task-selected .tasks-editor {
+    display: flex;
+    height: 100%;
+    grid-row: 1 / -1;
   }
+  
+
   
   .sidebar-header {
     height: 40px;
@@ -627,12 +647,7 @@
     padding: 1px var(--spacing-1);
   }
   
-  .tasks-list {
-    height: auto;
-    max-height: 200px;
-    border-right: none;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-  }
+
   
   .tasks-list-header {
     height: 40px;
@@ -653,7 +668,8 @@
   
   .tasks-items {
     padding: var(--spacing-1);
-    max-height: 150px;
+    flex: 1;
+    min-height: 0;
   }
   
   .task-item {
@@ -680,12 +696,9 @@
   }
   
   .tasks-editor {
-    height: auto;
-    min-height: 500px;
-  }
-  
-  .tasks-layout.task-selected .tasks-editor {
-    min-height: calc(100vh - var(--spacing-2));
+    height: 100%;
+    min-height: 0;
+    overflow: hidden;
   }
   
   .editor-header {
@@ -776,6 +789,13 @@
 }
 
 @media (max-width: 480px) {
+  .empty-state__image {
+    display: none;
+  }
+  
+  .editor-empty {
+    display: none;
+  }
   .tasks-layout {
     border-radius: 8px;
   }
@@ -813,7 +833,8 @@
   }
   
   .tasks-items {
-    max-height: 120px;
+    flex: 1;
+    min-height: 0;
   }
   
   .task-item__link {

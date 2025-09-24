@@ -375,7 +375,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 1000;
+  z-index: 10001;
 }
 
 .notespage-modal {
@@ -745,32 +745,50 @@
 /* Responsive */
 @media (max-width: 768px) {
   .notespage-notes-page {
-    height: auto;
-    min-height: calc(100vh - var(--spacing-2));
+    height: calc(100vh - 60px);
+    overflow: hidden;
   }
   
   .notespage-notes-layout {
     grid-template-columns: 1fr;
-    grid-template-rows: auto auto 1fr;
-    height: auto;
-    min-height: calc(100vh - var(--spacing-2));
+    grid-template-rows: auto 1fr;
+    height: 100%;
     border-radius: 12px;
   }
   
-  /* Hide sidebar and notes list when a note is selected */
-  .notespage-notes-layout.notespage-note-selected .notespage-notes-sidebar,
+  /* Show notebooks sidebar on mobile but compact */
+  .notespage-notes-sidebar {
+    display: flex;
+    height: auto;
+    max-height: 120px;
+    border-right: none;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  }
+  
+  .notespage-notes-layout.notespage-note-selected .notespage-notes-sidebar {
+    display: none;
+  }
+  
+  /* Show notes list by default, hide when note selected */
+  .notespage-notes-list {
+    display: flex;
+    height: 100%;
+    border-right: none;
+  }
+  
   .notespage-notes-layout.notespage-note-selected .notespage-notes-list {
     display: none;
   }
   
-  .notespage-notes-layout.notespage-note-selected {
-    grid-template-rows: 1fr;
+  /* Hide editor by default, show when note selected */
+  .notespage-notes-editor {
+    display: none;
   }
   
-  .notespage-notes-sidebar {
-    height: auto;
-    border-right: none;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  .notespage-notes-layout.notespage-note-selected .notespage-notes-editor {
+    display: flex;
+    height: 100%;
+    grid-row: 1 / -1;
   }
   
   .notespage-sidebar-header {
@@ -807,12 +825,7 @@
     padding: 1px var(--spacing-1);
   }
   
-  .notespage-notes-list {
-    height: auto;
-    max-height: 200px;
-    border-right: none;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-  }
+
   
   .notespage-notes-list-header {
     height: 40px;
@@ -833,7 +846,8 @@
   
   .notespage-notes-items {
     padding: var(--spacing-1);
-    max-height: 150px;
+    flex: 1;
+    min-height: 0;
   }
   
   .notespage-note-item {
@@ -860,31 +874,19 @@
   }
   
   .notespage-notes-editor {
-    height: auto;
-    min-height: 500px;
-  }
-  
-  .notespage-notes-layout.notespage-note-selected .notespage-notes-editor {
-    min-height: calc(100vh - var(--spacing-2));
+    height: 100%;
+    min-height: 0;
+    overflow: hidden;
   }
   
   .notespage-editor-header {
-    height: 40px;
-    padding: var(--spacing-1);
-  }
-  
-  .notespage-notes-layout.notespage-note-selected .notespage-editor-header {
     height: 60px;
     padding: var(--spacing-2);
   }
   
   .notespage-editor-title {
-    font-size: var(--font-size-base);
-    margin-right: var(--spacing-1);
-  }
-  
-  .notespage-notes-layout.notespage-note-selected .notespage-editor-title {
     font-size: var(--font-size-lg);
+    margin-right: var(--spacing-1);
   }
   
   .notespage-mobile-back-btn {
@@ -937,6 +939,13 @@
 }
 
 @media (max-width: 480px) {
+  .notespage-empty-state__image {
+    display: none;
+  }
+  
+  .notespage-editor-empty {
+    display: none;
+  }
   .notespage-notes-layout {
     border-radius: 8px;
   }
@@ -974,7 +983,8 @@
   }
   
   .notespage-notes-items {
-    max-height: 120px;
+    flex: 1;
+    min-height: 0;
   }
   
   .notespage-note-item__link {
@@ -1081,6 +1091,29 @@
 .notespage-modal-input:focus {
   border-color: #2EC4B6;
   background: rgba(255, 255, 255, 0.08);
+}
+
+.notespage-modal-select {
+  padding: var(--spacing-3);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: var(--radius-md);
+  color: white;
+  font-size: var(--font-size-sm);
+  outline: none;
+  transition: all var(--transition-fast);
+  cursor: pointer;
+}
+
+.notespage-modal-select:focus {
+  border-color: #2EC4B6;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.notespage-modal-select option {
+  background: #1a1a2e;
+  color: white;
+  padding: var(--spacing-2);
 }
 
 .notespage-modal-actions {

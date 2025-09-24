@@ -579,8 +579,8 @@ h2 {
 @media (max-width: 768px) {
   .dashboardpage-container {
     padding: var(--spacing-4);
-    height: auto;
-    min-height: calc(100vh - var(--spacing-2));
+    height: calc(100vh - 100px);
+    overflow-y: auto;
   }
   
   .dashboardpage-welcome-header h1 {
@@ -618,6 +618,7 @@ h2 {
     grid-template-columns: 1fr;
     gap: var(--spacing-4);
     height: auto;
+    min-height: calc(100vh - 300px);
   }
   
   .dashboardpage-content::before {
@@ -688,6 +689,8 @@ h2 {
 @media (max-width: 480px) {
   .dashboardpage-container {
     padding: var(--spacing-2);
+    height: calc(100vh - 100px);
+    overflow-y: auto;
   }
   
   .dashboardpage-welcome-header h1 {
@@ -718,6 +721,12 @@ h2 {
   .dashboardpage-agenda-item,
   .dashboardpage-note-item {
     padding: var(--spacing-2);
+  }
+}
+
+@media (max-width: 1250px) {
+  .dashboardpage-date-display {
+    display: none;
   }
 }
 

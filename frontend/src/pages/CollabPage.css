@@ -405,6 +405,23 @@
 @media (max-width: 768px) {
   .collabpage-header {
     padding: var(--spacing-4);
+    flex-direction: column;
+    gap: var(--spacing-3);
+    height: auto;
+  }
+  
+  .collabpage-header h1 {
+    font-size: var(--font-size-xl);
+  }
+  
+  .collabpage-search-box {
+    flex: 1;
+    width: 100%;
+  }
+  
+  .collabpage-search-input {
+    padding: var(--spacing-2);
+    font-size: var(--font-size-xs);
   }
   
   .collabpage-notes-section,
@@ -424,5 +441,36 @@
   
   .collabpage-requester-info {
     width: 100%;
+  }
+  
+  .collabpage-empty-icon {
+    font-size: 2rem;
+  }
+  
+  .collabpage-empty-state--small > div > div {
+    width: 150px !important;
+    height: 150px !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .collabpage-empty-icon {
+    font-size: 1.5rem;
+  }
+  
+  .collabpage-empty-state--small > div > div {
+    width: 120px !important;
+    height: 120px !important;
+  }
+}
+
+@media (max-width: 1024px) and (min-width: 769px) {
+  .collabpage-empty-icon {
+    font-size: 2.5rem;
+  }
+  
+  .collabpage-empty-state--small > div > div {
+    width: 200px !important;
+    height: 200px !important;
   }
 }

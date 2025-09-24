@@ -179,8 +179,8 @@
 @media (max-width: 768px) {
   .trash-container {
     padding: var(--spacing-4);
-    height: auto;
-    min-height: calc(100vh - var(--spacing-2));
+    height: calc(100vh - 100px);
+    overflow: hidden;
   }
   
   .trash-header h1 {
