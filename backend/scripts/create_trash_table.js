@@ -12,8 +12,8 @@ async function createTrashTable() {
     await pool.query(`
       CREATE TABLE IF NOT EXISTS trash (
         id SERIAL PRIMARY KEY,
-        user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-        item_id UUID NOT NULL,
+        user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        item_id INTEGER NOT NULL,
         item_type VARCHAR(50) NOT NULL,
         title VARCHAR(255) NOT NULL,
         data JSONB,

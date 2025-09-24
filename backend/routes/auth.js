@@ -52,14 +52,11 @@ router.post('/register', async (req, res) => {
       { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
     );
     
-    // Set cookie with Safari compatibility
-    const userAgent = req.headers['user-agent'] || '';
-    const isSafari = /Safari/.test(userAgent) && !/Chrome/.test(userAgent);
-    
+    // Set cookie
     res.cookie('token', token, {
       httpOnly: true,
-      secure: true,
-      sameSite: isSafari ? 'lax' : 'none',
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
       maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
     });
     
@@ -104,8 +101,8 @@ router.post('/login', async (req, res) => {
     // Set cookie
     res.cookie('token', token, {
       httpOnly: true,
-      secure: true,
-      sameSite: 'none',
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
       maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
     });
     
@@ -119,7 +116,11 @@ router.post('/login', async (req, res) => {
 
 // Logout
 router.post('/logout', (req, res) => {
-  res.clearCookie('token');
+  res.clearCookie('token', {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax'
+  });
   res.json({ message: 'Logged out successfully' });
 });
 

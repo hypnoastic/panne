@@ -51,8 +51,13 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization', 'Cookie', 'X-Requested-With'],
   exposedHeaders: ['Set-Cookie']
 }));
+
+// Configure cookie parser for Safari compatibility
+app.use(cookieParser(undefined, {
+  sameSite: 'none',
+  secure: process.env.NODE_ENV === 'production'
+}));
 app.use(express.json({ limit: '10mb' }));
-app.use(cookieParser());
 
 
 
