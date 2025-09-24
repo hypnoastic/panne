@@ -17,7 +17,7 @@ import CodeBlockLowlight from '@tiptap/extension-code-block-lowlight';
 import { lowlight } from 'lowlight';
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { useMutation } from '@tanstack/react-query';
-import { uploadApi } from '../services/api';
+import { uploadApi, aiApi } from '../services/api';
 import Button from './Button';
 import './RichEditor.css';
 
@@ -84,14 +84,7 @@ export default function RichEditor({ content, onChange, placeholder = "Start wri
     mutationFn: async ({ message, context }) => {
       const prompt = `You are an AI editor. Edit the provided text according to the user's instructions. Return ONLY the edited text, no explanations or additional text.\n\nOriginal text: ${context}\n\nEdit instruction: ${message}\n\nEdited text:`;
       
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/ai/query`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ prompt })
-      });
-      if (!response.ok) throw new Error('AI request failed');
-      return response.json();
+      return aiApi.query({ prompt });
     },
     onMutate: () => {
       setIsAiProcessing(true);

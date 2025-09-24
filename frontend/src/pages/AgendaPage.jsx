@@ -8,44 +8,7 @@ import Button from '../components/Button';
 import SectionLoader from '../components/SectionLoader';
 import './AgendaPage.css';
 
-import { agendasApi, tasksApi } from '../services/api';
-
-const todoItemsApi = {
-  getByTaskId: async (taskId) => {
-    const token = localStorage.getItem('token');
-    const response = await fetch(`${import.meta.env.VITE_API_URL}/tasks/${taskId}/todos`, {
-      headers: { 'Authorization': `Bearer ${token}` }
-    });
-    if (!response.ok) throw new Error('Failed to fetch todos');
-    return response.json();
-  },
-  create: async (item) => {
-    const token = localStorage.getItem('token');
-    const response = await fetch(`${import.meta.env.VITE_API_URL}/todos`, {
-      method: 'POST',
-      headers: { 
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
-      },
-      body: JSON.stringify(item)
-    });
-    if (!response.ok) throw new Error('Failed to create todo');
-    return response.json();
-  },
-  update: async (id, updates) => {
-    const token = localStorage.getItem('token');
-    const response = await fetch(`${import.meta.env.VITE_API_URL}/todos/${id}`, {
-      method: 'PUT',
-      headers: { 
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
-      },
-      body: JSON.stringify(updates)
-    });
-    if (!response.ok) throw new Error('Failed to update todo');
-    return response.json();
-  }
-};
+import { agendasApi, tasksApi, todosApi } from '../services/api';
 
 export default function AgendaPage() {
   const navigate = useNavigate();

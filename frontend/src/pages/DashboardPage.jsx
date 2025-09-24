@@ -6,49 +6,21 @@ import Lottie from 'lottie-react';
 import AppLayout from '../components/AppLayout';
 import Button from '../components/Button';
 import SectionLoader from '../components/SectionLoader';
-import { authApi, notesApi } from '../services/api';
+import { authApi, notesApi, eventsApi, tasksApi, agendasApi } from '../services/api';
+import api from '../services/api';
 import aiAnimation from '../assets/ai.json';
 import helloAnimation from '../assets/hello.json';
 import './DashboardPage.css';
 
-// AI Chat API
-const API_BASE_URL = import.meta.env.VITE_API_URL;
-
+// AI Chat API using centralized API
 const aiChatApi = {
   sendMessage: async (message) => {
-    const response = await fetch(`${API_BASE_URL}/ai/chat`, {
-      method: 'POST',
-      headers: { 
-        'Content-Type': 'application/json'
-      },
-      credentials: 'include',
-      body: JSON.stringify({ message })
-    });
-    
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-    
-    const data = await response.json();
-    return data;
+    const response = await api.post('/ai/chat', { message });
+    return response.data;
   },
   formatToNote: async (chatHistory) => {
-    const response = await fetch(`${API_BASE_URL}/ai/format-note`, {
-      method: 'POST',
-      headers: { 
-        'Content-Type': 'application/json'
-      },
-      credentials: 'include',
-      body: JSON.stringify({ chatHistory })
-    });
-    
-    
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-    
-    const data = await response.json();
-    return data;
+    const response = await api.post('/ai/format-note', { chatHistory });
+    return response.data;
   }
 };
 
@@ -83,17 +55,8 @@ export default function DashboardPage() {
   // Get upcoming events from backend
   const { data: calendarEvents = [] } = useQuery({
     queryKey: ['events'],
-    queryFn: async () => {
-      try {
-        const response = await fetch(`${API_BASE_URL}/events`, {
-          credentials: 'include'
-        });
-        if (!response.ok) return [];
-        return response.json();
-      } catch (error) {
-        return [];
-      }
-    }
+    queryFn: eventsApi.getAll,
+    retry: false
   });
   
   const today = new Date();
@@ -105,33 +68,15 @@ export default function DashboardPage() {
   // Real tasks data
   const { data: tasks = [] } = useQuery({
     queryKey: ['tasks'],
-    queryFn: async () => {
-      try {
-        const response = await fetch(`${API_BASE_URL}/tasks`, {
-          credentials: 'include'
-        });
-        if (!response.ok) return [];
-        return response.json();
-      } catch (error) {
-        return [];
-      }
-    }
+    queryFn: tasksApi.getAll,
+    retry: false
   });
   
   // Agendas data
   const { data: agendas = [] } = useQuery({
     queryKey: ['agendas'],
-    queryFn: async () => {
-      try {
-        const response = await fetch(`${API_BASE_URL}/agendas`, {
-          credentials: 'include'
-        });
-        if (!response.ok) return [];
-        return response.json();
-      } catch (error) {
-        return [];
-      }
-    }
+    queryFn: agendasApi.getAll,
+    retry: false
   });
   
   const upcomingAgendas = agendas.slice(0, 2);

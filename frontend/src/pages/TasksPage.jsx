@@ -10,53 +10,7 @@ import SectionLoader from '../components/SectionLoader';
 import eventsAnimation from '../assets/events.json';
 import './TasksPage.css';
 
-import { agendasApi, tasksApi } from '../services/api';
-
-const todoItemsApi = {
-  getByTaskId: async (taskId) => {
-    const token = localStorage.getItem('token');
-    const response = await fetch(`${import.meta.env.VITE_API_URL}/tasks/${taskId}/todos`, {
-      headers: { 'Authorization': `Bearer ${token}` }
-    });
-    if (!response.ok) throw new Error('Failed to fetch todos');
-    return response.json();
-  },
-  create: async (item) => {
-    const token = localStorage.getItem('token');
-    const response = await fetch(`${import.meta.env.VITE_API_URL}/todos`, {
-      method: 'POST',
-      headers: { 
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
-      },
-      body: JSON.stringify(item)
-    });
-    if (!response.ok) throw new Error('Failed to create todo');
-    return response.json();
-  },
-  update: async (id, updates) => {
-    const token = localStorage.getItem('token');
-    const response = await fetch(`${import.meta.env.VITE_API_URL}/todos/${id}`, {
-      method: 'PUT',
-      headers: { 
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
-      },
-      body: JSON.stringify(updates)
-    });
-    if (!response.ok) throw new Error('Failed to update todo');
-    return response.json();
-  },
-  delete: async (id) => {
-    const token = localStorage.getItem('token');
-    const response = await fetch(`${import.meta.env.VITE_API_URL}/todos/${id}`, {
-      method: 'DELETE',
-      headers: { 'Authorization': `Bearer ${token}` }
-    });
-    if (!response.ok) throw new Error('Failed to delete todo');
-    return response.json();
-  }
-};
+import { agendasApi, tasksApi, todosApi } from '../services/api';
 
 export default function TasksPage() {
   const { taskId } = useParams();
@@ -89,7 +43,7 @@ export default function TasksPage() {
 
   const { data: todoItems = [] } = useQuery({
     queryKey: ['todoItems', taskId],
-    queryFn: () => todoItemsApi.getByTaskId(taskId),
+    queryFn: () => todosApi.getByTaskId(taskId),
     enabled: !!taskId
   });
 
@@ -130,14 +84,14 @@ export default function TasksPage() {
   });
 
   const createTodoMutation = useMutation({
-    mutationFn: todoItemsApi.create,
+    mutationFn: todosApi.create,
     onSuccess: () => {
       queryClient.invalidateQueries(['todoItems', taskId]);
     }
   });
 
   const updateTodoMutation = useMutation({
-    mutationFn: ({ id, ...data }) => todoItemsApi.update(id, data),
+    mutationFn: ({ id, ...data }) => todosApi.update(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries(['todoItems', taskId]);
     }

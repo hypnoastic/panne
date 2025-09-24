@@ -39,10 +39,7 @@ export default function NotebooksPage() {
   });
 
   const deleteNotebookMutation = useMutation({
-    mutationFn: (id) => fetch(`${import.meta.env.VITE_API_URL}/notebooks/${id}/trash`, {
-      method: 'POST',
-      credentials: 'include'
-    }),
+    mutationFn: notebooksApi.delete,
     onSuccess: () => {
       queryClient.invalidateQueries(['notebooks']);
       setShowDeleteModal(false);

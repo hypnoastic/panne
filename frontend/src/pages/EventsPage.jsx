@@ -6,75 +6,8 @@ import Lottie from 'lottie-react';
 import AppLayout from '../components/AppLayout';
 import Button from '../components/Button';
 import SectionLoader from '../components/SectionLoader';
+import { eventsApi, tasksApi, todosApi } from '../services/api';
 import './EventsPage.css';
-
-// API calls
-const eventsApi = {
-  getAll: async () => {
-    const response = await fetch(`${import.meta.env.VITE_API_URL}/events`, {
-      credentials: 'include'
-    });
-    if (!response.ok) throw new Error('Failed to fetch events');
-    return response.json();
-  },
-  create: async (event) => {
-    const response = await fetch(`${import.meta.env.VITE_API_URL}/events`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
-      body: JSON.stringify(event)
-    });
-    if (!response.ok) throw new Error('Failed to create event');
-    return response.json();
-  }
-};
-
-const tasksApi = {
-  getAll: async () => {
-    const response = await fetch(`${import.meta.env.VITE_API_URL}/tasks`, {
-      credentials: 'include'
-    });
-    if (!response.ok) throw new Error('Failed to fetch tasks');
-    return response.json();
-  },
-  getById: async (id) => {
-    const response = await fetch(`${import.meta.env.VITE_API_URL}/tasks/${id}`, {
-      credentials: 'include'
-    });
-    if (!response.ok) throw new Error('Failed to fetch task');
-    return response.json();
-  }
-};
-
-const todoItemsApi = {
-  getByTaskId: async (taskId) => {
-    const response = await fetch(`${import.meta.env.VITE_API_URL}/tasks/${taskId}/todos`, {
-      credentials: 'include'
-    });
-    if (!response.ok) throw new Error('Failed to fetch todos');
-    return response.json();
-  },
-  create: async (item) => {
-    const response = await fetch(`${import.meta.env.VITE_API_URL}/todos`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
-      body: JSON.stringify(item)
-    });
-    if (!response.ok) throw new Error('Failed to create todo');
-    return response.json();
-  },
-  update: async (id, updates) => {
-    const response = await fetch(`${import.meta.env.VITE_API_URL}/todos/${id}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
-      body: JSON.stringify(updates)
-    });
-    if (!response.ok) throw new Error('Failed to update todo');
-    return response.json();
-  }
-};
 
 export default function EventsPage() {
   const navigate = useNavigate();

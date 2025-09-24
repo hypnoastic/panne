@@ -5,41 +5,26 @@ import Lottie from 'lottie-react';
 import AppLayout from '../components/AppLayout';
 import Button from '../components/Button';
 import SectionLoader from '../components/SectionLoader';
+import api from '../services/api';
 import './TrashPage.css';
 
-// Trash API
+// Trash API using centralized API
 const trashApi = {
   getAll: async (search = '', type = 'all') => {
     const params = new URLSearchParams();
     if (search) params.append('search', search);
     if (type !== 'all') params.append('type', type);
     
-    const response = await fetch(`${import.meta.env.VITE_API_URL}/trash?${params}`, {
-      credentials: 'include'
-    });
-    if (!response.ok) throw new Error('Failed to fetch trash items');
-    return response.json();
+    const response = await api.get(`/trash?${params}`);
+    return response.data;
   },
   restore: async (id) => {
-    const response = await fetch(`${import.meta.env.VITE_API_URL}/trash/${id}/restore`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include'
-    });
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.error || 'Failed to restore item');
-    }
-    return response.json();
+    const response = await api.post(`/trash/${id}/restore`);
+    return response.data;
   },
   permanentDelete: async (id) => {
-    const response = await fetch(`${import.meta.env.VITE_API_URL}/trash/${id}`, {
-      method: 'DELETE',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include'
-    });
-    if (!response.ok) throw new Error('Failed to delete item');
-    return response.json();
+    const response = await api.delete(`/trash/${id}`);
+    return response.data;
   }
 };
 

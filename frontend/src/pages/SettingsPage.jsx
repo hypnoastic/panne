@@ -4,40 +4,26 @@ import { motion } from 'framer-motion';
 import AppLayout from '../components/AppLayout';
 import Button from '../components/Button';
 import SectionLoader from '../components/SectionLoader';
-import { authApi } from '../services/api';
+import { authApi, usersApi } from '../services/api';
+import api from '../services/api';
 import './SettingsPage.css';
 
 const settingsApi = {
   updateProfile: async (data) => {
-    const response = await fetch(`${import.meta.env.VITE_API_URL}/auth/profile`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
-      body: JSON.stringify(data)
-    });
-    if (!response.ok) throw new Error('Failed to update profile');
-    return response.json();
+    const response = await api.put('/auth/profile', data);
+    return response.data;
   },
   changePassword: async (data) => {
-    const response = await fetch(`${import.meta.env.VITE_API_URL}/auth/change-password`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
-      body: JSON.stringify(data)
-    });
-    if (!response.ok) throw new Error('Failed to change password');
-    return response.json();
+    const response = await api.post('/auth/change-password', data);
+    return response.data;
   },
   uploadAvatar: async (file) => {
     const formData = new FormData();
     formData.append('avatar', file);
-    const response = await fetch(`${import.meta.env.VITE_API_URL}/auth/avatar`, {
-      method: 'POST',
-      credentials: 'include',
-      body: formData
+    const response = await api.post('/auth/avatar', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
     });
-    if (!response.ok) throw new Error('Failed to upload avatar');
-    return response.json();
+    return response.data;
   }
 };
 

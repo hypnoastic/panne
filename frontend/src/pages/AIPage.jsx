@@ -6,86 +6,32 @@ import Lottie from 'lottie-react';
 import AppLayout from '../components/AppLayout';
 import Button from '../components/Button';
 import SectionLoader from '../components/SectionLoader';
-import { notesApi } from '../services/api';
+import { notesApi, aiApi } from '../services/api';
+import api from '../services/api';
 import aiAnimation from '../assets/ai.json';
 import './AIPage.css';
 
-// AI Chat API
-const API_BASE_URL = import.meta.env.VITE_API_URL;
-
+// AI Chat API using centralized API
 const aiChatApi = {
   sendMessage: async (message, context = [], chatId = null) => {
-    const response = await fetch(`${API_BASE_URL}/ai/chat`, {
-      method: 'POST',
-      headers: { 
-        'Content-Type': 'application/json'
-      },
-      credentials: 'include',
-      body: JSON.stringify({ message, context, chatId })
-    });
-    
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-    
-    const data = await response.json();
-    return data;
+    const response = await api.post('/ai/chat', { message, context, chatId });
+    return response.data;
   },
   exportToNote: async (chatId, selectedNotes = []) => {
-    const response = await fetch(`${API_BASE_URL}/ai/export-to-note`, {
-      method: 'POST',
-      headers: { 
-        'Content-Type': 'application/json'
-      },
-      credentials: 'include',
-      body: JSON.stringify({ chatId, selectedNotes })
-    });
-    
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-    
-    const data = await response.json();
-    return data;
+    const response = await api.post('/ai/export-to-note', { chatId, selectedNotes });
+    return response.data;
   },
   saveChat: async (chatData) => {
-    const response = await fetch(`${API_BASE_URL}/ai/chats`, {
-      method: 'POST',
-      headers: { 
-        'Content-Type': 'application/json'
-      },
-      credentials: 'include',
-      body: JSON.stringify(chatData)
-    });
-    
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-    
-    return response.json();
+    const response = await api.post('/ai/chats', chatData);
+    return response.data;
   },
   getChats: async () => {
-    const response = await fetch(`${API_BASE_URL}/ai/chats`, {
-      credentials: 'include'
-    });
-    
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-    
-    return response.json();
+    const response = await api.get('/ai/chats');
+    return response.data;
   },
   deleteChat: async (chatId) => {
-    const response = await fetch(`${API_BASE_URL}/ai/chats/${chatId}/trash`, {
-      method: 'POST',
-      credentials: 'include'
-    });
-    
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-    
-    return response.json();
+    const response = await api.post(`/ai/chats/${chatId}/trash`);
+    return response.data;
   }
 };
 

@@ -91,7 +91,7 @@ export const notebooksApi = {
   getAll: () => api.get('/notebooks').then(res => res.data),
   create: (notebookData) => api.post('/notebooks', notebookData).then(res => res.data),
   update: (id, notebookData) => api.put(`/notebooks/${id}`, notebookData).then(res => res.data),
-  delete: (id) => api.delete(`/notebooks/${id}`).then(res => res.data),
+  delete: (id) => api.post(`/notebooks/${id}/trash`).then(res => res.data),
 };
 
 // AI API
@@ -133,6 +133,7 @@ export const notificationsApi = {
 // Tasks API
 export const tasksApi = {
   getAll: () => api.get('/tasks').then(res => res.data),
+  getById: (id) => api.get(`/tasks/${id}`).then(res => res.data),
   create: (taskData) => api.post('/tasks', taskData).then(res => res.data),
   update: (id, taskData) => api.put(`/tasks/${id}`, taskData).then(res => res.data),
   delete: (id) => api.post(`/tasks/${id}/trash`).then(res => res.data),
@@ -152,6 +153,14 @@ export const eventsApi = {
   create: (eventData) => api.post('/events', eventData).then(res => res.data),
   update: (id, eventData) => api.put(`/events/${id}`, eventData).then(res => res.data),
   delete: (id) => api.post(`/events/${id}/trash`).then(res => res.data),
+};
+
+// Todos API
+export const todosApi = {
+  getByTaskId: (taskId) => api.get(`/tasks/${taskId}/todos`).then(res => res.data),
+  create: (todoData) => api.post('/todos', todoData).then(res => res.data),
+  update: (id, todoData) => api.put(`/todos/${id}`, todoData).then(res => res.data),
+  delete: (id) => api.delete(`/todos/${id}`).then(res => res.data),
 };
 
 export default api;
