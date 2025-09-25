@@ -153,9 +153,9 @@ router.post('/google', async (req, res) => {
     
     let user;
     if (result.rows.length === 0) {
-      // Create new user
+      // Create new user with NULL password_hash for OAuth
       result = await pool.query(
-        'INSERT INTO users (email, name, avatar_url) VALUES ($1, $2, $3) RETURNING id, email, name, avatar_url',
+        'INSERT INTO users (email, name, avatar_url, password_hash) VALUES ($1, $2, $3, NULL) RETURNING id, email, name, avatar_url',
         [email, name, picture]
       );
       user = result.rows[0];
