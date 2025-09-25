@@ -1,54 +1,44 @@
-import nodemailer from "nodemailer";
 import { google } from "googleapis";
 
-const OAuth2 = google.auth.OAuth2;
-
-const createTransporter = async () => {
-  const oauth2Client = new OAuth2(
-    process.env.GMAIL_CLIENT_ID,
-    process.env.GMAIL_CLIENT_SECRET,
-    "https://developers.google.com/oauthplayground"
-  );
-
-  oauth2Client.setCredentials({
-    refresh_token: process.env.GMAIL_REFRESH_TOKEN
-  });
-
+const createGmailClient = async () => {
   try {
-    const accessToken = await new Promise((resolve, reject) => {
-      oauth2Client.getAccessToken((err, token) => {
-        if (err) {
-          console.error('Failed to get access token:', err);
-          reject(err);
-        }
-        resolve(token);
-      });
+    const oauth2Client = new google.auth.OAuth2(
+      process.env.GMAIL_CLIENT_ID,
+      process.env.GMAIL_CLIENT_SECRET,
+      "https://developers.google.com/oauthplayground"
+    );
+
+    oauth2Client.setCredentials({
+      refresh_token: process.env.GMAIL_REFRESH_TOKEN
     });
 
-    const transporter = nodemailer.createTransport({
-      service: "gmail",
-      auth: {
-        type: "OAuth2",
-        user: process.env.EMAIL_USER,
-        clientId: process.env.GMAIL_CLIENT_ID,
-        clientSecret: process.env.GMAIL_CLIENT_SECRET,
-        refreshToken: process.env.GMAIL_REFRESH_TOKEN,
-        accessToken: accessToken
-      },
-      tls: {
-        rejectUnauthorized: true,
-      },
-      pool: true,
-      maxConnections: 1,
-      rateDelta: 1000,
-      rateLimit: 1
-    });
-
-    return transporter;
+    const gmail = google.gmail({ version: 'v1', auth: oauth2Client });
+    return gmail;
   } catch (error) {
-    console.error('Error creating transporter:', error);
+    console.error('Error creating Gmail client:', error);
     throw error;
   }
+};
+
+const createEmail = ({ to, subject, html }) => {
+  const utf8Subject = `=?utf-8?B?${Buffer.from(subject).toString('base64')}?=`;
+  const messageParts = [
+    `From: ${process.env.EMAIL_FROM}`,
+    `To: ${to}`,
+    'Content-Type: text/html; charset=utf-8',
+    'MIME-Version: 1.0',
+    `Subject: ${utf8Subject}`,
+    '',
+    html,
+  ];
+  const message = messageParts.join('\n');
+  const encodedMessage = Buffer.from(message)
+    .toString('base64')
+    .replace(/\+/g, '-')
+    .replace(/\//g, '_')
+    .replace(/=+$/, '');
+
+  return encodedMessage;
 };
 
 // Verify transporter connection
@@ -76,10 +66,8 @@ const retry = async (fn, retries = 3, delay = 2000) => {
 };
 
 export const sendOTP = async (email, otp, type = "Email Verification") => {
-  let transporter;
-  
   try {
-    transporter = await createTransporter();
+    console.log(`Attempting to send ${type} email to: ${email}`);
     
     const isPasswordReset = type === "Password Reset";
     const subject = isPasswordReset
@@ -90,46 +78,51 @@ export const sendOTP = async (email, otp, type = "Email Verification") => {
       ? "Your password reset code is:"
       : "Your verification code is:";
 
-    const mailOptions = {
-      from: process.env.EMAIL_FROM || process.env.EMAIL_USER,
+    const html = `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <h2 style="color: #333;">${title}</h2>
+        <p>${message}</p>
+        <div style="background: #f5f5f5; padding: 20px; text-align: center; margin: 20px 0;">
+          <h1 style="color: #2EC4B6; font-size: 32px; margin: 0;">${otp}</h1>
+        </div>
+        <p>This code will expire in 10 minutes.</p>
+        ${
+          isPasswordReset
+            ? "<p style=\"color: #666;\">If you didn't request this password reset, please ignore this email.</p>"
+            : ""
+        }
+      </div>
+    `;
+
+    // Create raw email
+    const encodedMessage = createEmail({
       to: email,
       subject,
-      html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-          <h2 style="color: #333;">${title}</h2>
-          <p>${message}</p>
-          <div style="background: #f5f5f5; padding: 20px; text-align: center; margin: 20px 0;">
-            <h1 style="color: #2EC4B6; font-size: 32px; margin: 0;">${otp}</h1>
-          </div>
-          <p>This code will expire in 10 minutes.</p>
-          ${
-            isPasswordReset
-              ? "<p style=\"color: #666;\">If you didn't request this password reset, please ignore this email.</p>"
-              : ""
-          }
-        </div>
-      `
-    };
+      html
+    });
 
-    // Use retry mechanism for sending mail
+    // Send email using Gmail API with retry mechanism
     await retry(async () => {
-      const info = await transporter.sendMail(mailOptions);
-      console.log(`${type} email sent successfully. MessageId:`, info.messageId);
-      return info;
+      const gmail = await createGmailClient();
+      const { data: { id } = {} } = await gmail.users.messages.send({
+        userId: 'me',
+        requestBody: {
+          raw: encodedMessage,
+        },
+      });
+      console.log(`${type} email sent successfully. MessageId:`, id);
+      return id;
     });
   } catch (error) {
     console.error("Email send error details:", {
-      code: error.code,
-      command: error.command,
-      response: error.response,
-      responseCode: error.responseCode,
-      stack: error.stack
+      error: error.message,
+      stack: error.stack,
+      details: error.response?.data || error
     });
 
-    // Rethrow with more descriptive message
     throw new Error(
-      `Failed to send ${type} email: ${error.code || error.message}. ` +
-      `Please check SMTP settings and network connectivity.`
+      `Failed to send ${type} email: ${error.message}. ` +
+      `Please check Gmail API settings and permissions.`
     );
   }
 };
