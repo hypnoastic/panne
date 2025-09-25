@@ -1,23 +1,55 @@
 import nodemailer from "nodemailer";
+import { google } from "googleapis";
 
-const transporter = nodemailer.createTransport({
-  service: 'gmail',  // Using service instead of host/port
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS
-  },
-  tls: {
-    rejectUnauthorized: false,
-    minVersion: "TLSv1.2"
-  },
-  debug: true,
-  pool: true, // Use pooled connections
-  maxConnections: 3, // Limit concurrent connections
-  maxMessages: Infinity,
-  rateDelta: 1000, // Limit to 1 message per second
-  rateLimit: 3, // Maximum 3 messages per rateDelta
-  timeout: 10000 // 10 second timeout
-});
+const OAuth2 = google.auth.OAuth2;
+
+const createTransporter = async () => {
+  const oauth2Client = new OAuth2(
+    process.env.GMAIL_CLIENT_ID,
+    process.env.GMAIL_CLIENT_SECRET,
+    "https://developers.google.com/oauthplayground"
+  );
+
+  oauth2Client.setCredentials({
+    refresh_token: process.env.GMAIL_REFRESH_TOKEN
+  });
+
+  try {
+    const accessToken = await new Promise((resolve, reject) => {
+      oauth2Client.getAccessToken((err, token) => {
+        if (err) {
+          console.error('Failed to get access token:', err);
+          reject(err);
+        }
+        resolve(token);
+      });
+    });
+
+    const transporter = nodemailer.createTransport({
+      service: "gmail",
+      auth: {
+        type: "OAuth2",
+        user: process.env.EMAIL_USER,
+        clientId: process.env.GMAIL_CLIENT_ID,
+        clientSecret: process.env.GMAIL_CLIENT_SECRET,
+        refreshToken: process.env.GMAIL_REFRESH_TOKEN,
+        accessToken: accessToken
+      },
+      tls: {
+        rejectUnauthorized: true,
+      },
+      pool: true,
+      maxConnections: 1,
+      rateDelta: 1000,
+      rateLimit: 1
+    });
+
+    return transporter;
+  } catch (error) {
+    console.error('Error creating transporter:', error);
+    throw error;
+  }
+};
 
 // Verify transporter connection
 const verifyConnection = async () => {
@@ -44,13 +76,11 @@ const retry = async (fn, retries = 3, delay = 2000) => {
 };
 
 export const sendOTP = async (email, otp, type = "Email Verification") => {
+  let transporter;
+  
   try {
-    // Verify SMTP connection first
-    const isConnected = await verifyConnection();
-    if (!isConnected) {
-      throw new Error('Failed to establish SMTP connection');
-    }
-
+    transporter = await createTransporter();
+    
     const isPasswordReset = type === "Password Reset";
     const subject = isPasswordReset
       ? "Panne - Password Reset"
