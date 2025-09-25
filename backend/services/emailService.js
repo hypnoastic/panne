@@ -1,22 +1,56 @@
 import nodemailer from "nodemailer";
 
 const transporter = nodemailer.createTransport({
-  host: "smtp.gmail.com",
-  port: 465,
-  secure: true, // SSL immediately (just like Python's SMTP_SSL)
+  service: 'gmail',  // Using service instead of host/port
   auth: {
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASS
   },
   tls: {
-    // Force Node to use modern TLS, similar to Python
-    minVersion: "TLSv1.2",
-    rejectUnauthorized: false
-  }
+    rejectUnauthorized: false,
+    minVersion: "TLSv1.2"
+  },
+  debug: true,
+  pool: true, // Use pooled connections
+  maxConnections: 3, // Limit concurrent connections
+  maxMessages: Infinity,
+  rateDelta: 1000, // Limit to 1 message per second
+  rateLimit: 3, // Maximum 3 messages per rateDelta
+  timeout: 10000 // 10 second timeout
 });
+
+// Verify transporter connection
+const verifyConnection = async () => {
+  try {
+    await transporter.verify();
+    return true;
+  } catch (error) {
+    console.error('SMTP Connection Error:', error);
+    return false;
+  }
+};
+
+// Retry mechanism for failed attempts
+const retry = async (fn, retries = 3, delay = 2000) => {
+  try {
+    return await fn();
+  } catch (error) {
+    if (retries > 0) {
+      await new Promise(resolve => setTimeout(resolve, delay));
+      return retry(fn, retries - 1, delay * 1.5);
+    }
+    throw error;
+  }
+};
 
 export const sendOTP = async (email, otp, type = "Email Verification") => {
   try {
+    // Verify SMTP connection first
+    const isConnected = await verifyConnection();
+    if (!isConnected) {
+      throw new Error('Failed to establish SMTP connection');
+    }
+
     const isPasswordReset = type === "Password Reset";
     const subject = isPasswordReset
       ? "Panne - Password Reset"
@@ -47,10 +81,25 @@ export const sendOTP = async (email, otp, type = "Email Verification") => {
       `
     };
 
-    await transporter.sendMail(mailOptions);
-    console.log(`${type} email sent successfully`);
+    // Use retry mechanism for sending mail
+    await retry(async () => {
+      const info = await transporter.sendMail(mailOptions);
+      console.log(`${type} email sent successfully. MessageId:`, info.messageId);
+      return info;
+    });
   } catch (error) {
-    console.error("Email send error:", error);
-    throw error;
+    console.error("Email send error details:", {
+      code: error.code,
+      command: error.command,
+      response: error.response,
+      responseCode: error.responseCode,
+      stack: error.stack
+    });
+
+    // Rethrow with more descriptive message
+    throw new Error(
+      `Failed to send ${type} email: ${error.code || error.message}. ` +
+      `Please check SMTP settings and network connectivity.`
+    );
   }
 };
