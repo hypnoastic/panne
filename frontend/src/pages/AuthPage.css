@@ -187,6 +187,26 @@
   margin-top: var(--spacing-2);
 }
 
+.forgot-password-link {
+  text-align: center;
+
+}
+
+.forgot-password-link button {
+  background: none;
+  border: none;
+  color: #2EC4B6;
+  font-size: var(--font-size-xs);
+  cursor: pointer;
+  text-decoration: underline;
+  transition: color var(--transition-fast);
+
+}
+
+.forgot-password-link button:hover {
+  color: #10B981;
+}
+
 .auth-footer {
   text-align: center;
   margin-top: var(--spacing-6);
@@ -350,6 +370,158 @@
     left: 0.7rem;
     width: 16px;
     height: 16px;
+  }
+}
+
+/* OTP Verification Styles */
+.otp-container {
+  display: flex;
+  gap: var(--spacing-2);
+  justify-content: center;
+  margin: var(--spacing-4) 0;
+}
+
+.otp-input {
+  width: 50px;
+  height: 50px;
+  text-align: center;
+  font-size: var(--font-size-lg);
+  font-weight: 600;
+  background: rgba(255, 255, 255, 0.05);
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  color: white;
+  transition: all var(--transition-fast);
+}
+
+.otp-input:focus {
+  border-color: #2EC4B6;
+  box-shadow: 0 0 0 3px rgba(46, 196, 182, 0.1);
+  outline: none;
+}
+
+.otp-timer {
+  text-align: center;
+  margin: var(--spacing-3) 0;
+  color: #9CA3AF;
+  font-size: var(--font-size-sm);
+}
+
+.otp-timer .expired {
+  color: #EF4444;
+}
+
+.otp-back-btn {
+  position: absolute;
+  top: 0;
+  left: 0;
+  background: none;
+  border: none;
+  color: #9CA3AF;
+  font-size: 24px;
+  cursor: pointer;
+  padding: 8px;
+  transition: color var(--transition-fast);
+}
+
+.otp-back-btn:hover {
+  color: white;
+}
+
+.otp-back-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.auth-header {
+  position: relative;
+}
+
+.form-actions {
+  display: flex;
+  gap: var(--spacing-3);
+  margin-top: var(--spacing-4);
+}
+
+.form-actions button {
+  flex: 1;
+}
+.auth-back-btn {
+  background: rgba(255, 255, 255, 0.1);
+  color: white ;
+}
+
+.auth-back-btn:hover {
+  background: rgba(255, 255, 255, 0.15) !important;
+}
+
+
+/* Google Auth Styles */
+#google-signin-btn {
+  background:black;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+
+#google-signin-btn > div {
+  width: 100% !important;
+}
+
+#google-signin-btn iframe {
+  width: 100% !important;
+}
+
+.auth-divider {
+  position: relative;
+  text-align: center;
+  margin: var(--spacing-4) 0;
+}
+
+.auth-divider::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.auth-divider span {
+  background: rgba(1, 1, 1, 1);
+  padding: 0 var(--spacing-3);
+  color: #9CA3AF;
+  font-size: var(--font-size-sm);
+}
+
+@media (max-width: 768px) {
+  .otp-input {
+    width: 35px;
+    height: 35px;
+    font-size: var(--font-size-sm);
+  }
+  
+  .otp-container {
+    gap: 6px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  
+  .form-actions {
+    flex-direction: column;
+  }
+}
+
+@media (max-width: 480px) {
+  .otp-input {
+    width: 30px;
+    height: 30px;
+    font-size: var(--font-size-xs);
+  }
+  
+  .otp-container {
+    gap: 4px;
   }
 }
 

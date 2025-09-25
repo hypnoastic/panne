@@ -56,10 +56,18 @@ router.get('/collab', async (req, res) => {
 router.get('/:id', async (req, res) => {
   try {
     const result = await pool.query(`
-      SELECT n.*, nb.title as notebook_name 
+      SELECT DISTINCT n.*, nb.title as notebook_name,
+             CASE WHEN n.owner_id = $2 THEN true ELSE false END as is_owner,
+             CASE WHEN n.owner_id = $2 THEN 'edit'
+                  ELSE COALESCE(sl.permission, 'view')
+             END as permission
       FROM notes n 
       LEFT JOIN notebooks nb ON n.notebook_id = nb.id 
-      WHERE n.id = $1 AND n.owner_id = $2 AND n.deleted_at IS NULL
+      LEFT JOIN sharing_links sl ON n.id = sl.note_id
+      LEFT JOIN permission_requests pr ON n.id = pr.note_id AND pr.requester_id = $2 AND pr.status = 'approved'
+      WHERE n.id = $1 
+        AND (n.owner_id = $2 OR pr.requester_id = $2)
+        AND n.deleted_at IS NULL
     `, [req.params.id, req.user.id]);
     
     if (result.rows.length === 0) {

@@ -46,7 +46,14 @@ export const authApi = {
     }
     return res.data;
   }),
-  register: (userData) => api.post('/auth/register', userData).then(res => {
+  sendOTP: (email) => api.post('/auth/send-otp', { email }).then(res => res.data),
+  verifyOTP: (otpData) => api.post('/auth/verify-otp', otpData).then(res => {
+    if (res.data.token) {
+      localStorage.setItem('token', res.data.token);
+    }
+    return res.data;
+  }),
+  googleAuth: (credential) => api.post('/auth/google', { credential }).then(res => {
     if (res.data.token) {
       localStorage.setItem('token', res.data.token);
     }
@@ -58,6 +65,9 @@ export const authApi = {
   },
   getCurrentUser: () => api.get('/auth/me').then(res => res.data.user),
   isAuthenticated: () => !!localStorage.getItem('token'),
+  sendResetOTP: (email) => api.post('/auth/send-reset-otp', { email }).then(res => res.data),
+  verifyResetOTP: (data) => api.post('/auth/verify-reset-otp', data).then(res => res.data),
+  resetPassword: (data) => api.post('/auth/reset-password', data).then(res => res.data),
 };
 
 // Notes API

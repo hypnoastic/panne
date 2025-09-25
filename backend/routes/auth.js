@@ -3,11 +3,14 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import multer from 'multer';
 import { v2 as cloudinary } from 'cloudinary';
+import { OAuth2Client } from 'google-auth-library';
 import pool from '../config/database.js';
 import { authenticateToken } from '../middleware/auth.js';
+import { sendOTP } from '../services/emailService.js';
 
 // Constants
 const SALT_ROUNDS = 12;
+const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 // Configure multer for memory storage
 const upload = multer({ storage: multer.memoryStorage() });
@@ -21,10 +24,16 @@ cloudinary.config({
 
 const router = express.Router();
 
-// Register
-router.post('/register', async (req, res) => {
+// Send OTP
+router.post('/send-otp', async (req, res) => {
   try {
-    const { email, password, name } = req.body;
+    const { email } = req.body;
+    
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!email || !emailRegex.test(email)) {
+      return res.status(400).json({ error: 'Invalid email format' });
+    }
     
     // Check if user exists
     const existingUser = await pool.query(
@@ -35,6 +44,67 @@ router.post('/register', async (req, res) => {
     if (existingUser.rows.length > 0) {
       return res.status(400).json({ error: 'User already exists' });
     }
+    
+    // Generate 6-digit OTP
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+    
+    // Check for recent OTP requests (rate limiting)
+    const recentOTP = await pool.query(
+      'SELECT created_at FROM email_otps WHERE email = $1 AND created_at > NOW() - INTERVAL \'1 minute\'',
+      [email]
+    );
+    
+    if (recentOTP.rows.length > 0) {
+      return res.status(429).json({ error: 'Please wait before requesting another OTP' });
+    }
+    
+    // Delete existing OTPs for this email
+    await pool.query('DELETE FROM email_otps WHERE email = $1', [email]);
+    
+    // Store OTP
+    await pool.query(
+      'INSERT INTO email_otps (email, otp, expires_at) VALUES ($1, $2, $3)',
+      [email, otp, expiresAt]
+    );
+    
+    // Send OTP email
+    await sendOTP(email, otp);
+    
+    res.json({ message: 'OTP sent successfully' });
+  } catch (error) {
+    console.error('Send OTP error:', error);
+    res.status(500).json({ error: 'Failed to send OTP' });
+  }
+});
+
+// Verify OTP and Register
+router.post('/verify-otp', async (req, res) => {
+  try {
+    const { email, otp, password, name } = req.body;
+    
+    // Validate inputs
+    if (!email || !otp || !password || !name) {
+      return res.status(400).json({ error: 'All fields are required' });
+    }
+    
+    // Validate OTP format (6 digits)
+    if (!/^\d{6}$/.test(otp)) {
+      return res.status(400).json({ error: 'Invalid OTP format' });
+    }
+    
+    // Verify OTP
+    const otpResult = await pool.query(
+      'SELECT * FROM email_otps WHERE email = $1 AND otp = $2 AND expires_at > NOW()',
+      [email, otp]
+    );
+    
+    if (otpResult.rows.length === 0) {
+      return res.status(400).json({ error: 'Invalid or expired OTP' });
+    }
+    
+    // Delete used OTP
+    await pool.query('DELETE FROM email_otps WHERE email = $1', [email]);
     
     // Hash password
     const passwordHash = await bcrypt.hash(password, SALT_ROUNDS);
@@ -56,8 +126,54 @@ router.post('/register', async (req, res) => {
     
     res.status(201).json({ user, token });
   } catch (error) {
-    console.error('Registration error:', error);
+    console.error('OTP verification error:', error);
     res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Google OAuth
+router.post('/google', async (req, res) => {
+  try {
+    const { credential } = req.body;
+    
+    // Verify Google token
+    const ticket = await googleClient.verifyIdToken({
+      idToken: credential,
+      audience: process.env.GOOGLE_CLIENT_ID
+    });
+    
+    const payload = ticket.getPayload();
+    const { email, name, picture } = payload;
+    
+    // Check if user exists
+    let result = await pool.query(
+      'SELECT id, email, name, avatar_url FROM users WHERE email = $1',
+      [email]
+    );
+    
+    let user;
+    if (result.rows.length === 0) {
+      // Create new user
+      result = await pool.query(
+        'INSERT INTO users (email, name, avatar_url) VALUES ($1, $2, $3) RETURNING id, email, name, avatar_url',
+        [email, name, picture]
+      );
+      user = result.rows[0];
+    } else {
+      user = result.rows[0];
+    }
+    
+    // Generate JWT
+    const token = jwt.sign(
+      { userId: user.id },
+      process.env.JWT_SECRET,
+      { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
+    );
+    
+    res.json({ user, token });
+  } catch (error) {
+    console.error('Google OAuth error:', error);
+    res.status(500).json({ error: 'Google authentication failed' });
   }
 });
 
@@ -180,6 +296,139 @@ router.post('/change-password', authenticateToken, async (req, res) => {
     res.json({ message: 'Password changed successfully' });
   } catch (error) {
     console.error('Password change error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Send Reset OTP
+router.post('/send-reset-otp', async (req, res) => {
+  try {
+    const { email } = req.body;
+    
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!email || !emailRegex.test(email)) {
+      return res.status(400).json({ error: 'Invalid email format' });
+    }
+    
+    // Check if user exists
+    const existingUser = await pool.query(
+      'SELECT id FROM users WHERE email = $1',
+      [email]
+    );
+    
+    if (existingUser.rows.length === 0) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    
+    // Generate 6-digit OTP
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+    
+    // Check for recent OTP requests (rate limiting)
+    const recentOTP = await pool.query(
+      'SELECT created_at FROM password_reset_otps WHERE email = $1 AND created_at > NOW() - INTERVAL \'1 minute\'',
+      [email]
+    );
+    
+    if (recentOTP.rows.length > 0) {
+      return res.status(429).json({ error: 'Please wait before requesting another reset code' });
+    }
+    
+    // Delete existing OTPs for this email
+    await pool.query('DELETE FROM password_reset_otps WHERE email = $1', [email]);
+    
+    // Store OTP
+    await pool.query(
+      'INSERT INTO password_reset_otps (email, otp, expires_at) VALUES ($1, $2, $3)',
+      [email, otp, expiresAt]
+    );
+    
+    // Send OTP email
+    await sendOTP(email, otp, 'Password Reset');
+    
+    res.json({ message: 'Reset code sent successfully' });
+  } catch (error) {
+    console.error('Send reset OTP error:', error);
+    res.status(500).json({ error: 'Failed to send reset code' });
+  }
+});
+
+// Verify Reset OTP
+router.post('/verify-reset-otp', async (req, res) => {
+  try {
+    const { email, otp } = req.body;
+    
+    // Validate inputs
+    if (!email || !otp) {
+      return res.status(400).json({ error: 'Email and OTP are required' });
+    }
+    
+    // Validate OTP format (6 digits)
+    if (!/^\d{6}$/.test(otp)) {
+      return res.status(400).json({ error: 'Invalid OTP format' });
+    }
+    
+    // Verify OTP
+    const otpResult = await pool.query(
+      'SELECT * FROM password_reset_otps WHERE email = $1 AND otp = $2 AND expires_at > NOW()',
+      [email, otp]
+    );
+    
+    if (otpResult.rows.length === 0) {
+      return res.status(400).json({ error: 'Invalid or expired reset code' });
+    }
+    
+    res.json({ message: 'Reset code verified successfully' });
+  } catch (error) {
+    console.error('Reset OTP verification error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Reset Password
+router.post('/reset-password', async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    
+    // Validate inputs
+    if (!email || !password) {
+      return res.status(400).json({ error: 'Email and password are required' });
+    }
+    
+    if (password.length < 6) {
+      return res.status(400).json({ error: 'Password must be at least 6 characters' });
+    }
+    
+    // Check if there's a verified OTP for this email
+    const otpResult = await pool.query(
+      'SELECT * FROM password_reset_otps WHERE email = $1 AND expires_at > NOW()',
+      [email]
+    );
+    
+    if (otpResult.rows.length === 0) {
+      return res.status(400).json({ error: 'No valid reset session found' });
+    }
+    
+    // Hash new password
+    const passwordHash = await bcrypt.hash(password, SALT_ROUNDS);
+    
+    // Update user password
+    const result = await pool.query(
+      'UPDATE users SET password_hash = $1, updated_at = CURRENT_TIMESTAMP WHERE email = $2 RETURNING id',
+      [passwordHash, email]
+    );
+    
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    
+    // Delete used OTP
+    await pool.query('DELETE FROM password_reset_otps WHERE email = $1', [email]);
+    
+    res.json({ message: 'Password reset successfully' });
+  } catch (error) {
+    console.error('Password reset error:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
