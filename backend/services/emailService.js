@@ -3,10 +3,15 @@ import nodemailer from "nodemailer";
 const transporter = nodemailer.createTransport({
   host: "smtp.gmail.com",
   port: 465,
-  secure: true, // SSL immediately, just like Python's SMTP_SSL
+  secure: true, // SSL immediately (just like Python's SMTP_SSL)
   auth: {
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASS
+  },
+  tls: {
+    // Force Node to use modern TLS, similar to Python
+    minVersion: "TLSv1.2",
+    rejectUnauthorized: false
   }
 });
 
