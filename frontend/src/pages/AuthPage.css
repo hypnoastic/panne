@@ -478,6 +478,9 @@
   width: 100% !important;
   min-width: 100% !important;
   box-sizing: border-box !important;
+  margin: 0 auto !important;
+  display: flex !important;
+  justify-content: center !important;
 }
 
 .auth-divider {
