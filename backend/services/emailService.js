@@ -1,27 +1,28 @@
-import nodemailer from 'nodemailer';
+import nodemailer from "nodemailer";
 
 const transporter = nodemailer.createTransport({
-  host: process.env.EMAIL_HOST || 'smtp.gmail.com',
-  port: parseInt(process.env.EMAIL_PORT) || 587,
-  secure: false,
+  host: "smtp.gmail.com",
+  port: 465,
+  secure: true, // SSL immediately, just like Python's SMTP_SSL
   auth: {
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASS
-  },
-  tls: {
-    rejectUnauthorized: false
   }
 });
 
-export const sendOTP = async (email, otp, type = 'Email Verification') => {
+export const sendOTP = async (email, otp, type = "Email Verification") => {
   try {
-    const isPasswordReset = type === 'Password Reset';
-    const subject = isPasswordReset ? 'Panne - Password Reset' : 'Panne - Email Verification';
-    const title = isPasswordReset ? 'Password Reset' : 'Email Verification';
-    const message = isPasswordReset ? 'Your password reset code is:' : 'Your verification code is:';
-    
+    const isPasswordReset = type === "Password Reset";
+    const subject = isPasswordReset
+      ? "Panne - Password Reset"
+      : "Panne - Email Verification";
+    const title = isPasswordReset ? "Password Reset" : "Email Verification";
+    const message = isPasswordReset
+      ? "Your password reset code is:"
+      : "Your verification code is:";
+
     const mailOptions = {
-      from: process.env.EMAIL_FROM,
+      from: process.env.EMAIL_FROM || process.env.EMAIL_USER,
       to: email,
       subject,
       html: `
@@ -32,7 +33,11 @@ export const sendOTP = async (email, otp, type = 'Email Verification') => {
             <h1 style="color: #2EC4B6; font-size: 32px; margin: 0;">${otp}</h1>
           </div>
           <p>This code will expire in 10 minutes.</p>
-          ${isPasswordReset ? '<p style="color: #666;">If you didn\'t request this password reset, please ignore this email.</p>' : ''}
+          ${
+            isPasswordReset
+              ? "<p style=\"color: #666;\">If you didn't request this password reset, please ignore this email.</p>"
+              : ""
+          }
         </div>
       `
     };
@@ -40,7 +45,7 @@ export const sendOTP = async (email, otp, type = 'Email Verification') => {
     await transporter.sendMail(mailOptions);
     console.log(`${type} email sent successfully`);
   } catch (error) {
-    console.error('Email send error:', error);
+    console.error("Email send error:", error);
     throw error;
   }
 };
