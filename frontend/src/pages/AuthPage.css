@@ -458,18 +458,26 @@
 
 /* Google Auth Styles */
 #google-signin-btn {
-  background:black;
-  width: 100%;
-  display: flex;
-  justify-content: center;
+  width: 100% !important;
+  min-width: 100% !important;
+  display: flex !important;
+  justify-content: center !important;
 }
 
 #google-signin-btn > div {
   width: 100% !important;
+  min-width: 100% !important;
 }
 
 #google-signin-btn iframe {
   width: 100% !important;
+  min-width: 100% !important;
+}
+
+#google-signin-btn div[role="button"] {
+  width: 100% !important;
+  min-width: 100% !important;
+  box-sizing: border-box !important;
 }
 
 .auth-divider {
