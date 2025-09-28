@@ -1,5 +1,5 @@
 import express from 'express';
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import OpenAI from 'openai';
 import pool from '../config/database.js';
 import { authenticateToken } from '../middleware/auth.js';
 
@@ -10,17 +10,16 @@ router.post('/query', async (req, res) => {
   try {
     const { prompt, context, action } = req.body;
     
-    // Use environment Gemini API key
-    const apiKey = process.env.GEMINI_API_KEY;
+    // Use environment OpenAI API key
+    const apiKey = process.env.OPENAI_API_KEY;
     
     if (!apiKey) {
       return res.status(400).json({ 
-        error: 'Gemini API key not configured in environment variables.' 
+        error: 'OpenAI API key not configured in environment variables.' 
       });
     }
     
-    const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    const openai = new OpenAI({ apiKey });
     
     let systemPrompt = '';
     
@@ -44,12 +43,17 @@ router.post('/query', async (req, res) => {
         systemPrompt = 'Help with the following:';
     }
     
-    const fullPrompt = `${systemPrompt}\n\n${prompt}`;
+    const completion = await openai.chat.completions.create({
+      model: "gpt-4o",
+      messages: [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: prompt }
+      ],
+      max_tokens: 1500,
+      temperature: 0.7
+    });
     
-    const result = await model.generateContent(fullPrompt);
-    const response = await result.response;
-    const text = response.text();
-    
+    const text = completion.choices[0].message.content;
     res.json({ response: text });
   } catch (error) {
     console.error('AI query error:', error);
@@ -63,15 +67,14 @@ router.post('/chat', authenticateToken, async (req, res) => {
     const { message, context = [], chatId } = req.body;
     const userId = req.user.id;
     
-    const apiKey = process.env.GEMINI_API_KEY;
+    const apiKey = process.env.OPENAI_API_KEY;
     if (!apiKey) {
       return res.status(400).json({ 
-        error: 'Gemini API key not configured in environment variables.' 
+        error: 'OpenAI API key not configured in environment variables.' 
       });
     }
     
-    const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    const openai = new OpenAI({ apiKey });
     
     // Build context from selected notes
     let contextPrompt = '';
@@ -83,7 +86,7 @@ router.post('/chat', authenticateToken, async (req, res) => {
       contextPrompt += '\n--- End of Context ---\n\n';
     }
     
-    const systemPrompt = `You are PanneAI, an intelligent assistant integrated into a note-taking and productivity platform called Panne. You help users with their notes, tasks, and productivity questions.
+    const systemMessage = `You are PanneAI, an intelligent assistant integrated into a note-taking and productivity platform called Panne. You help users with their notes, tasks, and productivity questions.
 
 Key guidelines:
 - Be helpful, concise, and actionable
@@ -92,11 +95,19 @@ Key guidelines:
 - If asked about creating content, provide well-formatted text suitable for notes
 - Be conversational but professional
 
-${contextPrompt}User question: ${message}`;
+${contextPrompt}`;
     
-    const result = await model.generateContent(systemPrompt);
-    const response = await result.response;
-    const text = response.text();
+    const completion = await openai.chat.completions.create({
+      model: "gpt-4o",
+      messages: [
+        { role: "system", content: systemMessage },
+        { role: "user", content: message }
+      ],
+      max_tokens: 1000,
+      temperature: 0.7
+    });
+    
+    const text = completion.choices[0].message.content;
     
     // Store messages in database
     if (chatId) {
@@ -133,10 +144,10 @@ router.post('/export-to-note', authenticateToken, async (req, res) => {
     const { chatId, selectedNotes = [] } = req.body;
     const userId = req.user.id;
     
-    const apiKey = process.env.GEMINI_API_KEY;
+    const apiKey = process.env.OPENAI_API_KEY;
     if (!apiKey) {
       return res.status(400).json({ 
-        error: 'Gemini API key not configured in environment variables.' 
+        error: 'OpenAI API key not configured in environment variables.' 
       });
     }
     
@@ -152,8 +163,7 @@ router.post('/export-to-note', authenticateToken, async (req, res) => {
     
     const chatHistory = chatResult.rows[0].messages || [];
     
-    const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    const openai = new OpenAI({ apiKey });
     
     // Build chat history for summarization
     let chatText = '';
@@ -183,9 +193,20 @@ Format it as a proper note with headings and bullet points.
 Conversation:
 ${chatText}${contextInfo}`;
     
-    const result = await model.generateContent(summarizePrompt);
-    const response = await result.response;
-    const summaryText = response.text();
+    const completion = await openai.chat.completions.create({
+      model: "gpt-4o",
+      messages: [
+        { 
+          role: "system", 
+          content: "Format conversations into well-structured notes with proper headings, bullet points, and key takeaways. Make it useful for future reference." 
+        },
+        { role: "user", content: summarizePrompt }
+      ],
+      max_tokens: 2000,
+      temperature: 0.3
+    });
+    
+    const summaryText = completion.choices[0].message.content;
     
     // Extract title from summary (first line or generate one)
     const lines = summaryText.split('\n');

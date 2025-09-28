@@ -1,10 +1,12 @@
 import express from 'express';
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import OpenAI from 'openai';
 import { authenticateToken } from '../middleware/auth.js';
 import pool from '../config/database.js';
 
 const router = express.Router();
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY
+});
 
 // Chat with AI
 router.post('/chat', authenticateToken, async (req, res) => {
@@ -15,16 +17,23 @@ router.post('/chat', authenticateToken, async (req, res) => {
       return res.status(400).json({ error: 'Message is required' });
     }
 
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-    
-    const prompt = `You are a helpful AI assistant integrated into a note-taking app called Panne. 
-    Respond in a conversational, helpful manner. Keep responses concise but informative.
-    User message: ${message}`;
+    const completion = await openai.chat.completions.create({
+      model: "gpt-4o",
+      messages: [
+        {
+          role: "system",
+          content: "You are a helpful AI assistant integrated into a note-taking app called Panne. Respond in a conversational, helpful manner. Keep responses concise but informative."
+        },
+        {
+          role: "user",
+          content: message
+        }
+      ],
+      max_tokens: 1000,
+      temperature: 0.7
+    });
 
-    const result = await model.generateContent(prompt);
-    const response = await result.response;
-    const text = response.text();
-
+    const text = completion.choices[0].message.content;
     res.json({ message: text });
   } catch (error) {
     console.error('AI Chat error:', error);
@@ -57,14 +66,21 @@ router.post('/format-note', authenticateToken, async (req, res) => {
       aiNotebook = aiNotebook;
     }
 
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-    
     // Format chat history into a structured note
     const chatText = chatHistory.map(msg => 
       `${msg.type === 'user' ? 'User' : 'AI'}: ${msg.content}`
     ).join('\n\n');
 
-    const prompt = `Format the following conversation into a well-structured note with proper headings, bullet points, and key takeaways. Make it useful for future reference:
+    const completion = await openai.chat.completions.create({
+      model: "gpt-4o",
+      messages: [
+        {
+          role: "system",
+          content: "Format conversations into well-structured notes with proper headings, bullet points, and key takeaways. Make it useful for future reference."
+        },
+        {
+          role: "user",
+          content: `Format the following conversation into a well-structured note with proper headings, bullet points, and key takeaways. Make it useful for future reference:
 
 ${chatText}
 
@@ -72,11 +88,14 @@ Please format this as a clean, organized note with:
 - A descriptive title
 - Key points discussed
 - Important insights or conclusions
-- Action items if any`;
+- Action items if any`
+        }
+      ],
+      max_tokens: 2000,
+      temperature: 0.3
+    });
 
-    const result = await model.generateContent(prompt);
-    const response = await result.response;
-    const formattedNote = response.text();
+    const formattedNote = completion.choices[0].message.content;
 
     // Extract title from the formatted note (first line)
     const lines = formattedNote.split('\n');
