@@ -10,7 +10,14 @@ import { sendOTP } from '../services/emailService.js';
 
 // Constants
 const SALT_ROUNDS = 12;
-const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+
+// Initialize Google OAuth client only when needed
+const getGoogleClient = () => {
+  if (!process.env.GOOGLE_CLIENT_ID) {
+    throw new Error('Google OAuth not configured');
+  }
+  return new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+};
 
 // Configure multer for memory storage
 const upload = multer({ storage: multer.memoryStorage() });
@@ -136,7 +143,13 @@ router.post('/google', async (req, res) => {
   try {
     const { credential } = req.body;
     
+    // Check if Google OAuth is configured
+    if (!process.env.GOOGLE_CLIENT_ID) {
+      return res.status(501).json({ error: 'Google OAuth not configured' });
+    }
+    
     // Verify Google token
+    const googleClient = getGoogleClient();
     const ticket = await googleClient.verifyIdToken({
       idToken: credential,
       audience: process.env.GOOGLE_CLIENT_ID
