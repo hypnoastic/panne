@@ -6,7 +6,7 @@ import { v2 as cloudinary } from 'cloudinary';
 import { OAuth2Client } from 'google-auth-library';
 import pool from '../config/database.js';
 import { authenticateToken } from '../middleware/auth.js';
-import { sendOTP } from '../services/emailService.js';
+
 
 // Constants
 const SALT_ROUNDS = 12;
@@ -31,14 +31,19 @@ cloudinary.config({
 
 const router = express.Router();
 
-// Send OTP
-router.post('/send-otp', async (req, res) => {
+// Register (simplified without OTP)
+router.post('/register', async (req, res) => {
   try {
-    const { email } = req.body;
+    const { email, password, name } = req.body;
+    
+    // Validate inputs
+    if (!email || !password || !name) {
+      return res.status(400).json({ error: 'All fields are required' });
+    }
     
     // Validate email format
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!email || !emailRegex.test(email)) {
+    if (!emailRegex.test(email)) {
       return res.status(400).json({ error: 'Invalid email format' });
     }
     
@@ -51,67 +56,6 @@ router.post('/send-otp', async (req, res) => {
     if (existingUser.rows.length > 0) {
       return res.status(400).json({ error: 'User already exists' });
     }
-    
-    // Generate 6-digit OTP
-    const otp = Math.floor(100000 + Math.random() * 900000).toString();
-    const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
-    
-    // Check for recent OTP requests (rate limiting)
-    const recentOTP = await pool.query(
-      'SELECT created_at FROM email_otps WHERE email = $1 AND created_at > NOW() - INTERVAL \'1 minute\'',
-      [email]
-    );
-    
-    if (recentOTP.rows.length > 0) {
-      return res.status(429).json({ error: 'Please wait before requesting another OTP' });
-    }
-    
-    // Delete existing OTPs for this email
-    await pool.query('DELETE FROM email_otps WHERE email = $1', [email]);
-    
-    // Store OTP
-    await pool.query(
-      'INSERT INTO email_otps (email, otp, expires_at) VALUES ($1, $2, $3)',
-      [email, otp, expiresAt]
-    );
-    
-    // Send OTP email
-    await sendOTP(email, otp);
-    
-    res.json({ message: 'OTP sent successfully' });
-  } catch (error) {
-    console.error('Send OTP error:', error);
-    res.status(500).json({ error: 'Failed to send OTP' });
-  }
-});
-
-// Verify OTP and Register
-router.post('/verify-otp', async (req, res) => {
-  try {
-    const { email, otp, password, name } = req.body;
-    
-    // Validate inputs
-    if (!email || !otp || !password || !name) {
-      return res.status(400).json({ error: 'All fields are required' });
-    }
-    
-    // Validate OTP format (6 digits)
-    if (!/^\d{6}$/.test(otp)) {
-      return res.status(400).json({ error: 'Invalid OTP format' });
-    }
-    
-    // Verify OTP
-    const otpResult = await pool.query(
-      'SELECT * FROM email_otps WHERE email = $1 AND otp = $2 AND expires_at > NOW()',
-      [email, otp]
-    );
-    
-    if (otpResult.rows.length === 0) {
-      return res.status(400).json({ error: 'Invalid or expired OTP' });
-    }
-    
-    // Delete used OTP
-    await pool.query('DELETE FROM email_otps WHERE email = $1', [email]);
     
     // Hash password
     const passwordHash = await bcrypt.hash(password, SALT_ROUNDS);
@@ -133,10 +77,12 @@ router.post('/verify-otp', async (req, res) => {
     
     res.status(201).json({ user, token });
   } catch (error) {
-    console.error('OTP verification error:', error);
+    console.error('Registration error:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
+
+
 
 // Google OAuth
 router.post('/google', async (req, res) => {
