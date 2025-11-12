@@ -1,23 +1,29 @@
 import { google } from "googleapis";
 
 const createGmailClient = async () => {
-  try {
-    const oauth2Client = new google.auth.OAuth2(
-      process.env.GMAIL_CLIENT_ID,
-      process.env.GMAIL_CLIENT_SECRET,
-      "https://developers.google.com/oauthplayground"
-    );
-
-    oauth2Client.setCredentials({
-      refresh_token: process.env.GMAIL_REFRESH_TOKEN
-    });
-
-    const gmail = google.gmail({ version: 'v1', auth: oauth2Client });
-    return gmail;
-  } catch (error) {
-    console.error('Error creating Gmail client:', error);
-    throw error;
+  if (!process.env.GMAIL_CLIENT_ID || !process.env.GMAIL_CLIENT_SECRET || !process.env.GMAIL_REFRESH_TOKEN) {
+    throw new Error('Gmail OAuth2 credentials not configured');
   }
+
+  const oauth2Client = new google.auth.OAuth2(
+    process.env.GMAIL_CLIENT_ID,
+    process.env.GMAIL_CLIENT_SECRET,
+    "https://developers.google.com/oauthplayground"
+  );
+
+  oauth2Client.setCredentials({
+    refresh_token: process.env.GMAIL_REFRESH_TOKEN
+  });
+
+  // Get fresh access token
+  try {
+    await oauth2Client.getAccessToken();
+  } catch (error) {
+    throw new Error(`OAuth2 token refresh failed: ${error.message}`);
+  }
+
+  const gmail = google.gmail({ version: 'v1', auth: oauth2Client });
+  return gmail;
 };
 
 const createEmail = ({ to, subject, html }) => {
@@ -39,17 +45,6 @@ const createEmail = ({ to, subject, html }) => {
     .replace(/=+$/, '');
 
   return encodedMessage;
-};
-
-// Verify transporter connection
-const verifyConnection = async () => {
-  try {
-    await transporter.verify();
-    return true;
-  } catch (error) {
-    console.error('SMTP Connection Error:', error);
-    return false;
-  }
 };
 
 // Retry mechanism for failed attempts
@@ -94,14 +89,12 @@ export const sendOTP = async (email, otp, type = "Email Verification") => {
       </div>
     `;
 
-    // Create raw email
     const encodedMessage = createEmail({
       to: email,
       subject,
       html
     });
 
-    // Send email using Gmail API with retry mechanism
     await retry(async () => {
       const gmail = await createGmailClient();
       const { data: { id } = {} } = await gmail.users.messages.send({
@@ -122,7 +115,7 @@ export const sendOTP = async (email, otp, type = "Email Verification") => {
 
     throw new Error(
       `Failed to send ${type} email: ${error.message}. ` +
-      `Please check Gmail API settings and permissions.`
+      `Please check Gmail OAuth2 configuration.`
     );
   }
 };
