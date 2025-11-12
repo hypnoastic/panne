@@ -46,8 +46,7 @@ export const authApi = {
     }
     return res.data;
   }),
-  sendOTP: (email) => api.post('/auth/send-otp', { email }).then(res => res.data),
-  verifyOTP: (otpData) => api.post('/auth/verify-otp', otpData).then(res => {
+  register: (userData) => api.post('/auth/register', userData).then(res => {
     if (res.data.token) {
       localStorage.setItem('token', res.data.token);
     }

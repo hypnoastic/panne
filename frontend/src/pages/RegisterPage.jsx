@@ -7,7 +7,7 @@ import Lottie from 'lottie-react';
 import { authApi } from '../services/api';
 import Button from '../components/Button';
 import GoogleAuth from '../components/GoogleAuth';
-import OTPVerification from '../components/OTPVerification';
+
 import signupAnimation from '../assets/signup.json';
 import './AuthPage.css';
 
@@ -15,7 +15,7 @@ export default function RegisterPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const [step, setStep] = useState('register'); // 'register' or 'otp'
+
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -24,25 +24,14 @@ export default function RegisterPage() {
   });
   const [errors, setErrors] = useState({});
 
-  const sendOTPMutation = useMutation({
-    mutationFn: authApi.sendOTP,
-    onSuccess: () => {
-      setStep('otp');
-      setErrors({});
-    },
-    onError: (error) => {
-      setErrors({ general: error.response?.data?.error || 'Failed to send OTP' });
-    }
-  });
-
-  const verifyOTPMutation = useMutation({
-    mutationFn: authApi.verifyOTP,
+  const registerMutation = useMutation({
+    mutationFn: authApi.register,
     onSuccess: (data) => {
       queryClient.setQueryData(['auth', 'me'], data.user);
       navigate('/dashboard');
     },
     onError: (error) => {
-      setErrors({ general: error.response?.data?.error || 'Invalid OTP' });
+      setErrors({ general: error.response?.data?.error || 'Registration failed' });
     }
   });
 
@@ -65,18 +54,11 @@ export default function RegisterPage() {
       return;
     }
     
-    sendOTPMutation.mutate(formData.email);
-  };
-
-  const handleOTPVerify = (otp) => {
     const { confirmPassword, ...submitData } = formData;
-    verifyOTPMutation.mutate({ ...submitData, otp });
+    registerMutation.mutate(submitData);
   };
 
-  const handleBackToRegister = () => {
-    setStep('register');
-    setErrors({});
-  };
+
 
   const handleChange = (e) => {
     setFormData(prev => ({
@@ -105,24 +87,18 @@ export default function RegisterPage() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6 }}
             >
-              {step === 'register' && (
-                <div className="auth-header">
-                  <h2 className="auth-title">{t('auth.register')}</h2>
-                  <p className="auth-subtitle">
-                    Create your account to get started.
-                  </p>
-                </div>
-              )}
+              <div className="auth-header">
+                <h2 className="auth-title">{t('auth.register')}</h2>
+                <p className="auth-subtitle">
+                  Create your account to get started.
+                </p>
+              </div>
 
-              <AnimatePresence mode="wait">
-                {step === 'register' ? (
-                  <motion.form
-                    key="register"
-                    className="auth-form"
-                    onSubmit={handleSubmit}
-                    initial={{ opacity: 1 }}
-                    exit={{ opacity: 0, x: -20 }}
-                  >
+              <motion.form
+                className="auth-form"
+                onSubmit={handleSubmit}
+                initial={{ opacity: 1 }}
+              >
                     {errors.general && (
                       <motion.div
                         className="auth-error"
@@ -196,28 +172,17 @@ export default function RegisterPage() {
                     <Button
                       type="submit"
                       size="lg"
-                      loading={sendOTPMutation.isPending}
+                      loading={registerMutation.isPending}
                       className="auth-submit"
                     >
-                      Send Verification Code
+                      Sign Up
                     </Button>
 
                     <div className="auth-divider">
                     </div>
 
                     <GoogleAuth />
-                  </motion.form>
-                ) : (
-                  <OTPVerification
-                    key="otp"
-                    email={formData.email}
-                    onVerify={handleOTPVerify}
-                    onBack={handleBackToRegister}
-                    loading={verifyOTPMutation.isPending}
-                    error={errors.general}
-                  />
-                )}
-              </AnimatePresence>
+              </motion.form>
 
               <div className="auth-footer">
                 <p>
