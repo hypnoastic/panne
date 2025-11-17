@@ -4,15 +4,29 @@ import pool from '../config/database.js';
 
 class OAuthService {
   constructor() {
-    this.googleClient = new OAuth2Client(
-      process.env.GOOGLE_CLIENT_ID,
-      process.env.GOOGLE_CLIENT_SECRET,
-      process.env.GOOGLE_CALLBACK_URL
-    );
+    // Only initialize if OAuth is configured
+    if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
+      try {
+        this.googleClient = new OAuth2Client(
+          process.env.GOOGLE_CLIENT_ID,
+          process.env.GOOGLE_CLIENT_SECRET,
+          process.env.GOOGLE_CALLBACK_URL
+        );
+      } catch (error) {
+        console.warn('OAuth2Client initialization failed:', error.message);
+        this.googleClient = null;
+      }
+    } else {
+      this.googleClient = null;
+    }
   }
 
   // Generate Google OAuth URL
   generateGoogleAuthUrl() {
+    if (!this.googleClient) {
+      throw new Error('Google OAuth not configured');
+    }
+    
     const scopes = [
       'openid',
       'email',
@@ -29,6 +43,10 @@ class OAuthService {
 
   // Exchange authorization code for tokens
   async exchangeCodeForTokens(code) {
+    if (!this.googleClient) {
+      throw new Error('Google OAuth not configured');
+    }
+    
     try {
       const { tokens } = await this.googleClient.getToken(code);
       return tokens;
@@ -39,6 +57,10 @@ class OAuthService {
 
   // Verify and decode ID token
   async verifyIdToken(idToken) {
+    if (!this.googleClient) {
+      throw new Error('Google OAuth not configured');
+    }
+    
     try {
       const ticket = await this.googleClient.verifyIdToken({
         idToken,
@@ -80,6 +102,10 @@ class OAuthService {
 
   // Refresh Google access token
   async refreshGoogleAccessToken(userId) {
+    if (!this.googleClient) {
+      throw new Error('Google OAuth not configured');
+    }
+    
     try {
       const refreshToken = await this.getRefreshToken(userId, 'google');
       if (!refreshToken) {
