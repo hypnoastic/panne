@@ -18,6 +18,7 @@ import TrashPage from './pages/TrashPage';
 import SharePage from './pages/SharePage';
 import SharedNotePage from './pages/SharedNotePage';
 import CollabPage from './pages/CollabPage';
+import AuthSuccessPage from './pages/AuthSuccessPage';
 
 import SectionLoader from './components/SectionLoader'; // ✅ import your loader
 import './App.css';
@@ -58,6 +59,7 @@ function App() {
         element={!isAuthenticated ? <RegisterPage /> : <Navigate to="/dashboard" />}
       />
       <Route path="/share/:shareId" element={<SharePage />} />
+      <Route path="/auth/success" element={<AuthSuccessPage />} />
       <Route
         path="/notes/shared/:shareId"
         element={isAuthenticated ? <SharedNotePage /> : <Navigate to="/login" />}

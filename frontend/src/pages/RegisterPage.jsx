@@ -6,7 +6,7 @@ import { useTranslation } from 'react-i18next';
 import Lottie from 'lottie-react';
 import { authApi } from '../services/api';
 import Button from '../components/Button';
-import GoogleAuth from '../components/GoogleAuth';
+import GoogleAuthRedirect from '../components/GoogleAuthRedirect';
 import OTPVerification from '../components/OTPVerification';
 
 import signupAnimation from '../assets/signup.json';
@@ -24,7 +24,7 @@ export default function RegisterPage() {
     confirmPassword: ''
   });
   const [errors, setErrors] = useState({});
-  const [showOTPVerification, setShowOTPVerification] = useState(false);
+  const [step, setStep] = useState('form'); // 'form', 'otp'
   const [registeredEmail, setRegisteredEmail] = useState('');
 
   const registerMutation = useMutation({
@@ -32,7 +32,7 @@ export default function RegisterPage() {
     onSuccess: (data) => {
       if (data.requiresVerification) {
         setRegisteredEmail(formData.email);
-        setShowOTPVerification(true);
+        setStep('otp');
       } else {
         queryClient.setQueryData(['auth', 'me'], data.user);
         navigate('/dashboard');
@@ -93,7 +93,7 @@ export default function RegisterPage() {
   };
 
   const handleBackToRegister = () => {
-    setShowOTPVerification(false);
+    setStep('form');
     setRegisteredEmail('');
     setErrors({});
   };
@@ -139,7 +139,7 @@ export default function RegisterPage() {
               </div>
 
               <AnimatePresence mode="wait">
-                {!showOTPVerification ? (
+                {step === 'form' ? (
                   <motion.form
                     key="register-form"
                     className="auth-form"
@@ -223,13 +223,13 @@ export default function RegisterPage() {
                       loading={registerMutation.isPending}
                       className="auth-submit"
                     >
-                      Sign Up
+                      Send OTP
                     </Button>
 
                     <div className="auth-divider">
                     </div>
 
-                    <GoogleAuth />
+                    <GoogleAuthRedirect />
                   </motion.form>
                 ) : (
                   <motion.div

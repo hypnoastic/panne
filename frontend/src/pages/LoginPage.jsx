@@ -6,7 +6,7 @@ import { useTranslation } from 'react-i18next';
 import Lottie from 'lottie-react';
 import { authApi } from '../services/api';
 import Button from '../components/Button';
-import GoogleAuth from '../components/GoogleAuth';
+import GoogleAuthRedirect from '../components/GoogleAuthRedirect';
 import ForgotPassword from '../components/ForgotPassword';
 import OTPVerification from '../components/OTPVerification';
 import loginAnimation from '../assets/login.json';
@@ -205,7 +205,7 @@ export default function LoginPage() {
                       <div className="auth-divider">
                       </div>
 
-                      <GoogleAuth />
+                      <GoogleAuthRedirect />
                     </form>
                   </motion.div>
                 ) : view === 'forgot' ? (

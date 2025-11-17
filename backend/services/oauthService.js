@@ -30,7 +30,7 @@ class OAuthService {
   // Exchange authorization code for tokens
   async exchangeCodeForTokens(code) {
     try {
-      const { tokens } = await this.googleClient.getTokens(code);
+      const { tokens } = await this.googleClient.getToken(code);
       return tokens;
     } catch (error) {
       throw new Error(`Token exchange failed: ${error.message}`);
