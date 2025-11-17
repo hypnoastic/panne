@@ -7,6 +7,7 @@ import Lottie from 'lottie-react';
 import { authApi } from '../services/api';
 import Button from '../components/Button';
 import GoogleAuth from '../components/GoogleAuth';
+import OTPVerification from '../components/OTPVerification';
 
 import signupAnimation from '../assets/signup.json';
 import './AuthPage.css';
@@ -23,15 +24,43 @@ export default function RegisterPage() {
     confirmPassword: ''
   });
   const [errors, setErrors] = useState({});
+  const [showOTPVerification, setShowOTPVerification] = useState(false);
+  const [registeredEmail, setRegisteredEmail] = useState('');
 
   const registerMutation = useMutation({
     mutationFn: authApi.register,
+    onSuccess: (data) => {
+      if (data.requiresVerification) {
+        setRegisteredEmail(formData.email);
+        setShowOTPVerification(true);
+      } else {
+        queryClient.setQueryData(['auth', 'me'], data.user);
+        navigate('/dashboard');
+      }
+    },
+    onError: (error) => {
+      setErrors({ general: error.response?.data?.error || 'Registration failed' });
+    }
+  });
+
+  const verifyEmailMutation = useMutation({
+    mutationFn: authApi.verifyEmail,
     onSuccess: (data) => {
       queryClient.setQueryData(['auth', 'me'], data.user);
       navigate('/dashboard');
     },
     onError: (error) => {
-      setErrors({ general: error.response?.data?.error || 'Registration failed' });
+      setErrors({ otp: error.response?.data?.error || 'Verification failed' });
+    }
+  });
+
+  const resendVerificationMutation = useMutation({
+    mutationFn: authApi.resendVerification,
+    onSuccess: () => {
+      setErrors({ otp: '' });
+    },
+    onError: (error) => {
+      setErrors({ otp: error.response?.data?.error || 'Failed to resend code' });
     }
   });
 
@@ -56,6 +85,21 @@ export default function RegisterPage() {
     
     const { confirmPassword, ...submitData } = formData;
     registerMutation.mutate(submitData);
+  };
+
+  const handleOTPVerify = (otp) => {
+    setErrors({});
+    verifyEmailMutation.mutate({ email: registeredEmail, otp });
+  };
+
+  const handleBackToRegister = () => {
+    setShowOTPVerification(false);
+    setRegisteredEmail('');
+    setErrors({});
+  };
+
+  const handleResendOTP = () => {
+    resendVerificationMutation.mutate(registeredEmail);
   };
 
 
@@ -94,11 +138,15 @@ export default function RegisterPage() {
                 </p>
               </div>
 
-              <motion.form
-                className="auth-form"
-                onSubmit={handleSubmit}
-                initial={{ opacity: 1 }}
-              >
+              <AnimatePresence mode="wait">
+                {!showOTPVerification ? (
+                  <motion.form
+                    key="register-form"
+                    className="auth-form"
+                    onSubmit={handleSubmit}
+                    initial={{ opacity: 1 }}
+                    exit={{ opacity: 0, x: -20 }}
+                  >
                     {errors.general && (
                       <motion.div
                         className="auth-error"
@@ -182,7 +230,36 @@ export default function RegisterPage() {
                     </div>
 
                     <GoogleAuth />
-              </motion.form>
+                  </motion.form>
+                ) : (
+                  <motion.div
+                    key="otp-verification"
+                    initial={{ opacity: 0, x: 20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: 20 }}
+                  >
+                    <OTPVerification
+                      email={registeredEmail}
+                      onVerify={handleOTPVerify}
+                      onBack={handleBackToRegister}
+                      loading={verifyEmailMutation.isPending}
+                      error={errors.otp}
+                      title="Verify Your Email"
+                      subtitle={<>We've sent a 6-digit code to<br/><strong>{registeredEmail}</strong></>}
+                    />
+                    <div className="otp-resend">
+                      <Button
+                        variant="text"
+                        onClick={handleResendOTP}
+                        loading={resendVerificationMutation.isPending}
+                        disabled={verifyEmailMutation.isPending}
+                      >
+                        Resend Code
+                      </Button>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
 
               <div className="auth-footer">
                 <p>

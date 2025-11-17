@@ -7,8 +7,10 @@
     "start": "node server.js",
     "dev": "nodemon server.js",
     "migrate": "node scripts/migrate.js",
+    "migrate-oauth": "node scripts/create-oauth-tables.js",
     "setup-gmail": "node scripts/setup-gmail-oauth.js",
-    "test-email": "node scripts/test-email.js"
+    "test-email": "node scripts/test-email.js",
+    "test-oauth": "node scripts/test-oauth.js"
   },
   "dependencies": {
     "@google/generative-ai": "^0.11.0",

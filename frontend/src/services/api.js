@@ -52,18 +52,37 @@ export const authApi = {
     }
     return res.data;
   }),
+  // Email verification
+  verifyEmail: (data) => api.post('/auth/verify-email', data).then(res => {
+    if (res.data.token) {
+      localStorage.setItem('token', res.data.token);
+    }
+    return res.data;
+  }),
+  resendVerification: (email) => api.post('/auth/resend-verification', { email }).then(res => res.data),
+  // Google OAuth
+  getGoogleAuthUrl: () => api.get('/auth/google/url').then(res => res.data),
+  googleCallback: (code) => api.post('/auth/google/callback', { code }).then(res => {
+    if (res.data.token) {
+      localStorage.setItem('token', res.data.token);
+    }
+    return res.data;
+  }),
   googleAuth: (credential) => api.post('/auth/google', { credential }).then(res => {
     if (res.data.token) {
       localStorage.setItem('token', res.data.token);
     }
     return res.data;
   }),
+  refreshGoogleToken: () => api.post('/auth/google/refresh').then(res => res.data),
+  // Session management
   logout: () => {
     localStorage.removeItem('token');
     return api.post('/auth/logout').then(res => res.data);
   },
   getCurrentUser: () => api.get('/auth/me').then(res => res.data.user),
   isAuthenticated: () => !!localStorage.getItem('token'),
+  // Password reset
   sendResetOTP: (email) => api.post('/auth/send-reset-otp', { email }).then(res => res.data),
   verifyResetOTP: (data) => api.post('/auth/verify-reset-otp', data).then(res => res.data),
   resetPassword: (data) => api.post('/auth/reset-password', data).then(res => res.data),

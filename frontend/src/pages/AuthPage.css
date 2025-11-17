@@ -437,6 +437,30 @@
   position: relative;
 }
 
+.otp-resend {
+  text-align: center;
+  margin-top: var(--spacing-4);
+}
+
+.otp-resend button {
+  color: #2EC4B6;
+  background: none;
+  border: none;
+  font-size: var(--font-size-sm);
+  text-decoration: underline;
+  cursor: pointer;
+  transition: color var(--transition-fast);
+}
+
+.otp-resend button:hover {
+  color: #10B981;
+}
+
+.otp-resend button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 .form-actions {
   display: flex;
   gap: var(--spacing-3);
@@ -481,6 +505,21 @@
   margin: 0 auto !important;
   display: flex !important;
   justify-content: center !important;
+}
+
+.google-auth-btn {
+  background: rgba(255, 255, 255, 0.05) !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  color: white !important;
+}
+
+.google-auth-btn:hover {
+  background: rgba(255, 255, 255, 0.1) !important;
+  border-color: rgba(255, 255, 255, 0.3) !important;
+}
+
+.enhanced-google-auth {
+  width: 100%;
 }
 
 .auth-divider {

@@ -3,21 +3,15 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import multer from 'multer';
 import { v2 as cloudinary } from 'cloudinary';
-import { OAuth2Client } from 'google-auth-library';
 import pool from '../config/database.js';
 import { authenticateToken } from '../middleware/auth.js';
+import oauthService from '../services/oauthService.js';
+import otpService from '../services/otpService.js';
+import { sendOTP } from '../services/emailService.js';
 
 
 // Constants
 const SALT_ROUNDS = 12;
-
-// Initialize Google OAuth client only when needed
-const getGoogleClient = () => {
-  if (!process.env.GOOGLE_CLIENT_ID) {
-    throw new Error('Google OAuth not configured');
-  }
-  return new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
-};
 
 // Configure multer for memory storage
 const upload = multer({ storage: multer.memoryStorage() });
@@ -31,7 +25,7 @@ cloudinary.config({
 
 const router = express.Router();
 
-// Register (simplified without OTP)
+// Register with email verification
 router.post('/register', async (req, res) => {
   try {
     const { email, password, name } = req.body;
@@ -47,6 +41,10 @@ router.post('/register', async (req, res) => {
       return res.status(400).json({ error: 'Invalid email format' });
     }
     
+    if (password.length < 6) {
+      return res.status(400).json({ error: 'Password must be at least 6 characters' });
+    }
+    
     // Check if user exists
     const existingUser = await pool.query(
       'SELECT id FROM users WHERE email = $1',
@@ -60,67 +58,42 @@ router.post('/register', async (req, res) => {
     // Hash password
     const passwordHash = await bcrypt.hash(password, SALT_ROUNDS);
     
-    // Create user
+    // Create user (unverified)
     const result = await pool.query(
-      'INSERT INTO users (email, password_hash, name) VALUES ($1, $2, $3) RETURNING id, email, name',
-      [email, passwordHash, name]
+      'INSERT INTO users (email, password_hash, name, provider, is_verified) VALUES ($1, $2, $3, $4, $5) RETURNING id, email, name, is_verified',
+      [email, passwordHash, name, 'local', false]
     );
     
     const user = result.rows[0];
     
-    // Generate JWT
-    const token = jwt.sign(
-      { userId: user.id },
-      process.env.JWT_SECRET,
-      { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
-    );
+    // Send verification email
+    await otpService.sendEmailVerificationOTP(email);
     
-    res.status(201).json({ user, token });
+    res.status(201).json({ 
+      user, 
+      message: 'Registration successful. Please check your email for verification code.',
+      requiresVerification: true
+    });
   } catch (error) {
     console.error('Registration error:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
 
-
-
-// Google OAuth
-router.post('/google', async (req, res) => {
+// Verify email with OTP
+router.post('/verify-email', async (req, res) => {
   try {
-    const { credential } = req.body;
+    const { email, otp } = req.body;
     
-    // Check if Google OAuth is configured
-    if (!process.env.GOOGLE_CLIENT_ID) {
-      return res.status(501).json({ error: 'Google OAuth not configured' });
+    if (!email || !otp) {
+      return res.status(400).json({ error: 'Email and OTP are required' });
     }
     
-    // Verify Google token
-    const googleClient = getGoogleClient();
-    const ticket = await googleClient.verifyIdToken({
-      idToken: credential,
-      audience: process.env.GOOGLE_CLIENT_ID
-    });
+    // Verify OTP
+    await otpService.verifyEmailOTP(email, otp);
     
-    const payload = ticket.getPayload();
-    const { email, name, picture } = payload;
-    
-    // Check if user exists
-    let result = await pool.query(
-      'SELECT id, email, name, avatar_url FROM users WHERE email = $1',
-      [email]
-    );
-    
-    let user;
-    if (result.rows.length === 0) {
-      // Create new user with NULL password_hash for OAuth
-      result = await pool.query(
-        'INSERT INTO users (email, name, avatar_url, password_hash) VALUES ($1, $2, $3, NULL) RETURNING id, email, name, avatar_url',
-        [email, name, picture]
-      );
-      user = result.rows[0];
-    } else {
-      user = result.rows[0];
-    }
+    // Mark user as verified
+    const user = await otpService.markUserAsVerified(email);
     
     // Generate JWT
     const token = jwt.sign(
@@ -129,10 +102,137 @@ router.post('/google', async (req, res) => {
       { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
     );
     
-    res.json({ user, token });
+    // Get updated user data
+    const userResult = await pool.query(
+      'SELECT id, email, name, avatar_url, is_verified FROM users WHERE id = $1',
+      [user.id]
+    );
+    
+    res.json({ 
+      user: userResult.rows[0], 
+      token,
+      message: 'Email verified successfully'
+    });
+  } catch (error) {
+    console.error('Email verification error:', error);
+    res.status(400).json({ error: error.message });
+  }
+});
+
+// Resend verification OTP
+router.post('/resend-verification', async (req, res) => {
+  try {
+    const { email } = req.body;
+    
+    if (!email) {
+      return res.status(400).json({ error: 'Email is required' });
+    }
+    
+    // Check if user exists and is not verified
+    const userResult = await pool.query(
+      'SELECT id, is_verified FROM users WHERE email = $1',
+      [email]
+    );
+    
+    if (userResult.rows.length === 0) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    
+    if (userResult.rows[0].is_verified) {
+      return res.status(400).json({ error: 'Email already verified' });
+    }
+    
+    await otpService.sendEmailVerificationOTP(email);
+    
+    res.json({ message: 'Verification code sent successfully' });
+  } catch (error) {
+    console.error('Resend verification error:', error);
+    res.status(400).json({ error: error.message });
+  }
+});
+
+
+
+// Get Google OAuth URL
+router.get('/google/url', (req, res) => {
+  try {
+    if (!process.env.GOOGLE_CLIENT_ID) {
+      return res.status(501).json({ error: 'Google OAuth not configured' });
+    }
+    
+    const authUrl = oauthService.generateGoogleAuthUrl();
+    res.json({ authUrl });
+  } catch (error) {
+    console.error('Google OAuth URL error:', error);
+    res.status(500).json({ error: 'Failed to generate OAuth URL' });
+  }
+});
+
+// Google OAuth callback
+router.post('/google/callback', async (req, res) => {
+  try {
+    const { code } = req.body;
+    
+    if (!code) {
+      return res.status(400).json({ error: 'Authorization code is required' });
+    }
+    
+    // Exchange code for tokens
+    const tokens = await oauthService.exchangeCodeForTokens(code);
+    
+    // Verify ID token and get user info
+    const profile = await oauthService.verifyIdToken(tokens.id_token);
+    
+    // Create or update user
+    const user = await oauthService.createOrUpdateGoogleUser(profile, tokens.refresh_token);
+    
+    // Generate session token
+    const sessionToken = oauthService.generateSessionToken(user.id);
+    
+    res.json({ 
+      user, 
+      token: sessionToken,
+      message: 'Google authentication successful'
+    });
+  } catch (error) {
+    console.error('Google OAuth callback error:', error);
+    res.status(400).json({ error: error.message });
+  }
+});
+
+// Legacy Google OAuth (for existing frontend compatibility)
+router.post('/google', async (req, res) => {
+  try {
+    const { credential } = req.body;
+    
+    if (!process.env.GOOGLE_CLIENT_ID) {
+      return res.status(501).json({ error: 'Google OAuth not configured' });
+    }
+    
+    // Verify ID token
+    const profile = await oauthService.verifyIdToken(credential);
+    
+    // Create or update user (without refresh token for legacy flow)
+    const user = await oauthService.createOrUpdateGoogleUser(profile, null);
+    
+    // Generate session token
+    const sessionToken = oauthService.generateSessionToken(user.id);
+    
+    res.json({ user, token: sessionToken });
   } catch (error) {
     console.error('Google OAuth error:', error);
     res.status(500).json({ error: 'Google authentication failed' });
+  }
+});
+
+// Refresh Google access token
+router.post('/google/refresh', authenticateToken, async (req, res) => {
+  try {
+    const credentials = await oauthService.refreshGoogleAccessToken(req.user.id);
+    res.json({ accessToken: credentials.access_token });
+  } catch (error) {
+    console.error('Token refresh error:', error);
+    res.status(400).json({ error: error.message });
   }
 });
 
@@ -143,7 +243,7 @@ router.post('/login', async (req, res) => {
     
     // Find user
     const result = await pool.query(
-      'SELECT id, email, name, password_hash, avatar_url, language FROM users WHERE email = $1',
+      'SELECT id, email, name, password_hash, avatar_url, language, is_verified, provider FROM users WHERE email = $1',
       [email]
     );
     
@@ -153,11 +253,29 @@ router.post('/login', async (req, res) => {
     
     const user = result.rows[0];
     
+    // Check if user registered with OAuth
+    if (user.provider === 'google' && !user.password_hash) {
+      return res.status(400).json({ error: 'Please sign in with Google' });
+    }
+    
     // Verify password
+    if (!user.password_hash) {
+      return res.status(401).json({ error: 'Invalid credentials' });
+    }
+    
     const isValidPassword = await bcrypt.compare(password, user.password_hash);
     
     if (!isValidPassword) {
       return res.status(401).json({ error: 'Invalid credentials' });
+    }
+    
+    // Check if email is verified
+    if (!user.is_verified) {
+      return res.status(403).json({ 
+        error: 'Email not verified',
+        requiresVerification: true,
+        email: user.email
+      });
     }
     
     // Generate JWT
@@ -176,15 +294,24 @@ router.post('/login', async (req, res) => {
 });
 
 // Logout
-router.post('/logout', (req, res) => {
-  res.json({ message: 'Logged out successfully' });
+router.post('/logout', authenticateToken, async (req, res) => {
+  try {
+    // Remove OAuth refresh tokens
+    await oauthService.removeRefreshToken(req.user.id, 'google');
+    
+    res.json({ message: 'Logged out successfully' });
+  } catch (error) {
+    console.error('Logout error:', error);
+    // Still return success even if token cleanup fails
+    res.json({ message: 'Logged out successfully' });
+  }
 });
 
 // Get current user
 router.get('/me', authenticateToken, async (req, res) => {
   try {
     const result = await pool.query(
-      'SELECT id, email, name, avatar_url, language FROM users WHERE id = $1',
+      'SELECT id, email, name, avatar_url, language, is_verified, provider FROM users WHERE id = $1',
       [req.user.id]
     );
     

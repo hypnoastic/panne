@@ -8,6 +8,7 @@ import { authApi } from '../services/api';
 import Button from '../components/Button';
 import GoogleAuth from '../components/GoogleAuth';
 import ForgotPassword from '../components/ForgotPassword';
+import OTPVerification from '../components/OTPVerification';
 import loginAnimation from '../assets/login.json';
 import './AuthPage.css';
 
@@ -17,12 +18,13 @@ export default function LoginPage() {
   const queryClient = useQueryClient();
   const [searchParams] = useSearchParams();
   const redirectTo = searchParams.get('redirect');
-  const [view, setView] = useState('login'); // 'login' or 'forgot'
+  const [view, setView] = useState('login'); // 'login', 'forgot', or 'verify'
   const [formData, setFormData] = useState({
     email: '',
     password: ''
   });
   const [errors, setErrors] = useState({});
+  const [unverifiedEmail, setUnverifiedEmail] = useState('');
 
   const loginMutation = useMutation({
     mutationFn: authApi.login,
@@ -31,7 +33,34 @@ export default function LoginPage() {
       navigate(redirectTo || '/dashboard');
     },
     onError: (error) => {
-      setErrors({ general: error.response?.data?.error || 'Login failed' });
+      const errorData = error.response?.data;
+      if (errorData?.requiresVerification) {
+        setUnverifiedEmail(errorData.email || formData.email);
+        setView('verify');
+      } else {
+        setErrors({ general: errorData?.error || 'Login failed' });
+      }
+    }
+  });
+
+  const verifyEmailMutation = useMutation({
+    mutationFn: authApi.verifyEmail,
+    onSuccess: (data) => {
+      queryClient.setQueryData(['auth', 'me'], data.user);
+      navigate(redirectTo || '/dashboard');
+    },
+    onError: (error) => {
+      setErrors({ otp: error.response?.data?.error || 'Verification failed' });
+    }
+  });
+
+  const resendVerificationMutation = useMutation({
+    mutationFn: authApi.resendVerification,
+    onSuccess: () => {
+      setErrors({ otp: '' });
+    },
+    onError: (error) => {
+      setErrors({ otp: error.response?.data?.error || 'Failed to resend code' });
     }
   });
 
@@ -66,6 +95,21 @@ export default function LoginPage() {
   const handleForgotPasswordSuccess = () => {
     setView('login');
     setErrors({});
+  };
+
+  const handleOTPVerify = (otp) => {
+    setErrors({});
+    verifyEmailMutation.mutate({ email: unverifiedEmail, otp });
+  };
+
+  const handleBackToLogin = () => {
+    setView('login');
+    setUnverifiedEmail('');
+    setErrors({});
+  };
+
+  const handleResendOTP = () => {
+    resendVerificationMutation.mutate(unverifiedEmail);
   };
 
 
@@ -164,12 +208,39 @@ export default function LoginPage() {
                       <GoogleAuth />
                     </form>
                   </motion.div>
-                ) : (
+                ) : view === 'forgot' ? (
                   <ForgotPassword
                     key="forgot"
                     onBack={() => setView('login')}
                     onSuccess={handleForgotPasswordSuccess}
                   />
+                ) : (
+                  <motion.div
+                    key="verify"
+                    initial={{ opacity: 0, x: 20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: 20 }}
+                  >
+                    <OTPVerification
+                      email={unverifiedEmail}
+                      onVerify={handleOTPVerify}
+                      onBack={handleBackToLogin}
+                      loading={verifyEmailMutation.isPending}
+                      error={errors.otp}
+                      title="Verify Your Email"
+                      subtitle={<>Please verify your email to continue<br/><strong>{unverifiedEmail}</strong></>}
+                    />
+                    <div className="otp-resend">
+                      <Button
+                        variant="text"
+                        onClick={handleResendOTP}
+                        loading={resendVerificationMutation.isPending}
+                        disabled={verifyEmailMutation.isPending}
+                      >
+                        Resend Code
+                      </Button>
+                    </div>
+                  </motion.div>
                 )}
               </AnimatePresence>
 
