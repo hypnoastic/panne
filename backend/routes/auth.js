@@ -129,17 +129,23 @@ router.post('/resend-verification', async (req, res) => {
 });
 
 // Get Google OAuth URL
-router.get('/google/url', (req, res) => {
+router.get('/google/url', async (req, res) => {
   try {
     if (!process.env.GOOGLE_CLIENT_ID) {
       return res.status(501).json({ error: 'Google OAuth not configured' });
     }
     
+    // Wait for OAuth service to initialize
+    await new Promise(resolve => setTimeout(resolve, 100));
+    
     const authUrl = oauthService.generateGoogleAuthUrl();
     res.json({ authUrl });
   } catch (error) {
     console.error('Google OAuth URL error:', error);
-    res.status(500).json({ error: 'Failed to generate OAuth URL' });
+    res.status(500).json({ 
+      error: 'Failed to generate OAuth URL',
+      details: error.message 
+    });
   }
 });
 

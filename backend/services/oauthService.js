@@ -1,22 +1,24 @@
-import { OAuth2Client } from 'google-auth-library';
 import jwt from 'jsonwebtoken';
 import pool from '../config/database.js';
 
 class OAuthService {
   constructor() {
-    // Only initialize if OAuth is configured
-    if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
-      try {
+    this.googleClient = null;
+    this.initializeGoogleClient();
+  }
+
+  async initializeGoogleClient() {
+    try {
+      if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
+        const { OAuth2Client } = await import('google-auth-library');
         this.googleClient = new OAuth2Client(
           process.env.GOOGLE_CLIENT_ID,
           process.env.GOOGLE_CLIENT_SECRET,
           process.env.GOOGLE_CALLBACK_URL
         );
-      } catch (error) {
-        console.warn('OAuth2Client initialization failed:', error.message);
-        this.googleClient = null;
       }
-    } else {
+    } catch (error) {
+      console.warn('OAuth2Client initialization failed:', error.message);
       this.googleClient = null;
     }
   }
@@ -27,11 +29,7 @@ class OAuthService {
       throw new Error('Google OAuth not configured');
     }
     
-    const scopes = [
-      'openid',
-      'email',
-      'profile'
-    ];
+    const scopes = ['openid', 'email', 'profile'];
 
     return this.googleClient.generateAuthUrl({
       access_type: 'offline',
@@ -87,42 +85,65 @@ class OAuthService {
     }
   }
 
-  // Get stored refresh token
-  async getRefreshToken(userId, provider) {
-    try {
-      const result = await pool.query(
-        'SELECT refresh_token FROM oauth_tokens WHERE user_id = $1 AND provider = $2',
-        [userId, provider]
-      );
-      return result.rows[0]?.refresh_token || null;
-    } catch (error) {
-      throw new Error(`Failed to retrieve refresh token: ${error.message}`);
-    }
-  }
-
-  // Refresh Google access token
-  async refreshGoogleAccessToken(userId) {
-    if (!this.googleClient) {
-      throw new Error('Google OAuth not configured');
-    }
+  // Create or update user from Google profile
+  async createOrUpdateGoogleUser(profile, refreshToken) {
+    const client = await pool.connect();
     
     try {
-      const refreshToken = await this.getRefreshToken(userId, 'google');
-      if (!refreshToken) {
-        throw new Error('No refresh token found');
+      await client.query('BEGIN');
+
+      let result = await client.query(
+        'SELECT id, email, name, avatar_url, is_verified FROM users WHERE google_id = $1',
+        [profile.sub]
+      );
+
+      let user;
+      if (result.rows.length === 0) {
+        const emailResult = await client.query(
+          'SELECT id FROM users WHERE email = $1',
+          [profile.email]
+        );
+
+        if (emailResult.rows.length > 0) {
+          result = await client.query(
+            `UPDATE users SET 
+             google_id = $1, provider = 'google', is_verified = true, 
+             avatar_url = COALESCE(avatar_url, $2), updated_at = NOW()
+             WHERE email = $3
+             RETURNING id, email, name, avatar_url, is_verified`,
+            [profile.sub, profile.picture, profile.email]
+          );
+        } else {
+          result = await client.query(
+            `INSERT INTO users (email, name, avatar_url, google_id, provider, is_verified, password_hash)
+             VALUES ($1, $2, $3, $4, 'google', true, NULL)
+             RETURNING id, email, name, avatar_url, is_verified`,
+            [profile.email, profile.name, profile.picture, profile.sub]
+          );
+        }
+      } else {
+        result = await client.query(
+          `UPDATE users SET 
+           name = $1, avatar_url = COALESCE($2, avatar_url), updated_at = NOW()
+           WHERE google_id = $3
+           RETURNING id, email, name, avatar_url, is_verified`,
+          [profile.name, profile.picture, profile.sub]
+        );
       }
 
-      this.googleClient.setCredentials({ refresh_token: refreshToken });
-      const { credentials } = await this.googleClient.refreshAccessToken();
-      
-      return credentials;
-    } catch (error) {
-      if (error.message.includes('invalid_grant')) {
-        // Remove invalid refresh token
-        await this.removeRefreshToken(userId, 'google');
-        throw new Error('Refresh token expired or revoked. Please re-authenticate.');
+      user = result.rows[0];
+
+      if (refreshToken) {
+        await this.storeRefreshToken(user.id, 'google', refreshToken);
       }
-      throw new Error(`Token refresh failed: ${error.message}`);
+
+      await client.query('COMMIT');
+      return user;
+    } catch (error) {
+      await client.query('ROLLBACK');
+      throw error;
+    } finally {
+      client.release();
     }
   }
 
@@ -135,74 +156,6 @@ class OAuthService {
       );
     } catch (error) {
       console.error('Failed to remove refresh token:', error);
-    }
-  }
-
-  // Create or update user from Google profile
-  async createOrUpdateGoogleUser(profile, refreshToken) {
-    const client = await pool.connect();
-    
-    try {
-      await client.query('BEGIN');
-
-      // Check if user exists by Google ID
-      let result = await client.query(
-        'SELECT id, email, name, avatar_url, is_verified FROM users WHERE google_id = $1',
-        [profile.sub]
-      );
-
-      let user;
-      if (result.rows.length === 0) {
-        // Check if user exists by email
-        const emailResult = await client.query(
-          'SELECT id FROM users WHERE email = $1',
-          [profile.email]
-        );
-
-        if (emailResult.rows.length > 0) {
-          // Update existing user with Google ID
-          result = await client.query(
-            `UPDATE users SET 
-             google_id = $1, provider = 'google', is_verified = true, 
-             avatar_url = COALESCE(avatar_url, $2), updated_at = NOW()
-             WHERE email = $3
-             RETURNING id, email, name, avatar_url, is_verified`,
-            [profile.sub, profile.picture, profile.email]
-          );
-        } else {
-          // Create new user
-          result = await client.query(
-            `INSERT INTO users (email, name, avatar_url, google_id, provider, is_verified, password_hash)
-             VALUES ($1, $2, $3, $4, 'google', true, NULL)
-             RETURNING id, email, name, avatar_url, is_verified`,
-            [profile.email, profile.name, profile.picture, profile.sub]
-          );
-        }
-      } else {
-        // Update existing Google user
-        result = await client.query(
-          `UPDATE users SET 
-           name = $1, avatar_url = COALESCE($2, avatar_url), updated_at = NOW()
-           WHERE google_id = $3
-           RETURNING id, email, name, avatar_url, is_verified`,
-          [profile.name, profile.picture, profile.sub]
-        );
-      }
-
-      user = result.rows[0];
-
-      // Store refresh token
-      if (refreshToken) {
-        await this.storeRefreshToken(user.id, 'google', refreshToken);
-      }
-
-      await client.query('COMMIT');
-      return user;
-    } catch (error) {
-      await client.query('ROLLBACK');
-      throw error;
-    } finally {
-      client.release();
     }
   }
 
