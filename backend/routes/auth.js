@@ -6,8 +6,7 @@ import { v2 as cloudinary } from 'cloudinary';
 import pool from '../config/database.js';
 import { authenticateToken } from '../middleware/auth.js';
 import googleAuth from '../services/googleAuth.js';
-import otpService from '../services/otpService.js';
-import { sendOTP } from '../services/emailService.js';
+import otpService from '../services/simpleOtpService.js';
 
 const SALT_ROUNDS = 12;
 
@@ -276,8 +275,8 @@ router.post('/send-reset-otp', async (req, res) => {
       [email, otp, expiresAt]
     );
     
-    await sendOTP(email, otp, 'Password Reset');
-    res.json({ message: 'Reset code sent successfully' });
+    const result = await otpService.sendPasswordResetOTP(email);
+    res.json(result);
   } catch (error) {
     console.error('Send reset OTP error:', error);
     res.status(500).json({ error: 'Failed to send reset code' });

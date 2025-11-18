@@ -1,7 +1,7 @@
 import pool from '../config/database.js';
-import { sendOTP } from './emailService.js';
+import emailService from './simpleEmailService.js';
 
-class OTPService {
+class SimpleOTPService {
   // Generate 6-digit OTP
   generateOTP() {
     return Math.floor(100000 + Math.random() * 900000).toString();
@@ -35,7 +35,7 @@ class OTPService {
       );
 
       // Send OTP email
-      await sendOTP(email, otp, 'Email Verification');
+      await emailService.sendOTP(email, otp, 'Email Verification');
 
       return { success: true, message: 'Verification code sent successfully' };
     } catch (error) {
@@ -88,6 +88,41 @@ class OTPService {
       throw new Error(`Failed to verify user: ${error.message}`);
     }
   }
+
+  // Send password reset OTP
+  async sendPasswordResetOTP(email) {
+    try {
+      // Check for recent OTP requests
+      const recentOTP = await pool.query(
+        'SELECT created_at FROM password_reset_otps WHERE email = $1 AND created_at > NOW() - INTERVAL \'1 minute\'',
+        [email]
+      );
+
+      if (recentOTP.rows.length > 0) {
+        throw new Error('Please wait before requesting another reset code');
+      }
+
+      // Generate OTP
+      const otp = this.generateOTP();
+      const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
+
+      // Delete existing OTPs
+      await pool.query('DELETE FROM password_reset_otps WHERE email = $1', [email]);
+
+      // Store OTP
+      await pool.query(
+        'INSERT INTO password_reset_otps (email, otp, expires_at) VALUES ($1, $2, $3)',
+        [email, otp, expiresAt]
+      );
+
+      // Send OTP email
+      await emailService.sendOTP(email, otp, 'Password Reset');
+
+      return { success: true, message: 'Reset code sent successfully' };
+    } catch (error) {
+      throw new Error(`Failed to send reset code: ${error.message}`);
+    }
+  }
 }
 
-export default new OTPService();
+export default new SimpleOTPService();
