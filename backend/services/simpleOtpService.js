@@ -1,5 +1,5 @@
 import pool from '../config/database.js';
-import emailService from './simpleEmailService.js';
+import emailService from './oauthEmailService.js';
 
 class SimpleOTPService {
   // Generate 6-digit OTP

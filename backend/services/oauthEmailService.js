@@ -1,33 +1,4 @@
-import nodemailer from 'nodemailer';
-
-class SimpleEmailService {
-  constructor() {
-    this.transporter = null;
-    this.initializeTransporter();
-  }
-
-  async initializeTransporter() {
-    try {
-      // Get OAuth2 access token
-      const accessToken = await this.getAccessToken();
-      
-      this.transporter = nodemailer.createTransport({
-        service: 'gmail',
-        auth: {
-          type: 'OAuth2',
-          user: process.env.EMAIL_USER,
-          clientId: process.env.GMAIL_CLIENT_ID,
-          clientSecret: process.env.GMAIL_CLIENT_SECRET,
-          refreshToken: process.env.GMAIL_REFRESH_TOKEN,
-          accessToken: accessToken
-        }
-      });
-    } catch (error) {
-      console.warn('Email transporter initialization failed:', error.message);
-      this.transporter = null;
-    }
-  }
-
+class OAuthEmailService {
   async getAccessToken() {
     try {
       const response = await fetch('https://oauth2.googleapis.com/token', {
@@ -52,16 +23,24 @@ class SimpleEmailService {
     }
   }
 
+  createEmailMessage(to, subject, html) {
+    const message = [
+      `From: ${process.env.EMAIL_FROM}`,
+      `To: ${to}`,
+      `Subject: ${subject}`,
+      'MIME-Version: 1.0',
+      'Content-Type: text/html; charset=utf-8',
+      '',
+      html
+    ].join('\n');
+
+    return Buffer.from(message).toString('base64').replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+  }
+
   async sendOTP(email, otp, type = 'Email Verification') {
     try {
-      if (!this.transporter) {
-        await this.initializeTransporter();
-      }
-
-      if (!this.transporter) {
-        throw new Error('Email service not configured');
-      }
-
+      const accessToken = await this.getAccessToken();
+      
       const isPasswordReset = type === 'Password Reset';
       const subject = isPasswordReset ? 'Panne - Password Reset' : 'Panne - Email Verification';
       const title = isPasswordReset ? 'Password Reset' : 'Email Verification';
@@ -79,15 +58,26 @@ class SimpleEmailService {
         </div>
       `;
 
-      const mailOptions = {
-        from: process.env.EMAIL_FROM,
-        to: email,
-        subject: subject,
-        html: html
-      };
+      const encodedMessage = this.createEmailMessage(email, subject, html);
 
-      const result = await this.transporter.sendMail(mailOptions);
-      console.log(`${type} email sent successfully:`, result.messageId);
+      const response = await fetch('https://gmail.googleapis.com/gmail/v1/users/me/messages/send', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          raw: encodedMessage
+        })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.text();
+        throw new Error(`Gmail API error: ${response.statusText} - ${errorData}`);
+      }
+
+      const result = await response.json();
+      console.log(`${type} email sent successfully:`, result.id);
       return result;
     } catch (error) {
       console.error('Email send error:', error);
@@ -96,4 +86,4 @@ class SimpleEmailService {
   }
 }
 
-export default new SimpleEmailService();
+export default new OAuthEmailService();
