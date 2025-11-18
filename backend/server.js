@@ -234,6 +234,15 @@ app.get('/health', (req, res) => {
   res.json({ status: 'OK', timestamp: new Date().toISOString() });
 });
 
+// Keep alive endpoint for cron jobs
+app.get('/keep-alive', (req, res) => {
+  res.json({ 
+    status: 'alive', 
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime()
+  });
+});
+
 // Setup real-time collaboration
 setupCollaboration(io);
 
