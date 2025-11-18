@@ -5,7 +5,7 @@ import multer from 'multer';
 import { v2 as cloudinary } from 'cloudinary';
 import pool from '../config/database.js';
 import { authenticateToken } from '../middleware/auth.js';
-import oauthService from '../services/oauthService.js';
+import googleAuth from '../services/googleAuth.js';
 import otpService from '../services/otpService.js';
 import { sendOTP } from '../services/emailService.js';
 
@@ -129,23 +129,17 @@ router.post('/resend-verification', async (req, res) => {
 });
 
 // Get Google OAuth URL
-router.get('/google/url', async (req, res) => {
+router.get('/google/url', (req, res) => {
   try {
     if (!process.env.GOOGLE_CLIENT_ID) {
       return res.status(501).json({ error: 'Google OAuth not configured' });
     }
     
-    // Wait for OAuth service to initialize
-    await new Promise(resolve => setTimeout(resolve, 100));
-    
-    const authUrl = oauthService.generateGoogleAuthUrl();
+    const authUrl = googleAuth.generateAuthUrl();
     res.json({ authUrl });
   } catch (error) {
     console.error('Google OAuth URL error:', error);
-    res.status(500).json({ 
-      error: 'Failed to generate OAuth URL',
-      details: error.message 
-    });
+    res.status(500).json({ error: 'Failed to generate OAuth URL' });
   }
 });
 
@@ -162,10 +156,10 @@ router.get('/google/callback', async (req, res) => {
       return res.redirect(`${process.env.FRONTEND_URL}/login?error=no_code`);
     }
     
-    const tokens = await oauthService.exchangeCodeForTokens(code);
-    const profile = await oauthService.verifyIdToken(tokens.id_token);
-    const user = await oauthService.createOrUpdateGoogleUser(profile, tokens.refresh_token);
-    const sessionToken = oauthService.generateSessionToken(user.id);
+    const tokens = await googleAuth.exchangeCodeForTokens(code);
+    const userInfo = await googleAuth.getUserInfo(tokens.access_token);
+    const user = await googleAuth.createOrUpdateUser(userInfo);
+    const sessionToken = googleAuth.generateToken(user.id);
     
     res.redirect(`${process.env.FRONTEND_URL}/auth/success?token=${sessionToken}`);
   } catch (error) {
@@ -226,14 +220,8 @@ router.post('/login', async (req, res) => {
 });
 
 // Logout
-router.post('/logout', authenticateToken, async (req, res) => {
-  try {
-    await oauthService.removeRefreshToken(req.user.id, 'google');
-    res.json({ message: 'Logged out successfully' });
-  } catch (error) {
-    console.error('Logout error:', error);
-    res.json({ message: 'Logged out successfully' });
-  }
+router.post('/logout', authenticateToken, (req, res) => {
+  res.json({ message: 'Logged out successfully' });
 });
 
 // Get current user
