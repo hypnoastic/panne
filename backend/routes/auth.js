@@ -257,29 +257,11 @@ router.post('/send-reset-otp', async (req, res) => {
       return res.status(404).json({ error: 'User not found' });
     }
     
-    const otp = Math.floor(100000 + Math.random() * 900000).toString();
-    const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
-    
-    const recentOTP = await pool.query(
-      'SELECT created_at FROM password_reset_otps WHERE email = $1 AND created_at > NOW() - INTERVAL \'1 minute\'',
-      [email]
-    );
-    
-    if (recentOTP.rows.length > 0) {
-      return res.status(429).json({ error: 'Please wait before requesting another reset code' });
-    }
-    
-    await pool.query('DELETE FROM password_reset_otps WHERE email = $1', [email]);
-    await pool.query(
-      'INSERT INTO password_reset_otps (email, otp, expires_at) VALUES ($1, $2, $3)',
-      [email, otp, expiresAt]
-    );
-    
     const result = await otpService.sendPasswordResetOTP(email);
     res.json(result);
   } catch (error) {
     console.error('Send reset OTP error:', error);
-    res.status(500).json({ error: 'Failed to send reset code' });
+    res.status(500).json({ error: error.message || 'Failed to send reset code' });
   }
 });
 
