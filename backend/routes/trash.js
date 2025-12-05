@@ -4,31 +4,72 @@ import { authenticateToken } from '../middleware/auth.js';
 
 const router = express.Router();
 
-// Get all trash items for user with search
+// Get all trash items for user with pagination, search, sorting, and filtering
 router.get('/', authenticateToken, async (req, res) => {
   try {
-    const { search, type } = req.query;
-    let query = `
-      SELECT id, item_id, item_type, title, deleted_at
-      FROM trash 
-      WHERE user_id = $1
-    `;
+    const { 
+      page = 1, 
+      limit = 5, 
+      search = '', 
+      type = 'all',
+      date_from, 
+      date_to, 
+      sort = 'deleted_at', 
+      order = 'desc' 
+    } = req.query;
+    
+    const offset = (parseInt(page) - 1) * parseInt(limit);
+    const validSorts = ['deleted_at', 'title', 'item_type'];
+    const validOrders = ['asc', 'desc'];
+    const sortField = validSorts.includes(sort) ? sort : 'deleted_at';
+    const sortOrder = validOrders.includes(order.toLowerCase()) ? order.toUpperCase() : 'DESC';
+    
+    let whereClause = 'WHERE user_id = $1';
     const params = [req.user.id];
     
     if (type && type !== 'all') {
-      query += ` AND item_type = $${params.length + 1}`;
+      whereClause += ` AND item_type = $${params.length + 1}`;
       params.push(type);
     }
     
     if (search) {
-      query += ` AND title ILIKE $${params.length + 1}`;
+      whereClause += ` AND title ILIKE $${params.length + 1}`;
       params.push(`%${search}%`);
     }
     
-    query += ` ORDER BY deleted_at DESC`;
+    if (date_from) {
+      whereClause += ` AND deleted_at >= $${params.length + 1}`;
+      params.push(date_from);
+    }
     
-    const result = await pool.query(query, params);
-    res.json(result.rows);
+    if (date_to) {
+      whereClause += ` AND deleted_at <= $${params.length + 1}`;
+      params.push(date_to);
+    }
+    
+    // Get total count
+    const countQuery = `SELECT COUNT(*) as total FROM trash ${whereClause}`;
+    const countResult = await pool.query(countQuery, params);
+    const totalItems = parseInt(countResult.rows[0].total);
+    
+    // Get paginated data
+    const dataQuery = `
+      SELECT id, item_id, item_type, title, deleted_at
+      FROM trash 
+      ${whereClause}
+      ORDER BY ${sortField} ${sortOrder}
+      LIMIT $${params.length + 1} OFFSET $${params.length + 2}
+    `;
+    params.push(parseInt(limit), offset);
+    
+    const result = await pool.query(dataQuery, params);
+    
+    res.json({
+      data: result.rows,
+      totalItems,
+      totalPages: Math.ceil(totalItems / parseInt(limit)),
+      currentPage: parseInt(page)
+    });
   } catch (error) {
     console.error('Error fetching trash:', error);
     res.status(500).json({ error: 'Failed to fetch trash items' });

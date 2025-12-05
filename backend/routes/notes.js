@@ -4,17 +4,28 @@ import { v4 as uuidv4 } from 'uuid';
 
 const router = express.Router();
 
-// Get all notes for user
+// Get all notes for user with search
 router.get('/', async (req, res) => {
   try {
-    const result = await pool.query(`
+    const { search = '' } = req.query;
+    
+    let query = `
       SELECT n.*, nb.title as notebook_name 
       FROM notes n 
       LEFT JOIN notebooks nb ON n.notebook_id = nb.id 
       WHERE n.owner_id = $1 AND n.deleted_at IS NULL
-      ORDER BY n.updated_at DESC
-    `, [req.user.id]);
+    `;
     
+    const params = [req.user.id];
+    
+    if (search) {
+      query += ` AND n.title ILIKE $${params.length + 1}`;
+      params.push(`%${search}%`);
+    }
+    
+    query += ` ORDER BY n.updated_at DESC`;
+    
+    const result = await pool.query(query, params);
     res.json(result.rows);
   } catch (error) {
     console.error('Get notes error:', error);
@@ -22,10 +33,12 @@ router.get('/', async (req, res) => {
   }
 });
 
-// Get collaborative notes (notes user owns or has access to via sharing)
+// Get collaborative notes (notes user owns or has access to via sharing) with search
 router.get('/collab', async (req, res) => {
   try {
-    const result = await pool.query(`
+    const { search = '' } = req.query;
+    
+    let query = `
       SELECT DISTINCT n.*, nb.title as notebook_name,
              CASE WHEN n.owner_id = $1 THEN true ELSE false END as is_owner,
              CASE WHEN n.owner_id = $1 THEN 'edit'
@@ -42,9 +55,18 @@ router.get('/collab', async (req, res) => {
       LEFT JOIN permission_requests pr ON n.id = pr.note_id AND pr.requester_id = $1 AND pr.status = 'approved'
       WHERE (n.owner_id = $1 OR pr.requester_id = $1) 
         AND n.deleted_at IS NULL
-      ORDER BY n.updated_at DESC
-    `, [req.user.id]);
+    `;
     
+    const params = [req.user.id];
+    
+    if (search) {
+      query += ` AND n.title ILIKE $${params.length + 1}`;
+      params.push(`%${search}%`);
+    }
+    
+    query += ` ORDER BY n.updated_at DESC`;
+    
+    const result = await pool.query(query, params);
     res.json(result.rows);
   } catch (error) {
     console.error('Get collab notes error:', error);

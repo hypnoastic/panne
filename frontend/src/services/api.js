@@ -90,7 +90,12 @@ export const authApi = {
 
 // Notes API
 export const notesApi = {
-  getAll: () => api.get('/notes').then(res => res.data),
+  getAll: (params = {}) => {
+    const searchParams = new URLSearchParams();
+    if (params.search) searchParams.append('search', params.search);
+    const url = searchParams.toString() ? `/notes?${searchParams}` : '/notes';
+    return api.get(url).then(res => res.data);
+  },
   getById: (id) => api.get(`/notes/${id}`).then(res => res.data),
   create: (noteData) => api.post('/notes', noteData).then(res => res.data),
   update: (id, noteData) => api.put(`/notes/${id}`, noteData).then(res => res.data),
@@ -110,13 +115,28 @@ export const notesApi = {
     api.post(`/permissions/${requestId}/respond`, responseData).then(res => res.data),
   getPermissionRequests: () => 
     api.get('/permissions').then(res => res.data),
-  getCollabNotes: () => 
-    api.get('/notes/collab').then(res => res.data),
+  getCollabNotes: (params = {}) => {
+    const searchParams = new URLSearchParams();
+    if (params.search) searchParams.append('search', params.search);
+    const url = searchParams.toString() ? `/notes/collab?${searchParams}` : '/notes/collab';
+    return api.get(url).then(res => res.data);
+  },
 };
 
 // Notebooks API
 export const notebooksApi = {
-  getAll: () => api.get('/notebooks').then(res => res.data),
+  getAll: (params = {}) => {
+    const searchParams = new URLSearchParams();
+    if (params.page) searchParams.append('page', params.page);
+    if (params.limit) searchParams.append('limit', params.limit);
+    if (params.search) searchParams.append('search', params.search);
+    if (params.date_from) searchParams.append('date_from', params.date_from);
+    if (params.date_to) searchParams.append('date_to', params.date_to);
+    if (params.sort) searchParams.append('sort', params.sort);
+    if (params.order) searchParams.append('order', params.order);
+    const url = searchParams.toString() ? `/notebooks?${searchParams}` : '/notebooks';
+    return api.get(url).then(res => res.data);
+  },
   create: (notebookData) => api.post('/notebooks', notebookData).then(res => res.data),
   update: (id, notebookData) => api.put(`/notebooks/${id}`, notebookData).then(res => res.data),
   delete: (id) => api.post(`/notebooks/${id}/trash`).then(res => res.data),
@@ -160,7 +180,12 @@ export const notificationsApi = {
 
 // Tasks API
 export const tasksApi = {
-  getAll: () => api.get('/tasks').then(res => res.data),
+  getAll: (params = {}) => {
+    const searchParams = new URLSearchParams();
+    if (params.search) searchParams.append('search', params.search);
+    const url = searchParams.toString() ? `/tasks?${searchParams}` : '/tasks';
+    return api.get(url).then(res => res.data);
+  },
   getById: (id) => api.get(`/tasks/${id}`).then(res => res.data),
   create: (taskData) => api.post('/tasks', taskData).then(res => res.data),
   update: (id, taskData) => api.put(`/tasks/${id}`, taskData).then(res => res.data),
@@ -169,7 +194,18 @@ export const tasksApi = {
 
 // Agendas API
 export const agendasApi = {
-  getAll: () => api.get('/agendas').then(res => res.data),
+  getAll: (params = {}) => {
+    const searchParams = new URLSearchParams();
+    if (params.page) searchParams.append('page', params.page);
+    if (params.limit) searchParams.append('limit', params.limit);
+    if (params.search) searchParams.append('search', params.search);
+    if (params.date_from) searchParams.append('date_from', params.date_from);
+    if (params.date_to) searchParams.append('date_to', params.date_to);
+    if (params.sort) searchParams.append('sort', params.sort);
+    if (params.order) searchParams.append('order', params.order);
+    const url = searchParams.toString() ? `/agendas?${searchParams}` : '/agendas';
+    return api.get(url).then(res => res.data);
+  },
   create: (agendaData) => api.post('/agendas', agendaData).then(res => res.data),
   update: (id, agendaData) => api.put(`/agendas/${id}`, agendaData).then(res => res.data),
   delete: (id) => api.post(`/agendas/${id}/trash`).then(res => res.data),

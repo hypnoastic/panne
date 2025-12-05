@@ -14,9 +14,15 @@ export default function CollabPage() {
   const [selectedRequest, setSelectedRequest] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
 
-  const { data: collabNotes = [], isLoading: notesLoading } = useQuery({
-    queryKey: ['collab-notes'],
+  const { data: collabNotes = [], isFetching: searchLoading } = useQuery({
+    queryKey: ['collab-notes', searchTerm],
+    queryFn: () => notesApi.getCollabNotes({ search: searchTerm })
+  });
+  
+  const { isLoading: notesLoading } = useQuery({
+    queryKey: ['collab-notes-initial'],
     queryFn: () => notesApi.getCollabNotes(),
+    enabled: !searchTerm
   });
 
   const { data: permissionRequests = [], isLoading: requestsLoading } = useQuery({
@@ -83,18 +89,19 @@ export default function CollabPage() {
                 <span className="collabpage-count">{collabNotes.length}</span>
               </div>
 
-              {collabNotes.length === 0 ? (
+              {searchLoading && searchTerm ? (
+                <div style={{ display: 'flex', justifyContent: 'center', padding: '2rem', color: '#9CA3AF' }}>
+                  Searching...
+                </div>
+              ) : collabNotes.length === 0 ? (
                 <div className="collabpage-empty-state">
                   <div className="collabpage-empty-icon"></div>
-                  <h3>No collaborative notes yet</h3>
-                  <p>Notes you share or that are shared with you will appear here</p>
+                  <h3>{searchTerm ? 'No notes found' : 'No collaborative notes yet'}</h3>
+                  <p>{searchTerm ? 'Try adjusting your search terms' : 'Notes you share or that are shared with you will appear here'}</p>
                 </div>
               ) : (
                 <div className="collabpage-notes-grid">
-                  {collabNotes.filter(note => 
-                    note.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                    (note.content?.content?.[0]?.content?.[0]?.text || '').toLowerCase().includes(searchTerm.toLowerCase())
-                  ).map((note) => (
+                  {collabNotes.map((note) => (
                     <div 
                       key={note.id} 
                       className="collabpage-note-card"

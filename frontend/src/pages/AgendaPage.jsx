@@ -20,16 +20,41 @@ export default function AgendaPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [agendaToDelete, setAgendaToDelete] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [dateFrom, setDateFrom] = useState('');
+  const [dateTo, setDateTo] = useState('');
+  const [sortBy, setSortBy] = useState('created_at');
+  const [sortOrder, setSortOrder] = useState('desc');
+  const limit = 5;
 
-  const { data: agendas = [], isLoading, error: agendasError } = useQuery({
-    queryKey: ['agendas'],
-    queryFn: agendasApi.getAll,
+  const { data: agendasResponse, error: agendasError, isFetching: searchLoading } = useQuery({
+    queryKey: ['agendas', currentPage, searchTerm, dateFrom, dateTo, sortBy, sortOrder],
+    queryFn: () => agendasApi.getAll({
+      page: currentPage,
+      limit,
+      search: searchTerm,
+      date_from: dateFrom,
+      date_to: dateTo,
+      sort: sortBy,
+      order: sortOrder
+    }),
     retry: 1
   });
+  
+  const { isLoading } = useQuery({
+    queryKey: ['agendas-initial'],
+    queryFn: () => agendasApi.getAll({ page: 1, limit }),
+    enabled: !searchTerm && !dateFrom && !dateTo && currentPage === 1,
+    retry: 1
+  });
+  
+  const agendas = agendasResponse?.data || [];
+  const totalPages = agendasResponse?.totalPages || 1;
+  const totalItems = agendasResponse?.totalItems || 0;
 
   const { data: tasks = [], error: tasksError } = useQuery({
     queryKey: ['tasks'],
-    queryFn: tasksApi.getAll,
+    queryFn: () => tasksApi.getAll(),
     retry: 1
   });
 
@@ -77,9 +102,17 @@ export default function AgendaPage() {
     }
   };
 
-  const filteredAgendas = agendas.filter(agenda => 
-    (agenda.name || '').toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const handlePrevPage = () => {
+    if (currentPage > 1) {
+      setCurrentPage(currentPage - 1);
+    }
+  };
+  
+  const handleNextPage = () => {
+    if (currentPage < totalPages) {
+      setCurrentPage(currentPage + 1);
+    }
+  };
 
   // Handle navigation from dashboard to specific task
   useEffect(() => {
@@ -120,7 +153,10 @@ export default function AgendaPage() {
                 type="text"
                 placeholder="Search agendas..."
                 value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                onChange={(e) => {
+                  setSearchTerm(e.target.value);
+                  setCurrentPage(1);
+                }}
                 className="agendapage-search-input"
               />
               <button className="agendapage-plus-icon" onClick={() => setShowCreateModal(true)}>
@@ -131,9 +167,53 @@ export default function AgendaPage() {
 
 
 
+          <div className="agendapage-controls">
+            <div className="agendapage-filters">
+              <input
+                type="date"
+                value={dateFrom}
+                onChange={(e) => {
+                  setDateFrom(e.target.value);
+                  setCurrentPage(1);
+                }}
+                className="agendapage-date-input"
+              />
+              <span className="agendapage-date-separator">to</span>
+              <input
+                type="date"
+                value={dateTo}
+                onChange={(e) => {
+                  setDateTo(e.target.value);
+                  setCurrentPage(1);
+                }}
+                className="agendapage-date-input"
+              />
+              <select
+                value={`${sortBy}-${sortOrder}`}
+                onChange={(e) => {
+                  const [sort, order] = e.target.value.split('-');
+                  setSortBy(sort);
+                  setSortOrder(order);
+                  setCurrentPage(1);
+                }}
+                className="agendapage-sort-select"
+              >
+                <option value="created_at-desc">Newest First</option>
+                <option value="created_at-asc">Oldest First</option>
+                <option value="name-asc">Name A-Z</option>
+                <option value="name-desc">Name Z-A</option>
+              </select>
+            </div>
+          </div>
+
           <div className="agendapage-list">
-            <AnimatePresence>
-              {filteredAgendas.map((agenda) => {
+            {searchLoading && (searchTerm || dateFrom || dateTo) ? (
+              <div style={{ display: 'flex', justifyContent: 'center', padding: '2rem', color: '#9CA3AF' }}>
+                Searching...
+              </div>
+            ) : (
+              <AnimatePresence>
+                {agendas.map((agenda) => {
                 const agendaTasks = tasks.filter(task => task.agenda_id === agenda.id);
                 const isExpanded = expandedAgenda === agenda.id;
                 
@@ -219,16 +299,44 @@ export default function AgendaPage() {
                     )}
                   </motion.div>
                 );
-              })}
-            </AnimatePresence>
+                })}
+              </AnimatePresence>
+            )}
           </div>
 
-          {agendas.length === 0 && (
+          {!searchLoading && agendas.length === 0 && (
             <div className="agendapage-empty-state">
-              <h3 className="agendapage-empty-state-title">No agendas yet</h3>
+              <h3 className="agendapage-empty-state-title">
+                {searchTerm || dateFrom || dateTo ? 'No agendas found' : 'No agendas yet'}
+              </h3>
               <p className="agendapage-empty-state-description">
-                Create your first agenda to organize your tasks
+                {searchTerm || dateFrom || dateTo 
+                  ? 'Try adjusting your search or date filters' 
+                  : 'Create your first agenda to organize your tasks'
+                }
               </p>
+            </div>
+          )}
+          
+          {totalPages > 1 && (
+            <div className="agendapage-pagination">
+              <button 
+                onClick={handlePrevPage}
+                disabled={currentPage === 1}
+                className="agendapage-pagination-btn"
+              >
+                ← Previous
+              </button>
+              <span className="agendapage-pagination-info">
+                Page {currentPage} of {totalPages} ({totalItems} total)
+              </span>
+              <button 
+                onClick={handleNextPage}
+                disabled={currentPage === totalPages}
+                className="agendapage-pagination-btn"
+              >
+                Next →
+              </button>
             </div>
           )}
         </div>

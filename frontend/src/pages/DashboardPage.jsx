@@ -73,12 +73,13 @@ export default function DashboardPage() {
   });
   
   // Agendas data
-  const { data: agendas = [] } = useQuery({
+  const { data: agendasResponse } = useQuery({
     queryKey: ['agendas'],
-    queryFn: agendasApi.getAll,
+    queryFn: () => agendasApi.getAll(),
     retry: false
   });
   
+  const agendas = agendasResponse?.data || agendasResponse || [];
   const upcomingAgendas = agendas.slice(0, 2);
   const recentNotes = notes
     .sort((a, b) => new Date(b.updated_at) - new Date(a.updated_at))

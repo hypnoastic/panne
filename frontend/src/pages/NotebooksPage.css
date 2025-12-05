@@ -508,3 +508,109 @@
     grid-template-columns: repeat(2, 1fr);
   }
 }
+/* Pagination and Filter Controls */
+.notebookspage-controls {
+  margin-bottom: var(--spacing-4);
+}
+
+.notebookspage-filters {
+  display: flex;
+  gap: var(--spacing-3);
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.notebookspage-date-input,
+.notebookspage-sort-select {
+  padding: var(--spacing-2);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  color: white;
+  font-size: var(--font-size-sm);
+}
+
+.notebookspage-date-input {
+  cursor: pointer;
+}
+
+.notebookspage-date-input::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  filter: invert(1);
+}
+
+.notebookspage-date-input::placeholder {
+  color: #9CA3AF;
+}
+
+.notebookspage-sort-select option {
+  background: #1a1a2e;
+  color: white;
+}
+
+.notebookspage-pagination {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: var(--spacing-6);
+  padding: var(--spacing-4);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 12px;
+}
+
+.notebookspage-pagination-btn {
+  padding: var(--spacing-2) var(--spacing-4);
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  color: white;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.notebookspage-pagination-btn:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.notebookspage-pagination-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.notebookspage-pagination-info {
+  color: #9CA3AF;
+  font-size: var(--font-size-sm);
+}
+
+@media (max-width: 768px) {
+  .notebookspage-filters {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .notebookspage-date-input,
+  .notebookspage-sort-select {
+    width: 100%;
+  }
+  
+  .notebookspage-pagination {
+    flex-direction: column;
+    gap: var(--spacing-2);
+  }
+  
+  .notebookspage-pagination-info {
+    order: -1;
+  }
+}
+.notebookspage-date-separator {
+  color: #9CA3AF;
+  font-size: var(--font-size-sm);
+  margin: 0 var(--spacing-2);
+}
+
+@media (max-width: 768px) {
+  .notebookspage-date-separator {
+    margin: var(--spacing-1) 0;
+  }
+}

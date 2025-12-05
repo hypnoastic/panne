@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -24,15 +24,20 @@ export default function TasksPage() {
   const [newTaskName, setNewTaskName] = useState('');
   const [showDeleteTaskModal, setShowDeleteTaskModal] = useState(false);
   const [taskToDelete, setTaskToDelete] = useState(null);
+  const [localTitle, setLocalTitle] = useState('');
 
-  const { data: agendas = [] } = useQuery({
-    queryKey: ['agendas'],
-    queryFn: agendasApi.getAll
+
+
+  const { data: agendasResponse } = useQuery({
+    queryKey: ['agendas-sidebar'],
+    queryFn: () => agendasApi.getAll()
   });
+  
+  const agendas = agendasResponse?.data || agendasResponse || [];
 
-  const { data: tasks = [] } = useQuery({
-    queryKey: ['tasks'],
-    queryFn: tasksApi.getAll
+  const { data: tasks = [], isFetching: searchLoading } = useQuery({
+    queryKey: ['tasks', searchTerm],
+    queryFn: () => tasksApi.getAll({ search: searchTerm })
   });
 
   const { data: currentTask, isLoading: taskLoading } = useQuery({
@@ -97,12 +102,45 @@ export default function TasksPage() {
     }
   });
 
+  // Debounce utility function
+  function debounce(func, wait) {
+    let timeout;
+    return function executedFunction(...args) {
+      const later = () => {
+        clearTimeout(timeout);
+        func(...args);
+      };
+      clearTimeout(timeout);
+      timeout = setTimeout(later, wait);
+    };
+  }
+
+  // Update local title when task changes
+  useEffect(() => {
+    if (currentTask) {
+      setLocalTitle(currentTask.title);
+    }
+  }, [currentTask?.id]);
+
+  // Debounced title update
+  const debouncedTitleUpdate = useCallback(
+    debounce((title) => {
+      if (currentTask && title !== currentTask.title) {
+        updateTaskMutation.mutate({
+          id: currentTask.id,
+          title,
+          content: currentTask.content
+        });
+      }
+    }, 1000),
+    [currentTask?.id]
+  );
+
 
 
   const filteredTasks = tasks.filter(task => {
-    const matchesSearch = task.title.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesAgenda = !selectedAgenda || task.agenda_id === selectedAgenda;
-    return matchesSearch && matchesAgenda;
+    return matchesAgenda;
   });
 
   const handleCreateAgenda = () => {
@@ -201,8 +239,13 @@ export default function TasksPage() {
             </div>
 
             <div className="tasks-items">
-              <AnimatePresence>
-                {filteredTasks.map((task) => (
+              {searchLoading && searchTerm ? (
+                <div style={{ display: 'flex', justifyContent: 'center', padding: '2rem', color: '#9CA3AF' }}>
+                  Searching...
+                </div>
+              ) : (
+                <AnimatePresence>
+                  {filteredTasks.map((task) => (
                   <motion.div
                     key={task.id}
                     initial={{ opacity: 0, y: 20 }}
@@ -243,8 +286,9 @@ export default function TasksPage() {
                   </motion.div>
                 ))}
               </AnimatePresence>
-
-              {filteredTasks.length === 0 && (
+              )}
+              
+              {!searchLoading && filteredTasks.length === 0 && (
                 <div className="empty-state">
                   <h4 className="empty-state__title">No tasks found</h4>
                   <p className="empty-state__description">
@@ -272,13 +316,10 @@ export default function TasksPage() {
                   </button>
                   <input
                     type="text"
-                    value={currentTask.title}
+                    value={localTitle}
                     onChange={(e) => {
-                      updateTaskMutation.mutate({
-                        id: currentTask.id,
-                        title: e.target.value,
-                        content: currentTask.content
-                      });
+                      setLocalTitle(e.target.value);
+                      debouncedTitleUpdate(e.target.value);
                     }}
                     className="editor-title"
                     placeholder="Untitled"

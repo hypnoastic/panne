@@ -3,16 +3,28 @@ import pool from '../config/database.js';
 
 const router = express.Router();
 
-// Get all tasks for user
+// Get all tasks for user with search
 router.get('/', async (req, res) => {
   try {
-    const result = await pool.query(`
+    const { search = '' } = req.query;
+    
+    let query = `
       SELECT t.*, a.name as agenda_name 
       FROM tasks t 
       LEFT JOIN agendas a ON t.agenda_id = a.id 
-      WHERE t.user_id = $1 
-      ORDER BY t.created_at DESC
-    `, [req.user.id]);
+      WHERE t.user_id = $1
+    `;
+    
+    const params = [req.user.id];
+    
+    if (search) {
+      query += ` AND t.title ILIKE $${params.length + 1}`;
+      params.push(`%${search}%`);
+    }
+    
+    query += ` ORDER BY t.created_at DESC`;
+    
+    const result = await pool.query(query, params);
     res.json(result.rows);
   } catch (error) {
     res.status(500).json({ error: error.message });

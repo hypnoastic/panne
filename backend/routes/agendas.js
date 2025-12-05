@@ -3,14 +3,65 @@ import pool from '../config/database.js';
 
 const router = express.Router();
 
-// Get all agendas for user
+// Get all agendas for user with pagination, search, and sorting
 router.get('/', async (req, res) => {
   try {
-    const result = await pool.query(
-      'SELECT * FROM agendas WHERE user_id = $1 AND deleted_at IS NULL ORDER BY created_at DESC',
-      [req.user.id]
-    );
-    res.json(result.rows);
+    const { 
+      page = 1, 
+      limit = 5, 
+      search = '', 
+      date_from, 
+      date_to, 
+      sort = 'created_at', 
+      order = 'desc' 
+    } = req.query;
+    
+    const offset = (parseInt(page) - 1) * parseInt(limit);
+    const validSorts = ['created_at', 'name', 'updated_at'];
+    const validOrders = ['asc', 'desc'];
+    const sortField = validSorts.includes(sort) ? sort : 'created_at';
+    const sortOrder = validOrders.includes(order.toLowerCase()) ? order.toUpperCase() : 'DESC';
+    
+    let whereClause = 'WHERE user_id = $1 AND deleted_at IS NULL';
+    const params = [req.user.id];
+    
+    if (search) {
+      whereClause += ` AND name ILIKE $${params.length + 1}`;
+      params.push(`%${search}%`);
+    }
+    
+    if (date_from) {
+      whereClause += ` AND created_at >= $${params.length + 1}`;
+      params.push(date_from);
+    }
+    
+    if (date_to) {
+      whereClause += ` AND created_at <= $${params.length + 1}`;
+      params.push(date_to);
+    }
+    
+    // Get total count
+    const countQuery = `SELECT COUNT(*) as total FROM agendas ${whereClause}`;
+    const countResult = await pool.query(countQuery, params);
+    const totalItems = parseInt(countResult.rows[0].total);
+    
+    // Get paginated data
+    const dataQuery = `
+      SELECT * FROM agendas 
+      ${whereClause}
+      ORDER BY ${sortField} ${sortOrder}
+      LIMIT $${params.length + 1} OFFSET $${params.length + 2}
+    `;
+    params.push(parseInt(limit), offset);
+    
+    const result = await pool.query(dataQuery, params);
+    
+    res.json({
+      data: result.rows,
+      totalItems,
+      totalPages: Math.ceil(totalItems / parseInt(limit)),
+      currentPage: parseInt(page)
+    });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

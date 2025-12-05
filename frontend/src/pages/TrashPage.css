@@ -321,3 +321,117 @@
     margin-top: 0;
   }
 }
+/* Pagination and Filter Controls */
+.search-and-filters {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--spacing-4);
+  margin-bottom: var(--spacing-4);
+}
+
+.trash-controls {
+  flex-shrink: 0;
+}
+
+.trash-filters {
+  display: flex;
+  gap: var(--spacing-3);
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.trash-date-input,
+.trash-sort-select {
+  padding: var(--spacing-2);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  color: white;
+  font-size: var(--font-size-sm);
+}
+
+.trash-date-input {
+  cursor: pointer;
+}
+
+.trash-date-input::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  filter: invert(1);
+}
+
+.trash-date-separator {
+  color: #9CA3AF;
+  font-size: var(--font-size-sm);
+  margin: 0 var(--spacing-2);
+}
+
+.trash-sort-select option {
+  background: #1a1a2e;
+  color: white;
+}
+
+.trash-pagination {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: var(--spacing-6);
+  padding: var(--spacing-4);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 12px;
+}
+
+.trash-pagination-btn {
+  padding: var(--spacing-2) var(--spacing-4);
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  color: white;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.trash-pagination-btn:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.trash-pagination-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.trash-pagination-info {
+  color: #9CA3AF;
+  font-size: var(--font-size-sm);
+}
+
+@media (max-width: 768px) {
+  .search-and-filters {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .trash-filters {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .trash-date-input,
+  .trash-sort-select {
+    width: 100%;
+  }
+  
+  .trash-date-separator {
+    margin: var(--spacing-1) 0;
+  }
+  
+  .trash-pagination {
+    flex-direction: column;
+    gap: var(--spacing-2);
+  }
+  
+  .trash-pagination-info {
+    order: -1;
+  }
+}

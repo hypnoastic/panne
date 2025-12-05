@@ -47,7 +47,7 @@ export default function AIPage() {
   const [tempSelectedNotes, setTempSelectedNotes] = useState([]);
   const [chats, setChats] = useState([]);
   const [currentChatId, setCurrentChatId] = useState(null);
-  const [searchTerm, setSearchTerm] = useState('');
+
   const [showChatNameModal, setShowChatNameModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [chatToDelete, setChatToDelete] = useState(null);
@@ -104,7 +104,7 @@ export default function AIPage() {
 
   const { data: notes = [], isLoading: notesLoading } = useQuery({
     queryKey: ['notes'],
-    queryFn: notesApi.getAll
+    queryFn: () => notesApi.getAll()
   });
 
   const sendMessageMutation = useMutation({
@@ -257,9 +257,7 @@ export default function AIPage() {
     }
   };
 
-  const filteredChats = chats.filter(chat => 
-    chat.title.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+
 
   if (notesLoading) {
     return (
@@ -285,18 +283,8 @@ export default function AIPage() {
               </button>
             </div>
             
-            <div className="aipage-search-chats">
-              <input
-                type="text"
-                placeholder="Search chats..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="aipage-search-input"
-              />
-            </div>
-
             <div className="aipage-chats-list">
-              {filteredChats.map(chat => (
+              {chats.map(chat => (
                 <div
                   key={chat.id}
                   className={`aipage-chat-item ${currentChatId === chat.id ? 'aipage-active' : ''}`}
@@ -490,21 +478,27 @@ export default function AIPage() {
               </div>
               <div className="aipage-modal-content">
                 <div className="aipage-modal-body">
-                  {notes.map(note => (
-                    <div
-                      key={note.id}
-                      className={`aipage-note-option ${tempSelectedNotes.find(n => n.id === note.id) ? 'aipage-selected' : ''}`}
-                      onClick={() => handleNoteSelection(note)}
-                    >
-                      <div className="aipage-note-checkbox">
-                        {tempSelectedNotes.find(n => n.id === note.id) && '✓'}
-                      </div>
-                      <div className="aipage-note-details">
-                        <h4>{note.title}</h4>
-                        <p>{note.content && typeof note.content === 'string' ? note.content.replace(/<[^>]*>/g, '').substring(0, 100) + '...' : 'No content'}</p>
-                      </div>
+                  {notes.length === 0 ? (
+                    <div style={{ display: 'flex', justifyContent: 'center', padding: '2rem', color: '#9CA3AF' }}>
+                      No notes found
                     </div>
-                  ))}
+                  ) : (
+                    notes.map(note => (
+                      <div
+                        key={note.id}
+                        className={`aipage-note-option ${tempSelectedNotes.find(n => n.id === note.id) ? 'aipage-selected' : ''}`}
+                        onClick={() => handleNoteSelection(note)}
+                      >
+                        <div className="aipage-note-checkbox">
+                          {tempSelectedNotes.find(n => n.id === note.id) && '✓'}
+                        </div>
+                        <div className="aipage-note-details">
+                          <h4>{note.title}</h4>
+                          <p>{note.content && typeof note.content === 'string' ? note.content.replace(/<[^>]*>/g, '').substring(0, 100) + '...' : 'No content'}</p>
+                        </div>
+                      </div>
+                    ))
+                  )}
                 </div>
                 <div className="aipage-modal-actions">
                   <Button onClick={handleDoneSelection}>

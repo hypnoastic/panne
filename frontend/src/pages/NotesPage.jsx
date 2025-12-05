@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -37,9 +37,10 @@ export default function NotesPage() {
   const [showToast, setShowToast] = useState(false);
   const [lastRequestCount, setLastRequestCount] = useState(0);
   const [copyButtonText, setCopyButtonText] = useState('Copy');
+  const [localTitle, setLocalTitle] = useState('');
 
 
-  
+
   // Real-time collaboration
   const { connectedUsers, isConnected } = useCollaboration(noteId);
 
@@ -66,14 +67,16 @@ export default function NotesPage() {
     setLastRequestCount(permissionRequests.length);
   }, [permissionRequests.length, lastRequestCount]);
 
-  const { data: notebooks = [] } = useQuery({
-    queryKey: ['notebooks'],
-    queryFn: notebooksApi.getAll
+  const { data: notebooksResponse } = useQuery({
+    queryKey: ['notebooks-sidebar'],
+    queryFn: () => notebooksApi.getAll()
   });
+  
+  const notebooks = notebooksResponse?.data || notebooksResponse || [];
 
-  const { data: notes = [] } = useQuery({
-    queryKey: ['notes'],
-    queryFn: notesApi.getAll
+  const { data: notes = [], isFetching: searchLoading } = useQuery({
+    queryKey: ['notes', searchTerm],
+    queryFn: () => notesApi.getAll({ search: searchTerm })
   });
 
   const { data: currentNote, isLoading: noteLoading } = useQuery({
@@ -93,6 +96,40 @@ export default function NotesPage() {
     queryFn: () => notesApi.getCollaborators(noteId),
     enabled: !!noteId && showCollaborators
   });
+
+  // Debounce utility function
+  function debounce(func, wait) {
+    let timeout;
+    return function executedFunction(...args) {
+      const later = () => {
+        clearTimeout(timeout);
+        func(...args);
+      };
+      clearTimeout(timeout);
+      timeout = setTimeout(later, wait);
+    };
+  }
+
+  // Update local title when note changes
+  useEffect(() => {
+    if (currentNote) {
+      setLocalTitle(currentNote.title);
+    }
+  }, [currentNote?.id]);
+
+  // Debounced title update
+  const debouncedTitleUpdate = useCallback(
+    debounce((title) => {
+      if (currentNote && title !== currentNote.title) {
+        updateNoteMutation.mutate({
+          id: currentNote.id,
+          title,
+          content: currentNote.content
+        });
+      }
+    }, 1000),
+    [currentNote?.id]
+  );
 
   const createNoteMutation = useMutation({
     mutationFn: notesApi.create,
@@ -167,9 +204,8 @@ export default function NotesPage() {
 
 
   const filteredNotes = notes.filter(note => {
-    const matchesSearch = note.title.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesNotebook = !selectedNotebook || note.notebook_id === selectedNotebook;
-    return matchesSearch && matchesNotebook;
+    return matchesNotebook;
   });
 
   const handleCreateNote = () => {
@@ -266,56 +302,64 @@ export default function NotesPage() {
             </div>
 
             <div className="notespage-notes-items">
-              <AnimatePresence>
-                {filteredNotes.map((note) => (
-                  <motion.div
-                    key={note.id}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -20 }}
-                    className={`notespage-note-item ${noteId === note.id ? 'notespage-note-item--active' : ''}`}
-                  >
-                    <Link to={`/notes/${note.id}`} className="notespage-note-item__link">
-                      <h4 className="notespage-note-item__title">{note.title}</h4>
-                      <p className="notespage-note-item__preview">
-                        {note.content?.content?.[0]?.content?.[0]?.text || 'No content'}
-                      </p>
-                      <div className="notespage-note-item__meta">
-                        {note.notebook_name && (
-                          <span className="notespage-note-item__notebook">{note.notebook_name}</span>
-                        )}
-                        <span className="notespage-note-item__date">
-                          {new Date(note.updated_at).toLocaleDateString()}
-                        </span>
-                      </div>
-                    </Link>
-                    <button
-                      className="note-delete-btn"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        setNoteToDelete(note);
-                        setShowDeleteNoteModal(true);
-                      }}
-                    >
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <polyline points="3,6 5,6 21,6"></polyline>
-                        <path d="M19,6v14a2,2,0,0,1-2,2H7a2,2,0,0,1-2-2V6m3,0V4a2,2,0,0,1,2-2h4a2,2,0,0,1,2,2V6"></path>
-                        <line x1="10" y1="11" x2="10" y2="17"></line>
-                        <line x1="14" y1="11" x2="14" y2="17"></line>
-                      </svg>
-                    </button>
-                  </motion.div>
-                ))}
-              </AnimatePresence>
-
-              {filteredNotes.length === 0 && (
-                <div className="notespage-empty-state">
-                  <h4 className="notespage-empty-state__title">No notes found</h4>
-                  <p className="notespage-empty-state__description">
-                    {searchTerm ? 'Try adjusting your search terms' : 'Create your first note to get started'}
-                  </p>
+              {searchLoading && searchTerm ? (
+                <div style={{ display: 'flex', justifyContent: 'center', padding: '2rem', color: '#9CA3AF' }}>
+                  Searching...
                 </div>
+              ) : (
+                <>
+                  <AnimatePresence>
+                    {filteredNotes.map((note) => (
+                      <motion.div
+                        key={note.id}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -20 }}
+                        className={`notespage-note-item ${noteId === note.id ? 'notespage-note-item--active' : ''}`}
+                      >
+                        <Link to={`/notes/${note.id}`} className="notespage-note-item__link">
+                          <h4 className="notespage-note-item__title">{note.title}</h4>
+                          <p className="notespage-note-item__preview">
+                            {note.content?.content?.[0]?.content?.[0]?.text || 'No content'}
+                          </p>
+                          <div className="notespage-note-item__meta">
+                            {note.notebook_name && (
+                              <span className="notespage-note-item__notebook">{note.notebook_name}</span>
+                            )}
+                            <span className="notespage-note-item__date">
+                              {new Date(note.updated_at).toLocaleDateString()}
+                            </span>
+                          </div>
+                        </Link>
+                        <button
+                          className="note-delete-btn"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            setNoteToDelete(note);
+                            setShowDeleteNoteModal(true);
+                          }}
+                        >
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <polyline points="3,6 5,6 21,6"></polyline>
+                            <path d="M19,6v14a2,2,0,0,1-2,2H7a2,2,0,0,1-2-2V6m3,0V4a2,2,0,0,1,2-2h4a2,2,0,0,1,2,2V6"></path>
+                            <line x1="10" y1="11" x2="10" y2="17"></line>
+                            <line x1="14" y1="11" x2="14" y2="17"></line>
+                          </svg>
+                        </button>
+                      </motion.div>
+                    ))}
+                  </AnimatePresence>
+
+                  {!searchLoading && filteredNotes.length === 0 && (
+                    <div className="notespage-empty-state">
+                      <h4 className="notespage-empty-state__title">No notes found</h4>
+                      <p className="notespage-empty-state__description">
+                        {searchTerm ? 'Try adjusting your search terms' : 'Create your first note to get started'}
+                      </p>
+                    </div>
+                  )}
+                </>
               )}
             </div>
           </div>
@@ -338,13 +382,10 @@ export default function NotesPage() {
                     </button>
                     <input
                       type="text"
-                      value={currentNote.title}
+                      value={localTitle}
                       onChange={(e) => {
-                        updateNoteMutation.mutate({
-                          id: currentNote.id,
-                          title: e.target.value,
-                          content: currentNote.content
-                        });
+                        setLocalTitle(e.target.value);
+                        debouncedTitleUpdate(e.target.value);
                       }}
                       className="notespage-editor-title"
                       placeholder="Untitled"

@@ -18,11 +18,35 @@ export default function NotebooksPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [notebookToDelete, setNotebookToDelete] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [dateFrom, setDateFrom] = useState('');
+  const [dateTo, setDateTo] = useState('');
+  const [sortBy, setSortBy] = useState('created_at');
+  const [sortOrder, setSortOrder] = useState('desc');
+  const limit = 5;
 
-  const { data: notebooks = [], isLoading } = useQuery({
-    queryKey: ['notebooks'],
-    queryFn: notebooksApi.getAll
+  const { data: notebooksResponse, isFetching: searchLoading } = useQuery({
+    queryKey: ['notebooks', currentPage, searchTerm, dateFrom, dateTo, sortBy, sortOrder],
+    queryFn: () => notebooksApi.getAll({
+      page: currentPage,
+      limit,
+      search: searchTerm,
+      date_from: dateFrom,
+      date_to: dateTo,
+      sort: sortBy,
+      order: sortOrder
+    })
   });
+  
+  const { isLoading } = useQuery({
+    queryKey: ['notebooks-initial'],
+    queryFn: () => notebooksApi.getAll({ page: 1, limit }),
+    enabled: !searchTerm && !dateFrom && !dateTo && currentPage === 1
+  });
+  
+  const notebooks = notebooksResponse?.data || [];
+  const totalPages = notebooksResponse?.totalPages || 1;
+  const totalItems = notebooksResponse?.totalItems || 0;
 
   const { data: notes = [] } = useQuery({
     queryKey: ['notes'],
@@ -58,10 +82,17 @@ export default function NotebooksPage() {
     }
   };
 
-  const filteredNotebooks = notebooks
-    .filter(notebook => 
-      notebook.title.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+  const handlePrevPage = () => {
+    if (currentPage > 1) {
+      setCurrentPage(currentPage - 1);
+    }
+  };
+  
+  const handleNextPage = () => {
+    if (currentPage < totalPages) {
+      setCurrentPage(currentPage + 1);
+    }
+  };
 
   if (isLoading) {
     return (
@@ -82,7 +113,10 @@ export default function NotebooksPage() {
                 type="text"
                 placeholder="Search notebooks..."
                 value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                onChange={(e) => {
+                  setSearchTerm(e.target.value);
+                  setCurrentPage(1);
+                }}
                 className="notebookspage-search-input"
               />
               <button className="notebookspage-plus-icon" onClick={() => setShowCreateModal(true)}>
@@ -93,9 +127,53 @@ export default function NotebooksPage() {
 
 
 
+          <div className="notebookspage-controls">
+            <div className="notebookspage-filters">
+              <input
+                type="date"
+                value={dateFrom}
+                onChange={(e) => {
+                  setDateFrom(e.target.value);
+                  setCurrentPage(1);
+                }}
+                className="notebookspage-date-input"
+              />
+              <span className="notebookspage-date-separator">to</span>
+              <input
+                type="date"
+                value={dateTo}
+                onChange={(e) => {
+                  setDateTo(e.target.value);
+                  setCurrentPage(1);
+                }}
+                className="notebookspage-date-input"
+              />
+              <select
+                value={`${sortBy}-${sortOrder}`}
+                onChange={(e) => {
+                  const [sort, order] = e.target.value.split('-');
+                  setSortBy(sort);
+                  setSortOrder(order);
+                  setCurrentPage(1);
+                }}
+                className="notebookspage-sort-select"
+              >
+                <option value="created_at-desc">Newest First</option>
+                <option value="created_at-asc">Oldest First</option>
+                <option value="title-asc">Title A-Z</option>
+                <option value="title-desc">Title Z-A</option>
+              </select>
+            </div>
+          </div>
+
           <div className="notebookspage-notebooks-list">
-            <AnimatePresence>
-              {filteredNotebooks.map((notebook) => {
+            {searchLoading && (searchTerm || dateFrom || dateTo) ? (
+              <div style={{ display: 'flex', justifyContent: 'center', padding: '2rem', color: '#9CA3AF' }}>
+                Searching...
+              </div>
+            ) : (
+              <AnimatePresence>
+                {notebooks.map((notebook) => {
                 console.log('Notebook:', notebook);
                 console.log('All notes:', notes);
                 const notebookNotes = notes.filter(note => note.notebook_id === notebook.id);
@@ -186,17 +264,44 @@ export default function NotebooksPage() {
                     )}
                   </motion.div>
                 );
-              })}
-            </AnimatePresence>
+                })}
+              </AnimatePresence>
+            )}
           </div>
 
-          {notebooks.length === 0 && (
+          {!searchLoading && notebooks.length === 0 && (
             <div className="notebookspage-empty-state">
-  
-              <h3 className="notebookspage-empty-state__title">No notebooks yet</h3>
+              <h3 className="notebookspage-empty-state__title">
+                {searchTerm || dateFrom || dateTo ? 'No notebooks found' : 'No notebooks yet'}
+              </h3>
               <p className="notebookspage-empty-state__description">
-                Create your first notebook to organize your notes
+                {searchTerm || dateFrom || dateTo 
+                  ? 'Try adjusting your search or date filters' 
+                  : 'Create your first notebook to organize your notes'
+                }
               </p>
+            </div>
+          )}
+          
+          {totalPages > 1 && (
+            <div className="notebookspage-pagination">
+              <button 
+                onClick={handlePrevPage}
+                disabled={currentPage === 1}
+                className="notebookspage-pagination-btn"
+              >
+                ← Previous
+              </button>
+              <span className="notebookspage-pagination-info">
+                Page {currentPage} of {totalPages} ({totalItems} total)
+              </span>
+              <button 
+                onClick={handleNextPage}
+                disabled={currentPage === totalPages}
+                className="notebookspage-pagination-btn"
+              >
+                Next →
+              </button>
             </div>
           )}
         </div>
