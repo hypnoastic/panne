@@ -2,7 +2,7 @@
 
 Panne is an intelligent, fluid, and reliable digital workspace that combines real-time collaboration with AI-powered assistance. Built with modern web technologies, it provides a seamless experience for creating, editing, and sharing documents with advanced features like version control, real-time collaboration, and AI integration.
 
-## 🚀 Features
+## Features
 
 - **AI Assistant**: Powered by Google Gemini for intelligent suggestions, summaries, and writing improvements
 - **Real-time Collaboration**: Live cursors, instant sync, and conflict-free editing using Y.js/Hocuspocus
@@ -13,7 +13,7 @@ Panne is an intelligent, fluid, and reliable digital workspace that combines rea
 - **Responsive Design**: Mobile-first design with accessibility (WCAG 2.1 AA) compliance
 - **Internationalization**: Multi-language support with i18next
 
-## 🛠 Tech Stack
+## Tech Stack
 
 ### Frontend
 - **React 18+** with Vite for fast development
@@ -34,7 +34,7 @@ Panne is an intelligent, fluid, and reliable digital workspace that combines rea
 - **Google Gemini AI** integration
 - **bcryptjs** for password hashing
 
-## 📋 Prerequisites
+## Prerequisites
 
 Before running this project, make sure you have:
 
@@ -44,7 +44,7 @@ Before running this project, make sure you have:
 - **Cloudinary** account for media storage
 - **Google Gemini API** key for AI features
 
-## 🚀 Getting Started
+## Getting Started
 
 ### 1. Clone the Repository
 
@@ -134,7 +134,7 @@ npm run dev
 
 The frontend will start on `http://localhost:5173`
 
-## 🔧 Development Scripts
+## Development Scripts
 
 ### Backend Scripts
 ```bash
@@ -179,7 +179,7 @@ panne/
 └── README.md           # This file
 ```
 
-## 🔐 Authentication Flow
+## Authentication Flow
 
 1. Users register/login with email and password
 2. Backend generates JWT token and sets secure HttpOnly cookie
@@ -187,7 +187,7 @@ panne/
 4. Protected routes verify JWT token via middleware
 5. User data is cached using React Query
 
-## 🤝 Real-time Collaboration
+## Real-time Collaboration
 
 The collaboration system uses:
 - **Y.js** for Conflict-free Replicated Data Types (CRDTs)
@@ -195,7 +195,7 @@ The collaboration system uses:
 - **Socket.IO** for presence and cursor tracking
 - **WebSocket** connections for real-time updates
 
-## 🎨 Styling Guidelines
+## Styling Guidelines
 
 - Use CSS custom properties defined in `global.css`
 - Each component has its own `.css` file
@@ -203,7 +203,7 @@ The collaboration system uses:
 - Responsive design with mobile-first approach
 - Accessibility-first design principles
 
-## 🌐 API Endpoints
+## API Endpoints
 
 ### Authentication
 - `POST /api/auth/register` - User registration
@@ -231,7 +231,7 @@ The collaboration system uses:
 - `POST /api/upload/image` - Upload image
 - `POST /api/upload/signature` - Get Cloudinary signature
 
-## 🚀 Deployment
+## Deployment
 
 ### Backend Deployment
 1. Set up PostgreSQL database (Neon recommended)
@@ -244,7 +244,7 @@ The collaboration system uses:
 2. Deploy the `dist` folder to your preferred platform (Vercel, Netlify, etc.)
 3. Configure environment variables for production
 
-## 🤝 Contributing
+## Contributing
 
 1. Fork the repository
 2. Create a feature branch: `git checkout -b feature/amazing-feature`
@@ -252,11 +252,11 @@ The collaboration system uses:
 4. Push to the branch: `git push origin feature/amazing-feature`
 5. Open a Pull Request
 
-## 📝 License
+## License
 
 This project is licensed under the MIT License - see the LICENSE file for details.
 
-## 🙏 Acknowledgments
+## Acknowledgments
 
 - [Tiptap](https://tiptap.dev/) for the excellent rich text editor
 - [Y.js](https://github.com/yjs/yjs) for CRDT implementation
@@ -264,7 +264,7 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 - [Framer Motion](https://www.framer.com/motion/) for animations
 - [React Query](https://tanstack.com/query) for server state management
 
-## 📞 Support
+## Support
 
 If you have any questions or need help, please:
 1. Check the documentation
